@@ -2,7 +2,10 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-width=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Panel Móvil - Lumina Estética</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -3463,95 +3466,69 @@
                 } else if (c.totalTurnos > 1) {
                     badgeFidelidad = '<span class="bg-purple-100 text-purple-900 font-bold px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide shrink-0">✨ Regular</span>';
                 } else {
-                    badgeFidelidad = '<span class="bg-stone-100 text-stone-700 font-medium px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide shrink-0">🌱 Nuevo</span>';
+                    badgeFidelidad = '<span class="bg-stone-100 text-stone-700 font-semibold px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide shrink-0">🌱 Nuevo</span>';
                 }
 
-                // Tasa Cancelación Badge (Desktop & Mobile)
+                // Tasa Cancelación Badge
                 let badgeTasa = '';
-                let badgeTasaMobile = '';
                 if (c.tasaCancel === 0) {
-                    badgeTasa = '<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md text-xs">0% Cancelación (Excelente)</span>';
-                    badgeTasaMobile = '<span class="bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded text-[11px] inline-block">0% (Baja)</span>';
+                    badgeTasa = '<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[11px] inline-block">0% (Excelente)</span>';
                 } else if (c.tasaCancel <= 15) {
-                    badgeTasa = `<span class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-md text-xs">${c.tasaCancel}% Cancelación (Normal)</span>`;
-                    badgeTasaMobile = `<span class="bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded text-[11px] inline-block">${c.tasaCancel}% (Normal)</span>`;
+                    badgeTasa = `<span class="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded text-[11px] inline-block">${c.tasaCancel}% (Normal)</span>`;
                 } else if (c.tasaCancel <= 30) {
-                    badgeTasa = `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-md text-xs">${c.tasaCancel}% Cancelación (Moderada)</span>`;
-                    badgeTasaMobile = `<span class="bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded text-[11px] inline-block">${c.tasaCancel}% (Media)</span>`;
+                    badgeTasa = `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[11px] inline-block">${c.tasaCancel}% (Moderada)</span>`;
                 } else {
-                    badgeTasa = `<span class="bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-md text-xs">⚠️ ${c.tasaCancel}% Cancelación (Alta)</span>`;
-                    badgeTasaMobile = `<span class="bg-rose-100 text-rose-800 font-bold px-1.5 py-0.5 rounded text-[11px] inline-block">⚠️ ${c.tasaCancel}% (Alta)</span>`;
+                    badgeTasa = `<span class="bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded text-[11px] inline-block">⚠️ ${c.tasaCancel}% (Alta)</span>`;
                 }
 
                 html += `
-                    <div class="bg-stone-50/70 border border-stone-200/90 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-stone-50 transition shadow-2xs">
-                        <!-- Info Cliente -->
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-theme/20 text-theme font-bold flex items-center justify-center shrink-0 border border-theme/40 text-base">
-                                ${inicial}
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <h4 class="font-bold text-stone-800 text-sm truncate max-w-[180px] sm:max-w-xs">${c.nombre}</h4>
-                                    ${badgeFidelidad}
+                    <div class="bg-white border border-stone-200/90 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition space-y-3">
+                        <!-- Fila 1: Datos Cliente + Acciones -->
+                        <div class="flex items-start justify-between gap-2.5">
+                            <!-- Info Cliente -->
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-10 h-10 rounded-full bg-stone-100 text-stone-700 font-bold flex items-center justify-center shrink-0 border border-stone-300 text-sm shadow-2xs">
+                                    ${inicial}
                                 </div>
-                                <div class="text-xs text-stone-500 flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
-                                    ${c.tel && c.tel !== '-' ? `<span>📞 <a href="tel:${c.tel}" class="hover:underline hover:text-stone-700">${c.tel}</a></span>` : ''}
-                                    ${c.email && c.email !== '-' ? `<span class="truncate max-w-[180px] sm:max-w-none">📧 ${c.email}</span>` : ''}
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <h4 class="font-bold text-stone-900 text-sm truncate max-w-[150px] sm:max-w-xs">${c.nombre}</h4>
+                                        ${badgeFidelidad}
+                                    </div>
+                                    <div class="text-xs text-stone-500 flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
+                                        ${c.tel && c.tel !== '-' ? `<span>📞 <a href="tel:${c.tel}" class="hover:underline font-medium text-stone-600">${c.tel}</a></span>` : ''}
+                                        ${c.email && c.email !== '-' ? `<span class="truncate max-w-[160px] sm:max-w-none text-stone-400">📧 ${c.email}</span>` : ''}
+                                    </div>
                                 </div>
                             </div>
+
+                            <!-- Acciones Rápidas (WhatsApp + Eliminar) -->
+                            <div class="flex items-center gap-1.5 shrink-0 pt-0.5">
+                                ${waLink ? `
+                                    <a href="${waLink}" target="_blank" class="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition flex items-center gap-1 border border-emerald-200/90 shadow-2xs active:scale-95" title="Contactar por WhatsApp">
+                                        <span>💬</span> <span class="hidden sm:inline">WhatsApp</span>
+                                    </a>
+                                ` : ''}
+                                <button onclick="eliminarCliente('${c.id || ''}', '${(c.nombre || '').replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition flex items-center gap-1 border border-rose-200/90 shadow-2xs active:scale-95 cursor-pointer" title="Eliminar cliente">
+                                    <span>🗑️</span> <span class="hidden sm:inline">Eliminar</span>
+                                </button>
+                            </div>
                         </div>
 
-                        <!-- Métricas en Móvil (Grid de 3 columnas ordenado y legible) -->
-                        <div class="grid grid-cols-3 gap-1.5 py-2 px-2.5 bg-stone-100/70 rounded-xl text-center border border-stone-200/60 sm:hidden">
+                        <!-- Fila 2: Barra de Métricas (Grid de 3 columnas espacioso) -->
+                        <div class="grid grid-cols-3 gap-2 py-2 px-3 bg-stone-50/90 rounded-xl border border-stone-200/70 text-center">
                             <div>
-                                <span class="text-[10px] text-stone-400 uppercase font-bold block">Año ${anioActual}</span>
-                                <span class="font-bold text-stone-800 text-xs">${c.turnosAnio} citas</span>
+                                <span class="text-[10px] text-stone-400 uppercase font-bold tracking-wide block">Año ${anioActual}</span>
+                                <span class="font-extrabold text-stone-800 text-xs sm:text-sm">${c.turnosAnio} <span class="font-normal text-[11px] text-stone-500">citas</span></span>
                             </div>
-                            <div class="border-x border-stone-200/80">
-                                <span class="text-[10px] text-stone-400 uppercase font-bold block">Mes Pasado</span>
-                                <span class="font-bold text-stone-700 text-xs">${c.turnosMesPasado} citas</span>
+                            <div class="border-x border-stone-200">
+                                <span class="text-[10px] text-stone-400 uppercase font-bold tracking-wide block">Mes Pasado</span>
+                                <span class="font-extrabold text-stone-700 text-xs sm:text-sm">${c.turnosMesPasado} <span class="font-normal text-[11px] text-stone-500">citas</span></span>
                             </div>
                             <div>
-                                <span class="text-[10px] text-stone-400 uppercase font-bold block">Cancelaciones</span>
-                                ${badgeTasaMobile}
+                                <span class="text-[10px] text-stone-400 uppercase font-bold tracking-wide block">Cancelación</span>
+                                <div class="mt-0.5">${badgeTasa}</div>
                             </div>
-                        </div>
-
-                        <!-- Acciones en Móvil (Botones completos con buen tap target) -->
-                        <div class="flex items-center gap-2 pt-0.5 sm:hidden">
-                            ${waLink ? `
-                                <a href="${waLink}" target="_blank" class="flex-1 py-2 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition flex items-center justify-center gap-1.5 border border-emerald-200/80 shadow-2xs active:scale-95" title="Contactar por WhatsApp">
-                                    <span>💬</span> WhatsApp
-                                </a>
-                            ` : ''}
-                            <button onclick="eliminarCliente('${c.id || ''}', '${(c.nombre || '').replace(/'/g, "\\'")}')" class="${waLink ? 'flex-1' : 'w-full'} py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition flex items-center justify-center gap-1.5 border border-rose-200/80 shadow-2xs active:scale-95 cursor-pointer" title="Eliminar cliente">
-                                <span>🗑️</span> Eliminar
-                            </button>
-                        </div>
-
-                        <!-- Métricas y Acciones en Desktop -->
-                        <div class="hidden sm:flex items-center gap-3 lg:gap-4 shrink-0">
-                            <div class="text-center px-2">
-                                <span class="text-[10px] text-stone-400 uppercase font-semibold block">Año ${anioActual}</span>
-                                <span class="font-bold text-stone-800 text-sm">${c.turnosAnio} citas</span>
-                            </div>
-                            <div class="text-center px-2">
-                                <span class="text-[10px] text-stone-400 uppercase font-semibold block">Mes Pasado</span>
-                                <span class="font-bold text-stone-700 text-sm">${c.turnosMesPasado} citas</span>
-                            </div>
-                            <div class="text-center px-2">
-                                <span class="text-[10px] text-stone-400 uppercase font-semibold block">Tasa Cancel.</span>
-                                ${badgeTasa}
-                            </div>
-                            ${waLink ? `
-                                <a href="${waLink}" target="_blank" class="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition flex items-center gap-1 shrink-0" title="Contactar por WhatsApp">
-                                    💬 WhatsApp
-                                </a>
-                            ` : ''}
-                            <button onclick="eliminarCliente('${c.id || ''}', '${(c.nombre || '').replace(/'/g, "\\'")}')" class="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition flex items-center gap-1 shrink-0 border border-rose-200 shadow-2xs active:scale-95 cursor-pointer" title="Eliminar cliente del directorio">
-                                🗑️ <span>Eliminar</span>
-                            </button>
                         </div>
                     </div>
                 `;
