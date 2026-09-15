@@ -40,22 +40,16 @@
         }
 
         body {
-            background: url('./spa_background.jpg') center center / cover no-repeat fixed;
-            color: #57534e;
-            position: relative;
+            background-color: #faf7f2;
+            color: #44403c;
             min-height: 100vh;
-        }
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(250, 247, 242, 0.88), rgba(243, 232, 255, 0.82));
-            backdrop-filter: blur(14px);
-            z-index: 0;
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 0;
         }
 
         .hide { display: none !important; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid #f5f5f4; }
+        .glass { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px); border-bottom: 1px solid #e7e5e4; }
         
         .btn-pastel { background-color: var(--primary) !important; color: var(--primary-text) !important; font-weight: 600; }
         .btn-pastel:hover { background-color: var(--primary-hover) !important; }
@@ -64,36 +58,10 @@
         .btn-outline-theme:hover { background-color: var(--accent) !important; }
         
         .container-center {
-            width: 100%; max-width: 440px; margin: 0 auto; min-height: 100vh;
-            background-color: rgba(255, 255, 255, 0.95); position: relative;
-            z-index: 10;
-            box-shadow: 0 10px 45px rgba(0,0,0,0.12);
-            backdrop-filter: blur(12px);
-        }
-
-        @media (min-width: 1024px) {
-            body::before {
-                display: none !important;
-            }
-            body {
-                background-color: #faf7f2 !important;
-            }
-            .container-center {
-                max-width: 100% !important;
-                width: 100% !important;
-                margin: 0 !important;
-                box-shadow: none !important;
-                backdrop-filter: none !important;
-                background-color: transparent !important;
-            }
-            header.glass {
-                padding-left: 2rem !important;
-                padding-right: 2rem !important;
-                padding-top: 1rem !important;
-                padding-bottom: 1rem !important;
-                background: rgba(255, 255, 255, 0.96) !important;
-                border-bottom: 1px solid #e7e5e4 !important;
-            }
+            width: 100%;
+            min-height: 100vh;
+            background-color: transparent;
+            position: relative;
         }
 
         .input-pastel { width: 100%; background: #faf7f2; border: 1px solid #e7e5e4; border-radius: 12px; padding: 14px; color: #57534e; outline: none; transition: all 0.3s; }
@@ -211,168 +179,208 @@
             </div>
         </header>
 
-        <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full pb-24 overflow-x-hidden" id="mainContent">
+        <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-24" id="mainContent">
             
-            <!-- Banner de Portada de Marca + Perfil -->
-            <section class="mb-6 sm:mb-8 rounded-3xl overflow-hidden bg-white border border-stone-200/90 shadow-xs relative">
-                <!-- Foto de Portada Nítida Completa -->
-                <div id="brandHeroSection" class="h-44 sm:h-60 lg:h-72 w-full bg-cover bg-center relative" style="background-image: url('./spa_background.jpg');">
-                </div>
-
-                <!-- Perfil de Marca (Logo Solapado + Nombre + Tarjeta de Descripción con Tema Pastel) -->
-                <div class="px-4 sm:px-8 pb-6 text-center relative -mt-12 sm:-mt-16">
-                    <div class="brand-logo-hero w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-accent flex items-center justify-center font-bold text-3xl sm:text-4xl mb-3 mx-auto overflow-hidden shadow-md border-4 border-white ring-2 ring-stone-100 cursor-pointer transition transform hover:scale-105 shrink-0" onclick="irAlInicio()" title="Volver al Inicio">L</div>
-
-                    <h2 class="brand-name text-2xl sm:text-3xl font-bold tracking-wide text-stone-800 cursor-pointer" onclick="irAlInicio()">Lumina Estética</h2>
-                    
-                    <!-- Tarjeta con Fondo Pastel de la Temática Elegida -->
-                    <div class="mt-4 p-4 sm:p-6 max-w-3xl mx-auto rounded-2xl bg-accent border border-theme/40 text-stone-800 shadow-2xs text-justify text-xs sm:text-sm font-medium leading-relaxed whitespace-pre-line brand-desc">
-                        Tu santuario de belleza, bienestar y cuidado personal integral.
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Loading State -->
-            <div id="loadingState" class="flex flex-col items-center justify-center h-48 text-stone-400">
-                <svg class="w-8 h-8 animate-spin mb-4 text-theme" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                <p>Cargando información de la agenda...</p>
-            </div>
-
-            <!-- Formularios -->
-            <div id="bookingForm" class="hide fade-in">
+            <div class="lg:grid lg:grid-cols-12 lg:gap-8 lg:items-start space-y-6 lg:space-y-0">
                 
-                <!-- PANTALLA: GESTIÓN / RECORDATORIO (DESDE LINK DE EMAIL / WHATSAPP) -->
-                <div id="stepConfirmar24h" class="hide fade-in space-y-6 max-w-xl mx-auto">
-                    <div class="bg-accent border border-theme p-5 rounded-2xl text-center">
-                        <div class="w-16 h-16 bg-white text-theme rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold border border-theme shadow-xs">
-                            ⏰
+                <!-- COLUMNA LATERAL (EN PC: PANEL DE MARCA Y CONTACTO; EN MÓVIL: PARTE SUPERIOR) -->
+                <div class="lg:col-span-5 xl:col-span-4 space-y-6">
+                    <!-- Banner de Portada de Marca + Perfil -->
+                    <section class="rounded-3xl overflow-hidden bg-white border border-stone-200/90 shadow-xs relative">
+                        <!-- Foto de Portada Nítida Completa -->
+                        <div id="brandHeroSection" class="h-44 sm:h-52 w-full bg-cover bg-center relative" style="background-image: url('./spa_background.jpg');">
                         </div>
-                        <h2 class="text-xl font-bold text-stone-800 mb-1" id="confirm24hTitle">Gestionar tu Cita</h2>
-                        <p class="text-xs text-stone-600 mb-4" id="confirm24hSubtitle">Aquí puedes reprogramar el día y horario de tu cita, o cancelarla si no vas a poder asistir:</p>
 
-                        <div class="bg-white p-4 rounded-xl border border-stone-200 text-left text-xs space-y-2 shadow-xs" id="confirm24hDetails">
-                            <!-- Se llena dinámicamente con JS -->
+                        <!-- Perfil de Marca -->
+                        <div class="px-4 sm:px-6 pb-6 text-center relative -mt-12">
+                            <div class="brand-logo-hero w-24 h-24 rounded-full bg-accent flex items-center justify-center font-bold text-3xl mb-3 mx-auto overflow-hidden shadow-md border-4 border-white ring-2 ring-stone-100 cursor-pointer transition transform hover:scale-105 shrink-0" onclick="irAlInicio()" title="Volver al Inicio">L</div>
+
+                            <h2 class="brand-name text-2xl font-bold tracking-wide text-stone-800 cursor-pointer" onclick="irAlInicio()">Lumina Estética</h2>
+                            
+                            <!-- Tarjeta con Fondo Pastel de la Temática Elegida -->
+                            <div class="mt-4 p-4 rounded-2xl bg-accent border border-theme/40 text-stone-800 shadow-2xs text-justify text-xs font-medium leading-relaxed whitespace-pre-line brand-desc">
+                                Tu santuario de belleza, bienestar y cuidado personal integral.
+                            </div>
                         </div>
-                    </div>
+                    </section>
 
-                    <div class="space-y-3" id="confirm24hButtons">
-                        <button onclick="reprogramarTurno24hAction()" class="w-full btn-pastel py-3.5 rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-sm font-bold active:scale-95">
-                            <span>✏️</span> Reprogramar Turno (Cambiar fecha / horario)
-                        </button>
-                        <button onclick="cancelarTurno24hAction()" class="w-full bg-white border border-stone-200 text-rose-600 font-semibold py-3 rounded-xl hover:bg-rose-50 transition text-xs">
-                            <span>❌</span> No podré asistir (Cancelar Turno)
-                        </button>
-                        <button onclick="confirmarAsistencia24hAction()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-xs active:scale-95">
-                            <span>✅</span> Mantener y Confirmar Asistencia
-                        </button>
-                    </div>
+                    <!-- TARJETA ATENCIÓN Y CONSULTAS POR WHATSAPP -->
+                    <section id="whatsappSection" class="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs fade-in">
+                        <div class="bg-accent border border-theme/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2 mb-3">
+                            <span class="text-emerald-600 shrink-0">
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                            </span>
+                            <h3 class="text-sm font-bold text-theme">Consultas y Señas por WhatsApp</h3>
+                        </div>
+                        <p class="text-xs text-stone-500 mb-3.5">Si tenés dudas o necesitás enviar tu comprobante de seña, escribinos directamente por WhatsApp:</p>
+                        
+                        <a id="btnWhatsappDirect" href="https://api.whatsapp.com/send/?phone=%2B5491166266845&text&type=phone_number&app_absent=0" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-xs transition flex items-center justify-center gap-2.5 text-xs active:scale-95">
+                            <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                            <span>Abrir Chat de WhatsApp</span>
+                        </a>
+                    </section>
+
+                    <!-- TARJETA UBICACIÓN Y CÓMO LLEGAR -->
+                    <section id="ubicacionSection" class="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs fade-in">
+                        <div class="bg-accent border border-theme/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2 mb-3">
+                            <span class="text-base">📍</span>
+                            <h3 class="text-sm font-bold text-theme">Ubicación y Sucursal</h3>
+                        </div>
+                        
+                        <div class="bg-stone-50 border border-stone-200/80 rounded-xl p-4 flex flex-col gap-3">
+                            <div class="flex items-start gap-2.5">
+                                <span class="text-theme font-bold shrink-0 mt-0.5 text-base">📌</span>
+                                <div class="text-xs sm:text-sm font-semibold text-stone-800 leading-snug" id="brandAddressText">
+                                    Avenida Maipú 3907 , Gran Buenos Aires, Tres de Febrero, Argentina
+                                </div>
+                            </div>
+                        </div>
+
+                        <a id="btnGoogleMapsDirect" href="https://www.google.com/maps/search/?api=1&query=Avenida%20Maip%C3%BA%203907%20%2C%20Gran%20Buenos%20Aires%2C%20Tres%20de%20Febrero%2C%20Argentina" target="_blank" class="w-full btn-outline-theme py-2.5 mt-3 rounded-xl transition text-xs font-bold shadow-xs flex items-center justify-center gap-2">
+                            <span>🗺️</span> Abrir en Google Maps
+                        </a>
+                    </section>
                 </div>
 
-                <!-- TARJETA APARTADO 1: INGRESO / REGISTRO / VERIFICACIÓN DE CLIENTE -->
-                <div id="step1" class="bg-white border border-stone-200/90 rounded-2xl p-5 sm:p-7 max-w-xl mx-auto shadow-xs mb-6">
-                    <div class="bg-accent border border-theme/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2 mb-4">
-                        <span class="text-base">👤</span>
-                        <h2 class="text-sm sm:text-base font-bold text-theme">Identificación de Cliente</h2>
+                <!-- COLUMNA PRINCIPAL DE RESERVAS Y SERVICIOS -->
+                <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+                    <!-- Loading State -->
+                    <div id="loadingState" class="flex flex-col items-center justify-center h-48 text-stone-400">
+                        <svg class="w-8 h-8 animate-spin mb-4 text-theme" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <p>Cargando información de la agenda...</p>
                     </div>
 
-                    <!-- Aviso cuando se hace clic directo sobre un tratamiento -->
-                    <div id="noticeServicioPreseleccionado" class="hide mb-4 bg-accent border border-theme p-3 rounded-xl text-theme text-xs font-semibold flex items-center justify-between gap-2 shadow-2xs">
-                        <span id="noticeServicioText">✨ Vas a agendar: <strong>Servicio</strong></span>
-                        <button type="button" onclick="cancelarServicioPreseleccionado()" class="text-stone-500 hover:text-stone-700 text-xs underline font-bold shrink-0">Cambiar</button>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-stone-500 mb-1">Correo Electrónico *</label>
-                            <input type="email" id="cEmail" placeholder="ejemplo@correo.com" class="input-pastel" oninput="verificarClienteYEstado()" onchange="verificarClienteYEstado()" onblur="verificarClienteYEstado()">
+                    <!-- Formularios -->
+                    <div id="bookingForm" class="hide fade-in space-y-6">
+                        
+                        <!-- PANTALLA: GESTIÓN / RECORDATORIO (DESDE LINK DE EMAIL / WHATSAPP) -->
+                        <div id="stepConfirmar24h" class="hide fade-in space-y-6">
+                            <div class="bg-accent border border-theme p-5 rounded-2xl text-center">
+                                <div class="w-16 h-16 bg-white text-theme rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold border border-theme shadow-xs">
+                                    ⏰
+                                </div>
+                                <h2 class="text-xl font-bold text-stone-800 mb-1" id="confirm24hTitle">Gestionar tu Cita</h2>
+                                <p class="text-xs text-stone-600 mb-4" id="confirm24hSubtitle">Aquí puedes reprogramar el día y horario de tu cita, o cancelarla si no vas a poder asistir:</p>
+
+                                <div class="bg-white p-4 rounded-xl border border-stone-200 text-left text-xs space-y-2 shadow-xs" id="confirm24hDetails">
+                                    <!-- Se llena dinámicamente con JS -->
+                                </div>
+                            </div>
+
+                            <div class="space-y-3" id="confirm24hButtons">
+                                <button onclick="reprogramarTurno24hAction()" class="w-full btn-pastel py-3.5 rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-sm font-bold active:scale-95">
+                                    <span>✏️</span> Reprogramar Turno (Cambiar fecha / horario)
+                                </button>
+                                <button onclick="cancelarTurno24hAction()" class="w-full bg-white border border-stone-200 text-rose-600 font-semibold py-3 rounded-xl hover:bg-rose-50 transition text-xs">
+                                    <span>❌</span> No podré asistir (Cancelar Turno)
+                                </button>
+                                <button onclick="confirmarAsistencia24hAction()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-xs active:scale-95">
+                                    <span>✅</span> Mantener y Confirmar Asistencia
+                                </button>
+                            </div>
                         </div>
 
-                        <!-- Botón explícito para alta manual -->
-                        <div class="flex items-center justify-between text-xs text-stone-500 bg-stone-50 p-2.5 rounded-xl border border-stone-100">
-                            <span>¿Es tu primera vez aquí?</span>
-                            <button type="button" onclick="toggleRegistroManual()" class="text-theme font-bold hover:underline flex items-center gap-1">
-                                <span>📝</span> Darme de alta
+                        <!-- TARJETA APARTADO 1: INGRESO / REGISTRO / VERIFICACIÓN DE CLIENTE -->
+                        <div id="step1" class="bg-white border border-stone-200/90 rounded-3xl p-5 sm:p-7 shadow-xs">
+                            <div class="bg-accent border border-theme/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2 mb-4">
+                                <span class="text-base">👤</span>
+                                <h2 class="text-sm sm:text-base font-bold text-theme">Identificación de Cliente</h2>
+                            </div>
+
+                            <!-- Aviso cuando se hace clic directo sobre un tratamiento -->
+                            <div id="noticeServicioPreseleccionado" class="hide mb-4 bg-accent border border-theme p-3 rounded-xl text-theme text-xs font-semibold flex items-center justify-between gap-2 shadow-2xs">
+                                <span id="noticeServicioText">✨ Vas a agendar: <strong>Servicio</strong></span>
+                                <button type="button" onclick="cancelarServicioPreseleccionado()" class="text-stone-500 hover:text-stone-700 text-xs underline font-bold shrink-0">Cambiar</button>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-stone-500 mb-1">Correo Electrónico *</label>
+                                    <input type="email" id="cEmail" placeholder="ejemplo@correo.com" class="input-pastel" oninput="verificarClienteYEstado()" onchange="verificarClienteYEstado()" onblur="verificarClienteYEstado()">
+                                </div>
+
+                                <!-- Botón explícito para alta manual -->
+                                <div class="flex items-center justify-between text-xs text-stone-500 bg-stone-50 p-2.5 rounded-xl border border-stone-100">
+                                    <span>¿Es tu primera vez aquí?</span>
+                                    <button type="button" onclick="toggleRegistroManual()" class="text-theme font-bold hover:underline flex items-center gap-1">
+                                        <span>📝</span> Darme de alta
+                                    </button>
+                                </div>
+
+                                <!-- Campos para nuevo cliente -->
+                                <div id="divNuevoCliente" class="hide fade-in space-y-4 pt-2 border-t border-stone-100">
+                                    <div id="noticeNuevoClienteBox" class="bg-amber-50 border border-amber-200/90 p-3.5 rounded-xl text-amber-900 text-xs font-semibold leading-relaxed shadow-2xs">
+                                        📌 <strong>Correo no registrado:</strong> Este e-mail no figura en nuestra base de datos aún. Por favor completa tu nombre y teléfono a continuación para darte de alta y agendar tu turno:
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-stone-500 mb-1">Nombre Completo *</label>
+                                        <input type="text" id="cNombre" placeholder="¿Cómo te llamas?" class="input-pastel">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-stone-500 mb-1">Teléfono Móvil *</label>
+                                        <input type="tel" id="cTel" placeholder="+54 9 11 1234-5678" class="input-pastel">
+                                    </div>
+                                </div>
+
+                                <!-- Saludo para cliente existente sin turno activo -->
+                                <div id="divClienteExistenteSinTurno" class="hide fade-in bg-emerald-50 border border-emerald-100 p-3 rounded-xl text-emerald-800 text-sm font-semibold">
+                                    <!-- Se llena por JS -->
+                                </div>
+                            </div>
+
+                            <button id="btnContinuarStep1" onclick="procesarStep1()" class="w-full btn-pastel border-2 border-theme/60 py-3.5 rounded-xl mt-5 font-bold shadow-xs text-sm transition active:scale-95 flex items-center justify-center gap-1.5">
+                                <span>Continuar</span>
+                                <span>➔</span>
                             </button>
                         </div>
 
-                        <!-- Campos para nuevo cliente -->
-                        <div id="divNuevoCliente" class="hide fade-in space-y-4 pt-2 border-t border-stone-100">
-                            <div id="noticeNuevoClienteBox" class="bg-amber-50 border border-amber-200/90 p-3.5 rounded-xl text-amber-900 text-xs font-semibold leading-relaxed shadow-2xs">
-                                📌 <strong>Correo no registrado:</strong> Este e-mail no figura en nuestra base de datos aún. Por favor completa tu nombre y teléfono a continuación para darte de alta y agendar tu turno:
+                        <!-- PANTALLA: TURNO ACTIVO EXISTENTE -->
+                        <div id="stepActiveTurno" class="hide fade-in space-y-6">
+                            <div class="flex items-center justify-between mb-2">
+                                <button type="button" onclick="irAlInicio()" class="text-xs font-bold text-stone-500 hover:text-stone-700 flex items-center gap-1.5 bg-stone-100 px-3 py-1.5 rounded-lg border border-stone-200">
+                                    <span>←</span> Volver al inicio
+                                </button>
                             </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-stone-500 mb-1">Nombre Completo *</label>
-                                <input type="text" id="cNombre" placeholder="¿Cómo te llamas?" class="input-pastel">
+
+                            <div class="bg-accent border border-theme p-5 rounded-2xl shadow-xs">
+                                <div class="flex items-center gap-2 text-stone-800 font-bold text-lg mb-2">
+                                    <span>📅</span>
+                                    <h2 id="activeTurnoGreeting">Ya tienes un turno activo</h2>
+                                </div>
+                                <p class="text-xs text-stone-600 mb-4">Elige la opción que desees a continuación:</p>
+                                
+                                <div class="bg-white p-4 rounded-xl border border-stone-200 shadow-xs text-sm space-y-2" id="activeTurnoDetails">
+                                    <!-- Se llena por JS -->
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-stone-500 mb-1">Teléfono Móvil *</label>
-                                <input type="tel" id="cTel" placeholder="+54 9 11 1234-5678" class="input-pastel">
+
+                            <div class="space-y-3" id="activeTurnoActionsContainer">
+                                <!-- Se llena dinámicamente con botones de Confirmar, Reprogramar o Cancelar -->
                             </div>
                         </div>
 
-                        <!-- Saludo para cliente existente sin turno activo -->
-                        <div id="divClienteExistenteSinTurno" class="hide fade-in bg-emerald-50 border border-emerald-100 p-3 rounded-xl text-emerald-800 text-sm font-semibold">
-                            <!-- Se llena por JS -->
-                        </div>
-                    </div>
+                        <!-- PASO 2: SELECCIÓN DE SERVICIO Y HORARIO -->
+                        <div id="step2" class="hide fade-in space-y-6">
+                            
+                            <!-- Encabezado Principal del Paso 2 -->
+                            <div class="bg-accent border-l-4 border-l-theme border border-theme/40 rounded-2xl px-5 py-4 flex items-center justify-between shadow-2xs">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="text-xl">📅</span>
+                                    <h2 class="text-base sm:text-lg font-extrabold text-theme tracking-tight">Selección de Turno</h2>
+                                </div>
+                                <button onclick="volverAStep1()" class="text-xs font-bold text-stone-700 hover:text-stone-900 bg-white/90 hover:bg-white px-3.5 py-2 rounded-xl border border-stone-200 shadow-2xs transition active:scale-95 flex items-center gap-1.5">
+                                    <span>←</span> Volver
+                                </button>
+                            </div>
 
-                    <button id="btnContinuarStep1" onclick="procesarStep1()" class="w-full btn-pastel border-2 border-theme/60 py-3 rounded-xl mt-5 font-bold shadow-xs text-sm transition active:scale-95 flex items-center justify-center gap-1.5">
-                        <span>Continuar</span>
-                        <span>➔</span>
-                    </button>
-                </div>
+                            <div id="bannerReprogramando" class="hide bg-amber-50 border border-amber-200 p-4 rounded-2xl text-amber-900 text-xs font-semibold leading-relaxed shadow-2xs">
+                                🔒 <strong>Modo reprogramación:</strong> Tu turno actual se mantiene seguro. Si deseas cambiarlo, selecciona un nuevo horario y confirma al final.
+                            </div>
 
-                <!-- PANTALLA: TURNO ACTIVO EXISTENTE -->
-                <div id="stepActiveTurno" class="hide fade-in space-y-6">
-                    <div class="flex items-center justify-between mb-2">
-                        <button type="button" onclick="irAlInicio()" class="text-xs font-bold text-stone-500 hover:text-stone-700 flex items-center gap-1.5 bg-stone-100 px-3 py-1.5 rounded-lg border border-stone-200">
-                            <span>←</span> Volver al inicio
-                        </button>
-                    </div>
-
-                    <div class="bg-accent border border-theme p-5 rounded-2xl shadow-xs">
-                        <div class="flex items-center gap-2 text-stone-800 font-bold text-lg mb-2">
-                            <span>📅</span>
-                            <h2 id="activeTurnoGreeting">Ya tienes un turno activo</h2>
-                        </div>
-                        <p class="text-xs text-stone-600 mb-4">Elige la opción que desees a continuación:</p>
-                        
-                        <div class="bg-white p-4 rounded-xl border border-stone-200 shadow-xs text-sm space-y-2" id="activeTurnoDetails">
-                            <!-- Se llena por JS -->
-                        </div>
-                    </div>
-
-                    <div class="space-y-3" id="activeTurnoActionsContainer">
-                        <!-- Se llena dinámicamente con botones de Confirmar, Reprogramar o Cancelar -->
-                    </div>
-                </div>
-
-                <!-- PASO 2: SELECCIÓN DE SERVICIO Y HORARIO -->
-                <div id="step2" class="hide fade-in space-y-6 mb-8">
-                    
-                    <!-- Encabezado Principal del Paso 2 -->
-                    <div class="bg-accent border-l-4 border-l-theme border border-theme/40 rounded-2xl px-5 py-4 flex items-center justify-between shadow-2xs">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-xl">📅</span>
-                            <h2 class="text-base sm:text-lg font-extrabold text-theme tracking-tight">Selección de Turno</h2>
-                        </div>
-                        <button onclick="volverAStep1()" class="text-xs font-bold text-stone-700 hover:text-stone-900 bg-white/90 hover:bg-white px-3.5 py-2 rounded-xl border border-stone-200 shadow-2xs transition active:scale-95 flex items-center gap-1.5">
-                            <span>←</span> Volver
-                        </button>
-                    </div>
-
-                    <div id="bannerReprogramando" class="hide bg-amber-50 border border-amber-200 p-4 rounded-2xl text-amber-900 text-xs font-semibold leading-relaxed shadow-2xs">
-                        🔒 <strong>Modo reprogramación:</strong> Tu turno actual se mantiene seguro. Si deseas cambiarlo, selecciona un nuevo horario y confirma al final.
-                    </div>
-
-                    <!-- GRID RESPONSIVE: 2 COLUMNAS EN PC / 1 EN MÓVIL -->
-                    <div class="lg:grid lg:grid-cols-12 lg:gap-8 lg:items-start space-y-6 lg:space-y-0">
-                        <!-- Columna Izquierda: Bloque 1 y Bloque 2 -->
-                        <div class="lg:col-span-5 space-y-6">
                             <!-- BLOQUE 1: SERVICIO Y PROFESIONAL -->
-                            <div class="relative bg-white border-2 border-stone-200/90 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 pt-7 mt-5">
+                            <div class="relative bg-white border border-stone-200/90 rounded-3xl p-5 sm:p-6 shadow-xs space-y-4 pt-7 mt-5">
                                 <div class="step-card-badge">1</div>
-                                <div class="bg-accent border border-theme/40 rounded-2xl py-3 px-4 flex items-center justify-center text-center shadow-2xs">
+                                <div class="bg-accent border border-theme/40 rounded-2xl py-2.5 px-4 flex items-center justify-center text-center shadow-2xs">
                                     <span class="text-sm sm:text-base font-extrabold text-theme">💅 Servicio y Profesional</span>
                                 </div>
                                 
@@ -399,7 +407,7 @@
                             </div>
                             
                             <!-- BLOQUE 2: DÍA DE ATENCIÓN -->
-                            <div class="relative bg-white border-2 border-stone-200/90 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 pt-7 mt-5">
+                            <div class="relative bg-white border border-stone-200/90 rounded-3xl p-5 sm:p-6 shadow-xs space-y-4 pt-7 mt-5">
                                 <div class="step-card-badge">2</div>
                                 <div class="bg-accent border border-theme/40 rounded-2xl py-2.5 px-4 flex items-center justify-between shadow-2xs">
                                     <span class="text-sm sm:text-base font-extrabold text-theme">📆 Selecciona el Día</span>
@@ -413,14 +421,11 @@
                                     <!-- Se llena por JS dinámicamente -->
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Columna Derecha: Bloque 3 y Botón Confirmar -->
-                        <div class="lg:col-span-7 space-y-6">
                             <!-- BLOQUE 3: HORARIOS DISPONIBLES -->
-                            <div class="relative bg-white border-2 border-stone-200/90 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 pt-7 mt-5">
+                            <div class="relative bg-white border border-stone-200/90 rounded-3xl p-5 sm:p-6 shadow-xs space-y-4 pt-7 mt-5">
                                 <div class="step-card-badge">3</div>
-                                <div class="bg-accent border border-theme/40 rounded-2xl py-3 px-4 flex items-center justify-center text-center shadow-2xs">
+                                <div class="bg-accent border border-theme/40 rounded-2xl py-2.5 px-4 flex items-center justify-center text-center shadow-2xs">
                                     <span class="text-sm sm:text-base font-extrabold text-theme">⏰ Horarios Disponibles</span>
                                 </div>
 
@@ -437,85 +442,42 @@
                                     Confirmar Reserva ➔
                                 </button>
                             </div>
+
                         </div>
-                    </div>
 
-                </div>
-
-                <!-- PANTALLA DE ÉXITO -->
-                <div id="stepSuccess" class="hide fade-in text-center py-10 bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs mb-6">
-                    <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                    </div>
-                    <h2 class="text-2xl font-bold text-stone-700 mb-2" id="successTitle">¡Reserva Confirmada!</h2>
-                    <p class="text-stone-500 mb-6 text-sm" id="successMessage">Te hemos enviado un correo con todos los detalles de tu turno. ¡Te esperamos!</p>
-                    
-                    <!-- Resumen del turno en confirmación -->
-                    <div id="successTurnoDetails" class="hide mb-6 max-w-md w-full mx-auto"></div>
-
-                    <button onclick="irAlInicio()" class="w-full btn-pastel py-3.5 rounded-xl font-bold shadow-xs text-sm transition flex items-center justify-center gap-2 mb-4 active:scale-95">
-                        <span>←</span> Volver a la Página Principal
-                    </button>
-                    
-                    <p class="text-xs font-medium text-stone-400 bg-stone-100 py-3 rounded-lg">Ya puedes cerrar esta ventana o volver al inicio.</p>
-                </div>
-
-            </div>
-
-            <!-- TARJETAS APARTADO 2 & 3: WHATSAPP Y UBICACIÓN (GRID 2 COLUMNAS EN PC) -->
-            <div class="lg:grid lg:grid-cols-2 lg:gap-6 mb-6">
-                <!-- TARJETA APARTADO 2: ATENCIÓN Y CONSULTAS POR WHATSAPP -->
-                <section id="whatsappSection" class="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs mb-6 lg:mb-0 fade-in flex flex-col justify-between">
-                    <div>
-                        <div class="bg-accent border border-theme/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2 mb-3">
-                            <span class="text-emerald-600 shrink-0">
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                            </span>
-                            <h3 class="text-sm sm:text-base font-bold text-theme">Consultas y Señas por WhatsApp</h3>
-                        </div>
-                        <p class="text-xs text-stone-500 mb-3.5">Si tenés dudas o necesitás enviar tu comprobante de seña, escribinos directamente por WhatsApp:</p>
-                    </div>
-                    
-                    <a id="btnWhatsappDirect" href="https://api.whatsapp.com/send/?phone=%2B5491166266845&text&type=phone_number&app_absent=0" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-xs transition flex items-center justify-center gap-2.5 text-xs active:scale-95">
-                        <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                        <span>Abrir Chat de WhatsApp</span>
-                    </a>
-                </section>
-
-                <!-- TARJETA APARTADO 3: UBICACIÓN Y CÓMO LLEGAR -->
-                <section id="ubicacionSection" class="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs mb-6 lg:mb-0 fade-in flex flex-col justify-between">
-                    <div>
-                        <div class="bg-accent border border-theme/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2 mb-3">
-                            <span class="text-base">📍</span>
-                            <h3 class="text-sm sm:text-base font-bold text-theme">Ubicación y Sucursal</h3>
-                        </div>
-                        
-                        <div class="bg-stone-50 border border-stone-200/80 rounded-xl p-4 flex flex-col gap-3">
-                            <div class="flex items-start gap-2.5">
-                                <span class="text-theme font-bold shrink-0 mt-0.5 text-base">📌</span>
-                                <div class="text-sm font-semibold text-stone-800 leading-snug" id="brandAddressText">
-                                    Avenida Maipú 3907 , Gran Buenos Aires, Tres de Febrero, Argentina
-                                </div>
+                        <!-- PANTALLA DE ÉXITO -->
+                        <div id="stepSuccess" class="hide fade-in text-center py-10 bg-white border border-stone-200/90 rounded-3xl p-5 sm:p-8 shadow-xs">
+                            <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                             </div>
+                            <h2 class="text-2xl font-bold text-stone-700 mb-2" id="successTitle">¡Reserva Confirmada!</h2>
+                            <p class="text-stone-500 mb-6 text-sm" id="successMessage">Te hemos enviado un correo con todos los detalles de tu turno. ¡Te esperamos!</p>
+                            
+                            <!-- Resumen del turno en confirmación -->
+                            <div id="successTurnoDetails" class="hide mb-6 max-w-md w-full mx-auto"></div>
+
+                            <button onclick="irAlInicio()" class="w-full btn-pastel py-3.5 rounded-xl font-bold shadow-xs text-sm transition flex items-center justify-center gap-2 mb-4 active:scale-95">
+                                <span>←</span> Volver a la Página Principal
+                            </button>
+                            
+                            <p class="text-xs font-medium text-stone-400 bg-stone-100 py-3 rounded-lg">Ya puedes cerrar esta ventana o volver al inicio.</p>
                         </div>
+
                     </div>
 
-                    <a id="btnGoogleMapsDirect" href="https://www.google.com/maps/search/?api=1&query=Avenida%20Maip%C3%BA%203907%20%2C%20Gran%20Buenos%20Aires%2C%20Tres%20de%20Febrero%2C%20Argentina" target="_blank" class="w-full btn-outline-theme py-3 mt-4 rounded-xl transition text-xs font-bold shadow-xs flex items-center justify-center gap-2">
-                        <span>🗺️</span> Abrir en Google Maps
-                    </a>
-                </section>
-            </div>
+                    <!-- TARJETA APARTADO 4: SERVICIOS DISPONIBLES -->
+                    <section id="serviciosDisponiblesSection" class="bg-white border border-stone-200/90 rounded-3xl p-5 sm:p-7 shadow-xs fade-in">
+                        <div class="bg-accent border border-theme/30 rounded-xl px-4 py-3 flex items-center gap-2 mb-4">
+                            <span class="text-lg">💅</span>
+                            <h3 class="text-base sm:text-lg font-bold text-theme">Servicios y Tratamientos</h3>
+                        </div>
+                        <div id="serviciosGrid" class="space-y-4">
+                            <!-- Se llena dinámicamente desde bdGlobal.servicios -->
+                        </div>
+                    </section>
+                </div>
 
-            <!-- TARJETA APARTADO 4: SERVICIOS DISPONIBLES -->
-            <section id="serviciosDisponiblesSection" class="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs mb-6 fade-in">
-                <div class="bg-accent border border-theme/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2 mb-4">
-                    <span class="text-base">💅</span>
-                    <h3 class="text-sm sm:text-base font-bold text-theme">Servicios y Tratamientos</h3>
-                </div>
-                <div id="serviciosGrid" class="space-y-3">
-                    <!-- Se llena dinámicamente desde bdGlobal.servicios -->
-                </div>
-            </section>
+            </div>
 
         </main>
     </div>
