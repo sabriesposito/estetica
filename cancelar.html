@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-width=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gestionar Turno - Lumina Estética</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        bgLight: '#faf7f2',
+                        card: '#ffffff',
+                        textMain: '#57534e',
+                        accent: '#fecdd3', 
+                        accentDark: '#fda4af',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #faf7f2; color: #57534e; }
+        .hide { display: none !important; }
+        .container-center {
+            width: 100%; max-width: 430px; margin: 0 auto; min-height: 100vh;
+            background-color: #ffffff; position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container-center flex flex-col justify-between p-6">
+        <!-- Header -->
+        <header class="text-center py-6 border-b border-stone-100">
+            <div class="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-rose-900 font-bold text-2xl mx-auto mb-2">L</div>
+            <h1 class="text-xl font-bold tracking-wide text-stone-700">Lumina Estética</h1>
+            <p class="text-stone-400 text-sm">Gestión de Turnos</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 my-auto flex flex-col justify-center py-10">
+            <!-- Loading -->
+            <div id="loading" class="text-center py-10">
+                <svg class="w-8 h-8 animate-spin mx-auto mb-4 text-rose-300" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <p class="text-stone-400">Buscando detalles de tu turno...</p>
+            </div>
+
+            <!-- Confirm Action -->
+            <div id="actionContainer" class="hide text-center space-y-6">
+                <div class="bg-rose-50 border border-rose-100 p-6 rounded-2xl">
+                    <h2 class="text-rose-950 font-bold text-lg mb-2" id="actionTitle">¿Confirmas la cancelación?</h2>
+                    <p class="text-stone-500 text-sm mb-4" id="turnoDetails">Turno</p>
+                </div>
+                
+                <button id="btnAction" onclick="procesarAccion()" class="w-full bg-rose-500 text-white font-bold py-4 rounded-xl shadow-md hover:bg-rose-600 transition">
+                    Confirmar Acción
+                </button>
+            </div>
+
+            <!-- Success -->
+            <div id="successContainer" class="hide text-center py-10 space-y-4">
+                <div class="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-stone-700" id="successTitle">Turno Cancelado</h2>
+                <p class="text-stone-500" id="successMessage">El turno se ha cancelado de forma exitosa.</p>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="text-center py-4 border-t border-stone-100 text-xs text-stone-400">
+            &copy; Lumina Estética. Todos los derechos reservados.
+        </footer>
+    </div>
+
+    <script>
+        const GET_WEBHOOK = "https://n8n.neco-dev.cloud/webhook/get-demo-data";
+        const POST_WEBHOOK = "https://n8n.neco-dev.cloud/webhook/post-turno";
+
+        let urlParams = new URLSearchParams(window.location.search);
+        let idTurno = urlParams.get('id');
+        let tipoAccion = urlParams.get('action') || 'cancelar'; // 'cancelar' o 'reprogramar'
+        
+        let bdGlobal = null;
+        let turnoSeleccionado = null;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (!idTurno) {
+                document.getElementById('loading').innerHTML = "<p class='text-rose-500 font-bold'>Enlace inválido o sin ID de turno.</p>";
+                return;
+            }
+
+            try {
+                const res = await fetch(GET_WEBHOOK);
+                bdGlobal = await res.json();
+                
+                turnoSeleccionado = bdGlobal.turnos.find(t => t.ID_Turno === idTurno || t.idTurno === idTurno);
+                
+                if (!turnoSeleccionado) {
+                    document.getElementById('loading').innerHTML = "<p class='text-rose-500 font-bold'>No encontramos el turno solicitado. Puede que ya haya sido cancelado.</p>";
+                    return;
+                }
+
+                // Mostrar detalles
+                const fecha = turnoSeleccionado.Fecha || turnoSeleccionado.fecha || '';
+                const hora = turnoSeleccionado.Hora_Inicio || turnoSeleccionado.horaInicio || '';
+                const idSvc = turnoSeleccionado.ID_Servicio || turnoSeleccionado.idServicio || '';
+                
+                const servicioObj = bdGlobal.servicios.find(s => s.ID_Servicio === idSvc || (s.Nombre_Servicio || s.Nombre || s.Servicio) === idSvc);
+                const servicioNombre = servicioObj ? (servicioObj.Nombre_Servicio || servicioObj.Nombre || servicioObj.Servicio) : idSvc;
+
+                document.getElementById('turnoDetails').innerHTML = `
+                    <strong>Servicio:</strong> ${servicioNombre}<br>
+                    <strong>Fecha:</strong> ${fecha}<br>
+                    <strong>Hora:</strong> ${hora} hs
+                `;
+
+                if (tipoAccion === 'reprogramar') {
+                    document.getElementById('actionTitle').innerText = "¿Quieres reprogramar este turno?";
+                    document.getElementById('btnAction').innerText = "Confirmar y Elegir Nueva Fecha";
+                    document.getElementById('btnAction').className = "w-full bg-amber-500 text-white font-bold py-4 rounded-xl shadow-md hover:bg-amber-600 transition";
+                } else {
+                    document.getElementById('actionTitle').innerText = "¿Confirmas la cancelación de tu turno?";
+                    document.getElementById('btnAction').innerText = "Sí, Cancelar Turno";
+                }
+
+                document.getElementById('loading').classList.add('hide');
+                document.getElementById('actionContainer').classList.remove('hide');
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loading').innerHTML = "<p class='text-rose-500 font-bold'>Error al conectar con la agenda. Inténtalo más tarde.</p>";
+            }
+        });
+
+        async function procesarAccion() {
+            const btn = document.getElementById('btnAction');
+            btn.disabled = true;
+            btn.innerText = "Procesando...";
+
+            try {
+                // Notificar cancelación a n8n
+                const payload = {
+                    action: "cancelar",
+                    idTurno: idTurno
+                };
+
+                await fetch(POST_WEBHOOK, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                document.getElementById('actionContainer').classList.add('hide');
+                const successTitle = document.getElementById('successTitle');
+                const successMsg = document.getElementById('successMessage');
+
+                if (tipoAccion === 'reprogramar') {
+                    successTitle.innerText = "Turno Liberado";
+                    successMsg.innerHTML = "Tu turno anterior ha sido liberado. <br><strong>Redirigiéndote a la agenda para elegir tu nuevo horario...</strong>";
+                    document.getElementById('successContainer').classList.remove('hide');
+                    
+                    // Buscar el email del cliente para pre-cargarlo en la reserva
+                    const emailCliente = turnoSeleccionado.Correo || turnoSeleccionado.Email || turnoSeleccionado.email || '';
+                    
+                    setTimeout(() => {
+                        window.location.href = `reserva.html?email=${encodeURIComponent(emailCliente)}`;
+                    }, 3000);
+                } else {
+                    successTitle.innerText = "Turno Cancelado";
+                    successMsg.innerText = "El turno se ha cancelado correctamente de la agenda.";
+                    document.getElementById('successContainer').classList.remove('hide');
+                }
+
+            } catch (e) {
+                console.error(e);
+                alert("Hubo un error al procesar tu solicitud. Intenta de nuevo.");
+                btn.disabled = false;
+                btn.innerText = "Confirmar Acción";
+            }
+        }
+    </script>
+</body>
+</html>

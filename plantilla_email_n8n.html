@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #faf7f2; margin: 0; padding: 20px; color: #57534e;">
+    <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #f5f5f4;">
+        
+        <!-- Encabezado Dinámico según Tema seleccionado -->
+        <div style="background-color: {{ $('Webhook POST').item.json.body.branding.colors.accent || '#e0f2fe' }}; padding: 28px 24px; text-align: center; border-bottom: 1px solid {{ $('Webhook POST').item.json.body.branding.colors.border || '#bae6fd' }};">
+            <div style="width: 50px; height: 50px; background-color: {{ $('Webhook POST').item.json.body.branding.colors.primary || '#bae6fd' }}; color: {{ $('Webhook POST').item.json.body.branding.colors.text || '#075985' }}; border-radius: 50%; display: inline-block; line-height: 50px; font-weight: bold; font-size: 24px; margin-bottom: 6px;">L</div>
+            <h1 style="color: {{ $('Webhook POST').item.json.body.branding.colors.text || '#075985' }}; margin: 0; font-size: 22px; font-weight: 700;">{{ $('Webhook POST').item.json.body.branding.name || 'Lumina Estética' }}</h1>
+        </div>
+        
+        <!-- Cuerpo Principal -->
+        <div style="padding: 28px 24px;">
+            <div style="font-size: 18px; font-weight: 600; color: #44403c; margin-bottom: 10px;">
+                ¡Hola, {{ $('Webhook POST').item.json.body.clienteInfo.nombre }}! 👋
+            </div>
+            
+            <div style="background-color: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 8px 16px; border-radius: 20px; display: inline-block; font-weight: 600; font-size: 13px; margin-bottom: 20px;">
+                ✨ Tu turno ha sido confirmado con éxito
+            </div>
+            
+            <p style="font-size: 14px; color: #78716c; line-height: 1.5; margin-bottom: 20px;">
+                Gracias por reservar con nosotros. A continuación tienes el detalle de tu cita:
+            </p>
+
+            <!-- Cuadro de Detalles del Turno (Servicio, Fecha, Hora) -->
+            <div style="background-color: #faf7f2; border: 1px solid #e7e5e4; border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px;">
+                    <tr>
+                        <td style="padding: 8px 0; color: #78716c; border-bottom: 1px dashed #e7e5e4;">💅 <strong>Servicio:</strong></td>
+                        <td style="padding: 8px 0; color: #292524; font-weight: 600; text-align: right; border-bottom: 1px dashed #e7e5e4;">{{ $('Webhook POST').item.json.body.idServicio }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; color: #78716c; border-bottom: 1px dashed #e7e5e4;">📅 <strong>Fecha:</strong></td>
+                        <td style="padding: 8px 0; color: #292524; font-weight: 600; text-align: right; border-bottom: 1px dashed #e7e5e4;">{{ $('Webhook POST').item.json.body.fecha }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 0; color: #78716c;">⏰ <strong>Hora:</strong></td>
+                        <td style="padding: 8px 0; color: #292524; font-weight: 600; text-align: right;">{{ $('Webhook POST').item.json.body.horaInicio }} hs</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Botón con el color primario dinámico del tema -->
+            <a href="https://estetica.neco-dev.cloud/reserva.html" style="display: block; width: 100%; text-align: center; background-color: {{ $('Webhook POST').item.json.body.branding.colors.primary || '#bae6fd' }}; color: {{ $('Webhook POST').item.json.body.branding.colors.text || '#075985' }} !important; font-weight: 700; text-decoration: none; padding: 14px 0; border-radius: 12px; font-size: 15px; box-sizing: border-box;">
+                📅 Ver o Modificar Turno
+            </a>
+        </div>
+
+        <!-- Pie de página -->
+        <div style="background-color: #faf7f2; padding: 18px 24px; text-align: center; font-size: 12px; color: #a8a29e; border-top: 1px solid #f5f5f4;">
+            ¡Te esperamos en <strong>{{ $('Webhook POST').item.json.body.branding.name || 'Lumina Estética' }}</strong>! ✨<br>
+            <span style="font-size: 11px; opacity: 0.8;">Este es un mensaje automático de confirmación.</span>
+        </div>
+    </div>
+</body>
+</html>

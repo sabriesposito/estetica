@@ -1,0 +1,2053 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-width=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Portal de Reservas - Lumina Estética</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        bgLight: '#faf7f2',
+                        card: '#ffffff',
+                        textMain: '#57534e',
+                        textMuted: '#a8a29e',
+                        borderSoft: '#f5f5f4'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #bae6fd;
+            --primary-hover: #7dd3fc;
+            --primary-text: #075985;
+            --accent: #e0f2fe;
+            --border: #bae6fd;
+        }
+
+        body {
+            background: url('./spa_background.jpg') center center / cover no-repeat fixed;
+            color: #57534e;
+            position: relative;
+            min-height: 100vh;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(250, 247, 242, 0.88), rgba(243, 232, 255, 0.82));
+            backdrop-filter: blur(14px);
+            z-index: 0;
+        }
+
+        .hide { display: none !important; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid #f5f5f4; }
+        
+        .btn-pastel { background-color: var(--primary) !important; color: var(--primary-text) !important; font-weight: 600; }
+        .btn-pastel:hover { background-color: var(--primary-hover) !important; }
+        
+        .btn-outline-theme { border: 1px solid var(--border) !important; color: var(--primary-text) !important; font-weight: 600; background: transparent; }
+        .btn-outline-theme:hover { background-color: var(--accent) !important; }
+        
+        .container-center {
+            width: 100%; max-width: 440px; margin: 0 auto; min-height: 100vh;
+            background-color: rgba(255, 255, 255, 0.95); position: relative;
+            z-index: 10;
+            box-shadow: 0 10px 45px rgba(0,0,0,0.12);
+            backdrop-filter: blur(12px);
+        }
+
+        .input-pastel { width: 100%; background: #faf7f2; border: 1px solid #e7e5e4; border-radius: 12px; padding: 14px; color: #57534e; outline: none; transition: all 0.3s; }
+        .input-pastel:focus { border-color: var(--border); box-shadow: 0 0 0 3px rgba(186, 230, 253, 0.4); background: #ffffff; }
+
+        /* Evitar que Chrome fuerce fondo azul al autocompletar email */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px #faf7f2 inset !important;
+            -webkit-text-fill-color: #57534e !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+        
+        .flatpickr-calendar { font-family: 'Outfit', sans-serif; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important; border: none !important; border-radius: 16px !important; }
+        
+        .flatpickr-day.selected, 
+        .flatpickr-day.startRange, 
+        .flatpickr-day.endRange, 
+        .flatpickr-day.selected.inRange, 
+        .flatpickr-day.selected:focus, 
+        .flatpickr-day.selected:hover, 
+        .flatpickr-day.selected.prevMonthDay, 
+        .flatpickr-day.selected.nextMonthDay {
+            background: var(--primary) !important;
+            border-color: var(--border) !important;
+            color: var(--primary-text) !important;
+            font-weight: bold !important;
+        }
+
+        .flatpickr-day.today {
+            border-color: var(--border) !important;
+        }
+        .flatpickr-day.today:hover,
+        .flatpickr-day.today:focus,
+        .flatpickr-day:hover {
+            background: var(--accent) !important;
+            color: var(--primary-text) !important;
+        }
+        
+        .step-indicator { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
+        .step-active { background-color: var(--primary) !important; color: var(--primary-text) !important; }
+        
+        .bg-accent { background-color: var(--accent) !important; color: var(--primary-text) !important; }
+        .text-theme { color: var(--primary-text) !important; }
+        .border-theme { border-color: var(--border) !important; }
+
+        /* Píldoras de Horarios Disponibles */
+        .time-pill {
+            background-color: #faf7f2; border: 1.5px solid #e7e5e4; border-radius: 14px;
+            padding: 12px 14px; font-weight: 700; font-size: 13px; color: #57534e;
+            text-align: center; cursor: pointer; transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+        .time-pill:hover { border-color: var(--border); background-color: var(--accent); transform: translateY(-1px); }
+        .time-pill.selected {
+            background-color: var(--primary) !important; color: var(--primary-text) !important;
+            border-color: var(--primary-hover) !important; box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+            transform: scale(1.03); font-weight: 800 !important;
+        }
+
+        /* Circulito flotante para el número de paso */
+        .step-card-badge {
+            position: absolute;
+            top: -21px;
+            left: 20px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: var(--primary-text);
+            border: 3px solid var(--primary-hover);
+            font-weight: 900;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.14);
+            z-index: 20;
+        }
+
+        /* Pestañas de Días */
+        .day-tab {
+            padding: 10px 16px; border-radius: 14px; font-size: 13px; font-weight: 700;
+            white-space: nowrap; border: 1.5px solid #e7e5e4; background: #faf7f2; color: #57534e;
+            cursor: pointer; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+        .day-tab:hover { background: var(--accent); border-color: var(--border); color: var(--primary-text); transform: translateY(-1px); }
+        .day-tab.active {
+            background: var(--primary) !important; color: var(--primary-text) !important;
+            border-color: var(--primary-hover) !important; box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            font-weight: 800 !important;
+        }
+
+        .brand-desc, .service-desc-text {
+            text-align: justify !important;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container-center flex flex-col">
+        <!-- Header Sticky Ultra-Compacto (Solo Nombre y Logo en barra fija de ~48px) -->
+        <header class="glass sticky top-0 z-40 px-4 py-3 flex items-center justify-between border-b border-stone-200/80 shadow-xs">
+            <div class="flex items-center gap-2.5 cursor-pointer min-w-0" onclick="irAlInicio()" title="Volver al Inicio">
+                <!-- Botón Flecha Volver al Inicio -->
+                <button id="btnHeaderVolver" onclick="event.stopPropagation(); irAlInicio();" class="hide text-stone-600 hover:text-stone-900 bg-white/90 hover:bg-stone-100 p-1.5 rounded-full transition flex items-center justify-center border border-stone-200 shrink-0" title="Volver al Inicio">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <div class="brand-logo w-9 h-9 rounded-full bg-accent flex items-center justify-center font-bold text-sm overflow-hidden shrink-0 shadow-xs border border-white">L</div>
+                <h1 class="brand-name text-base font-bold tracking-wide text-stone-800 truncate">Lumina Estética</h1>
+            </div>
+        </header>
+
+        <main class="flex-1 p-5 pb-24 overflow-x-hidden" id="mainContent">
+            
+            <!-- Banner de Portada de Marca + Perfil -->
+            <section class="mb-6 rounded-3xl overflow-hidden bg-white border border-stone-200/90 shadow-xs relative">
+                <!-- Foto de Portada Nítida Completa -->
+                <div id="brandHeroSection" class="h-44 sm:h-56 w-full bg-cover bg-center relative" style="background-image: url('./spa_background.jpg');">
+                </div>
+
+                <!-- Perfil de Marca (Logo Solapado + Nombre + Tarjeta de Descripción con Tema Pastel) -->
+                <div class="px-4 sm:px-6 pb-6 text-center relative -mt-12 sm:-mt-14">
+                    <div class="brand-logo-hero w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-accent flex items-center justify-center font-bold text-3xl sm:text-4xl mb-3 mx-auto overflow-hidden shadow-md border-4 border-white ring-2 ring-stone-100 cursor-pointer transition transform hover:scale-105 shrink-0" onclick="irAlInicio()" title="Volver al Inicio">L</div>
+
+                    <h2 class="brand-name text-2xl font-bold tracking-wide text-stone-800 cursor-pointer" onclick="irAlInicio()">Lumina Estética</h2>
+                    
+                    <!-- Tarjeta con Fondo Pastel de la Temática Elegida -->
+                    <div class="mt-4 p-4 sm:p-5 rounded-2xl bg-accent border border-theme/40 text-stone-800 shadow-2xs text-justify text-xs sm:text-sm font-medium leading-relaxed whitespace-pre-line brand-desc">
+                        Tu santuario de belleza, bienestar y cuidado personal integral.
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Loading State -->
+            <div id="loadingState" class="flex flex-col items-center justify-center h-48 text-stone-400">
+                <svg class="w-8 h-8 animate-spin mb-4 text-theme" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <p>Cargando información de la agenda...</p>
+            </div>
+
+            <!-- Formularios -->
+            <div id="bookingForm" class="hide fade-in">
+                
+                <!-- PANTALLA: GESTIÓN / RECORDATORIO (DESDE LINK DE EMAIL / WHATSAPP) -->
+                <div id="stepConfirmar24h" class="hide fade-in space-y-6">
+                    <div class="bg-accent border border-theme p-5 rounded-2xl text-center">
+                        <div class="w-16 h-16 bg-white text-theme rounded-full flex items-center justify-center mx-auto mb-3 text-2xl font-bold border border-theme shadow-xs">
+                            ⏰
+                        </div>
+                        <h2 class="text-xl font-bold text-stone-800 mb-1" id="confirm24hTitle">Gestionar tu Cita</h2>
+                        <p class="text-xs text-stone-600 mb-4" id="confirm24hSubtitle">Aquí puedes reprogramar el día y horario de tu cita, o cancelarla si no vas a poder asistir:</p>
+
+                        <div class="bg-white p-4 rounded-xl border border-stone-200 text-left text-xs space-y-2 shadow-xs" id="confirm24hDetails">
+                            <!-- Se llena dinámicamente con JS -->
+                        </div>
+                    </div>
+
+                    <div class="space-y-3" id="confirm24hButtons">
+                        <button onclick="reprogramarTurno24hAction()" class="w-full btn-pastel py-3.5 rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-sm font-bold active:scale-95">
+                            <span>✏️</span> Reprogramar Turno (Cambiar fecha / horario)
+                        </button>
+                        <button onclick="cancelarTurno24hAction()" class="w-full bg-white border border-stone-200 text-rose-600 font-semibold py-3 rounded-xl hover:bg-rose-50 transition text-xs">
+                            <span>❌</span> No podré asistir (Cancelar Turno)
+                        </button>
+                        <button onclick="confirmarAsistencia24hAction()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-xs active:scale-95">
+                            <span>✅</span> Mantener y Confirmar Asistencia
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TARJETA APARTADO 1: INGRESO / REGISTRO / VERIFICACIÓN DE CLIENTE -->
+                <div id="step1" class="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs mb-6">
+                    <div class="bg-accent border border-theme/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2 mb-4">
+                        <span class="text-base">👤</span>
+                        <h2 class="text-sm sm:text-base font-bold text-theme">Identificación de Cliente</h2>
+                    </div>
+
+                    <!-- Aviso cuando se hace clic directo sobre un tratamiento -->
+                    <div id="noticeServicioPreseleccionado" class="hide mb-4 bg-accent border border-theme p-3 rounded-xl text-theme text-xs font-semibold flex items-center justify-between gap-2 shadow-2xs">
+                        <span id="noticeServicioText">✨ Vas a agendar: <strong>Servicio</strong></span>
+                        <button type="button" onclick="cancelarServicioPreseleccionado()" class="text-stone-500 hover:text-stone-700 text-xs underline font-bold shrink-0">Cambiar</button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-stone-500 mb-1">Correo Electrónico *</label>
+                            <input type="email" id="cEmail" placeholder="ejemplo@correo.com" class="input-pastel" oninput="verificarClienteYEstado()" onchange="verificarClienteYEstado()" onblur="verificarClienteYEstado()">
+                        </div>
+
+                        <!-- Botón explícito para alta manual -->
+                        <div class="flex items-center justify-between text-xs text-stone-500 bg-stone-50 p-2.5 rounded-xl border border-stone-100">
+                            <span>¿Es tu primera vez aquí?</span>
+                            <button type="button" onclick="toggleRegistroManual()" class="text-theme font-bold hover:underline flex items-center gap-1">
+                                <span>📝</span> Darme de alta
+                            </button>
+                        </div>
+
+                        <!-- Campos para nuevo cliente -->
+                        <div id="divNuevoCliente" class="hide fade-in space-y-4 pt-2 border-t border-stone-100">
+                            <div id="noticeNuevoClienteBox" class="bg-amber-50 border border-amber-200/90 p-3.5 rounded-xl text-amber-900 text-xs font-semibold leading-relaxed shadow-2xs">
+                                📌 <strong>Correo no registrado:</strong> Este e-mail no figura en nuestra base de datos aún. Por favor completa tu nombre y teléfono a continuación para darte de alta y agendar tu turno:
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-stone-500 mb-1">Nombre Completo *</label>
+                                <input type="text" id="cNombre" placeholder="¿Cómo te llamas?" class="input-pastel">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-stone-500 mb-1">Teléfono Móvil *</label>
+                                <input type="tel" id="cTel" placeholder="+54 9 11 1234-5678" class="input-pastel">
+                            </div>
+                        </div>
+
+                        <!-- Saludo para cliente existente sin turno activo -->
+                        <div id="divClienteExistenteSinTurno" class="hide fade-in bg-emerald-50 border border-emerald-100 p-3 rounded-xl text-emerald-800 text-sm font-semibold">
+                            <!-- Se llena por JS -->
+                        </div>
+                    </div>
+
+                    <button id="btnContinuarStep1" onclick="procesarStep1()" class="w-full btn-pastel border-2 border-theme/60 py-3 rounded-xl mt-5 font-bold shadow-xs text-sm transition active:scale-95 flex items-center justify-center gap-1.5">
+                        <span>Continuar</span>
+                        <span>➔</span>
+                    </button>
+                </div>
+
+                <!-- PANTALLA: TURNO ACTIVO EXISTENTE -->
+                <div id="stepActiveTurno" class="hide fade-in space-y-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <button type="button" onclick="irAlInicio()" class="text-xs font-bold text-stone-500 hover:text-stone-700 flex items-center gap-1.5 bg-stone-100 px-3 py-1.5 rounded-lg border border-stone-200">
+                            <span>←</span> Volver al inicio
+                        </button>
+                    </div>
+
+                    <div class="bg-accent border border-theme p-5 rounded-2xl shadow-xs">
+                        <div class="flex items-center gap-2 text-stone-800 font-bold text-lg mb-2">
+                            <span>📅</span>
+                            <h2 id="activeTurnoGreeting">Ya tienes un turno activo</h2>
+                        </div>
+                        <p class="text-xs text-stone-600 mb-4">Elige la opción que desees a continuación:</p>
+                        
+                        <div class="bg-white p-4 rounded-xl border border-stone-200 shadow-xs text-sm space-y-2" id="activeTurnoDetails">
+                            <!-- Se llena por JS -->
+                        </div>
+                    </div>
+
+                    <div class="space-y-3" id="activeTurnoActionsContainer">
+                        <!-- Se llena dinámicamente con botones de Confirmar, Reprogramar o Cancelar -->
+                    </div>
+                </div>
+
+                <!-- PASO 2: SELECCIÓN DE SERVICIO Y HORARIO -->
+                <div id="step2" class="hide fade-in space-y-6 mb-8">
+                    
+                    <!-- Encabezado Principal del Paso 2 -->
+                    <div class="bg-accent border-l-4 border-l-theme border border-theme/40 rounded-2xl px-5 py-4 flex items-center justify-between shadow-2xs">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-xl">📅</span>
+                            <h2 class="text-base sm:text-lg font-extrabold text-theme tracking-tight">Selección de Turno</h2>
+                        </div>
+                        <button onclick="volverAStep1()" class="text-xs font-bold text-stone-700 hover:text-stone-900 bg-white/90 hover:bg-white px-3.5 py-2 rounded-xl border border-stone-200 shadow-2xs transition active:scale-95 flex items-center gap-1.5">
+                            <span>←</span> Volver
+                        </button>
+                    </div>
+
+                    <div id="bannerReprogramando" class="hide bg-amber-50 border border-amber-200 p-4 rounded-2xl text-amber-900 text-xs font-semibold leading-relaxed shadow-2xs">
+                        🔒 <strong>Modo reprogramación:</strong> Tu turno actual se mantiene seguro. Si deseas cambiarlo, selecciona un nuevo horario y confirma al final.
+                    </div>
+
+                    <!-- BLOQUE 1: SERVICIO Y PROFESIONAL -->
+                    <div class="relative bg-white border-2 border-stone-200/90 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 pt-7 mt-5">
+                        <div class="step-card-badge">1</div>
+                        <div class="bg-accent border border-theme/40 rounded-2xl py-3 px-4 flex items-center justify-center text-center shadow-2xs">
+                            <span class="text-sm sm:text-base font-extrabold text-theme">💅 Servicio y Profesional</span>
+                        </div>
+                        
+                        <div class="space-y-4 pt-1">
+                            <div>
+                                <label class="block text-xs font-bold text-stone-600 mb-1.5">Tratamiento o Servicio *</label>
+                                <select id="serviceSelect" class="input-pastel appearance-none bg-white font-semibold text-stone-700 text-sm" onchange="onServiceChange()">
+                                    <option value="">Selecciona un servicio...</option>
+                                </select>
+                                <!-- Tarjeta Informativa de Precio y Duración -->
+                                <div id="serviceInfoPill" class="hide mt-3 bg-accent border border-theme/40 p-3.5 rounded-xl flex items-center justify-between text-xs shadow-2xs">
+                                    <span id="serviceInfoDuracion" class="font-semibold text-stone-700">⏱️ Duración: 60 min</span>
+                                    <span id="serviceInfoCosto" class="font-extrabold text-theme text-sm">💵 Valor: $20.000</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-stone-600 mb-1.5">Profesional de Atención</label>
+                                <select id="staffSelect" class="input-pastel appearance-none bg-white font-semibold text-stone-700 text-sm" onchange="calcularDisponibilidad()">
+                                    <option value="ANY">✨ Cualquier profesional disponible</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- BLOQUE 2: DÍA DE ATENCIÓN -->
+                    <div class="relative bg-white border-2 border-stone-200/90 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 pt-7 mt-5">
+                        <div class="step-card-badge">2</div>
+                        <div class="bg-accent border border-theme/40 rounded-2xl py-2.5 px-4 flex items-center justify-between shadow-2xs">
+                            <span class="text-sm sm:text-base font-extrabold text-theme">📆 Selecciona el Día</span>
+                            <button type="button" id="btnOtraFecha" class="text-xs text-theme font-extrabold hover:underline flex items-center gap-1 py-1 px-3 rounded-xl border border-theme/40 bg-white shadow-2xs active:scale-95">
+                                <span>📅</span> Otra fecha
+                            </button>
+                        </div>
+                        
+                        <!-- Pestañas de Días en Formato Flex Wrap Limpio sin Scrollbars -->
+                        <div class="flex flex-wrap gap-2.5 pt-1" id="dayTabsBar">
+                            <!-- Se llena por JS dinámicamente -->
+                        </div>
+                    </div>
+
+                    <!-- BLOQUE 3: HORARIOS DISPONIBLES -->
+                    <div class="relative bg-white border-2 border-stone-200/90 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 pt-7 mt-5">
+                        <div class="step-card-badge">3</div>
+                        <div class="bg-accent border border-theme/40 rounded-2xl py-3 px-4 flex items-center justify-center text-center shadow-2xs">
+                            <span class="text-sm sm:text-base font-extrabold text-theme">⏰ Horarios Disponibles</span>
+                        </div>
+
+                        <div id="timeGridContainer" class="space-y-5 pt-1">
+                            <div class="text-stone-400 text-xs italic bg-stone-50 p-4 rounded-xl text-center border border-stone-100">
+                                Selecciona un servicio y un día para comparar horarios disponibles.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOTÓN PRINCIPAL DE CONFIRMACIÓN -->
+                    <div class="pt-2">
+                        <button id="btnConfirmar" onclick="confirmarReserva()" class="w-full btn-pastel border-2 border-theme/60 py-4 rounded-2xl transition font-extrabold shadow-md text-base flex items-center justify-center gap-2 opacity-50 cursor-not-allowed active:scale-[0.98]" disabled>
+                            Confirmar Reserva ➔
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- PANTALLA DE ÉXITO -->
+                <div id="stepSuccess" class="hide fade-in text-center py-10 bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs mb-6">
+                    <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-stone-700 mb-2" id="successTitle">¡Reserva Confirmada!</h2>
+                    <p class="text-stone-500 mb-6 text-sm" id="successMessage">Te hemos enviado un correo con todos los detalles de tu turno. ¡Te esperamos!</p>
+                    
+                    <!-- Resumen del turno en confirmación -->
+                    <div id="successTurnoDetails" class="hide mb-6 max-w-md w-full mx-auto"></div>
+
+                    <button onclick="irAlInicio()" class="w-full btn-pastel py-3.5 rounded-xl font-bold shadow-xs text-sm transition flex items-center justify-center gap-2 mb-4 active:scale-95">
+                        <span>←</span> Volver a la Página Principal
+                    </button>
+                    
+                    <p class="text-xs font-medium text-stone-400 bg-stone-100 py-3 rounded-lg">Ya puedes cerrar esta ventana o volver al inicio.</p>
+                </div>
+
+            </div>
+
+            <!-- TARJETA APARTADO 2: ATENCIÓN Y CONSULTAS POR WHATSAPP -->
+            <section id="whatsappSection" class="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs mb-6 fade-in">
+                <div class="bg-accent border border-theme/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2 mb-3">
+                    <span class="text-emerald-600 shrink-0">
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                    </span>
+                    <h3 class="text-sm sm:text-base font-bold text-theme">Consultas y Señas por WhatsApp</h3>
+                </div>
+                <p class="text-xs text-stone-500 mb-3.5">Si tenés dudas o necesitás enviar tu comprobante de seña, escribinos directamente por WhatsApp:</p>
+                
+                <a id="btnWhatsappDirect" href="https://api.whatsapp.com/send/?phone=%2B5491166266845&text&type=phone_number&app_absent=0" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl shadow-xs transition flex items-center justify-center gap-2.5 text-xs active:scale-95">
+                    <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                    <span>Abrir Chat de WhatsApp</span>
+                </a>
+            </section>
+
+            <!-- TARJETA APARTADO 3: UBICACIÓN Y CÓMO LLEGAR -->
+            <section id="ubicacionSection" class="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs mb-6 fade-in">
+                <div class="bg-accent border border-theme/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2 mb-3">
+                    <span class="text-base">📍</span>
+                    <h3 class="text-sm sm:text-base font-bold text-theme">Ubicación y Sucursal</h3>
+                </div>
+                
+                <div class="bg-stone-50 border border-stone-200/80 rounded-xl p-4 flex flex-col gap-3">
+                    <div class="flex items-start gap-2.5">
+                        <span class="text-theme font-bold shrink-0 mt-0.5 text-base">📌</span>
+                        <div class="text-sm font-semibold text-stone-800 leading-snug" id="brandAddressText">
+                            Avenida Maipú 3907 , Gran Buenos Aires, Tres de Febrero, Argentina
+                        </div>
+                    </div>
+
+                    <a id="btnGoogleMapsDirect" href="https://www.google.com/maps/search/?api=1&query=Avenida%20Maip%C3%BA%203907%20%2C%20Gran%20Buenos%20Aires%2C%20Tres%20de%20Febrero%2C%20Argentina" target="_blank" class="w-full btn-outline-theme py-3 rounded-xl transition text-xs font-bold shadow-xs flex items-center justify-center gap-2">
+                        <span>🗺️</span> Abrir en Google Maps
+                    </a>
+                </div>
+            </section>
+
+            <!-- TARJETA APARTADO 4: SERVICIOS DISPONIBLES -->
+            <section id="serviciosDisponiblesSection" class="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs mb-6 fade-in">
+                <div class="bg-accent border border-theme/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2 mb-4">
+                    <span class="text-base">💅</span>
+                    <h3 class="text-sm sm:text-base font-bold text-theme">Servicios y Tratamientos</h3>
+                </div>
+                <div id="serviciosGrid" class="space-y-3">
+                    <!-- Se llena dinámicamente desde bdGlobal.servicios -->
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        function getLocalDateIso(dObj) {
+            const d = dObj || new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function irAlInicio() {
+            document.getElementById('step2').classList.add('hide');
+            document.getElementById('stepActiveTurno').classList.add('hide');
+            document.getElementById('stepSuccess').classList.add('hide');
+            document.getElementById('stepConfirmar24h').classList.add('hide');
+            const successDetails = document.getElementById('successTurnoDetails');
+            if (successDetails) successDetails.classList.add('hide');
+            
+            document.getElementById('step1').classList.remove('hide');
+            const serviciosSec = document.getElementById('serviciosDisponiblesSection');
+            if (serviciosSec) serviciosSec.classList.remove('hide');
+            
+            actualizarBotonVolverHeader();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function actualizarBotonVolverHeader() {
+            const btn = document.getElementById('btnHeaderVolver');
+            if (!btn) return;
+            const step1 = document.getElementById('step1');
+            if (step1 && !step1.classList.contains('hide')) {
+                btn.classList.add('hide');
+            } else {
+                btn.classList.remove('hide');
+            }
+        }
+
+        // --- BRANDING Y TEMAS ---
+        const defaultBranding = {
+            name: "Lumina Estética",
+            description: "Tu santuario de belleza, bienestar y cuidado personal integral. Especialistas en estética facial avanzada, manicuría Rusa & esculpidas, diseño de mirada y tratamientos corporales de vanguardia.",
+            logoUrl: "",
+            theme: "purple",
+            address: "Avenida Maipú 3907 , Gran Buenos Aires, Tres de Febrero, Argentina",
+            mapUrl: "https://www.google.com/maps/search/?api=1&query=Avenida%20Maip%C3%BA%203907%20%2C%20Gran%20Buenos%20Aires%2C%20Tres%20de%20Febrero%2C%20Argentina",
+            whatsapp: "https://api.whatsapp.com/send/?phone=%2B5491166266845&text&type=phone_number&app_absent=0"
+        };
+
+        const themesMap = {
+            rose:    { primary: '#fecdd3', hover: '#fda4af', text: '#881337', accent: '#ffe4e6', border: '#fecdd3' },
+            emerald: { primary: '#a7f3d0', hover: '#6ee7b7', text: '#065f46', accent: '#ecfdf5', border: '#a7f3d0' },
+            sky:     { primary: '#bae6fd', hover: '#7dd3fc', text: '#075985', accent: '#e0f2fe', border: '#bae6fd' },
+            purple:  { primary: '#e9d5ff', hover: '#d8b4fe', text: '#6b21a8', accent: '#f3e8ff', border: '#e9d5ff' },
+            amber:   { primary: '#fef3c7', hover: '#fde68a', text: '#92400e', accent: '#fffbeb', border: '#fef3c7' }
+        };
+
+        const fallbackData = {
+            clientes: [
+                { ID_Cliente: "C1787797749", Nombre_Completo: "Sabri", Correo: "espositosabrina29@gmail.com", Telefono: "+5491166266845" },
+                { ID_Cliente: "C1787799907", Nombre_Completo: "Sabri2", Correo: "siempresina23@gmail.com", Telefono: "+5491166266845" }
+            ],
+            servicios: [
+                { ID_Servicio: "SRV01", Nombre_Servicio: "Corte Mujer", Duracion_Min: 60, Especialidad: "Pelo", Costo: "$20.000", Descripción: "Corte adaptado al estilo y forma del rostro, incluye lavado y peinado." },
+                { ID_Servicio: "SRV02", Nombre_Servicio: "Corte Hombre", Duracion_Min: 30, Especialidad: "Pelo", Costo: "$15.000", Descripción: "Corte clásico o moderno con tijera y máquina, terminado impecable." },
+                { ID_Servicio: "SRV03", Nombre_Servicio: "Manicuría", Duracion_Min: 30, Especialidad: "Uñas", Costo: "$18.000", Descripción: "Limpieza de cutículas, limado y esmaltado tradicional o gel." },
+                { ID_Servicio: "SRV04", Nombre_Servicio: "Uñas Esculpidas Acrílico", Duracion_Min: 90, Especialidad: "Uñas", Costo: "$30.000", Descripción: "Construcción completa de uñas acrílicas con acabado duradero y natural." },
+                { ID_Servicio: "SRV05", Nombre_Servicio: "Kapping Gel", Duracion_Min: 60, Especialidad: "Uñas", Costo: "$25.000", Descripción: "Capa protectora de gel sobre la uña natural para fortalecerla y evitar quebraduras." }
+            ],
+            staff: [
+                { ID_Staff: "S01", Nombre: "Valeria Gomez", Especialidad: "Uñas", Hora_Inicio: "08:00", Hora_Fin: "18:00" },
+                { ID_Staff: "S02", Nombre: "Marcos Silva", Especialidad: "Pelo", Hora_Inicio: "15:00", Hora_Fin: "20:00" }
+            ],
+            turnos: []
+        };
+
+        async function getBrandingConfigAsync() {
+            let serverCfg = null;
+            try {
+                const res = await fetch("./branding.json?v=" + Date.now(), { cache: 'no-store' });
+                if (res.ok) serverCfg = await res.json();
+            } catch(e) {}
+
+            let saved = null;
+            try {
+                const savedStr = localStorage.getItem("lumina_branding_config");
+                if (savedStr) saved = JSON.parse(savedStr);
+            } catch(e) {}
+
+            let finalConfig = { ...defaultBranding };
+            if (saved) finalConfig = { ...finalConfig, ...saved };
+            if (serverCfg) finalConfig = { ...finalConfig, ...serverCfg }; // SERVER IS AUTHORITATIVE
+
+            return finalConfig;
+        }
+
+        function renderUbicacionMapa(cfg) {
+            const address = cfg.address || defaultBranding.address;
+            const addressEl = document.getElementById('brandAddressText');
+            if (addressEl) addressEl.innerText = address;
+
+            const encodedAddr = encodeURIComponent(address);
+            const directBtn = document.getElementById('btnGoogleMapsDirect');
+            if (directBtn) {
+                directBtn.href = cfg.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodedAddr}`;
+            }
+
+            const waUrl = cfg.whatsapp || defaultBranding.whatsapp;
+            const waBtn = document.getElementById('btnWhatsappDirect');
+            if (waBtn) waBtn.href = waUrl;
+            const waFloat = document.getElementById('btnWhatsappFloating');
+            if (waFloat) waFloat.href = waUrl;
+        }
+
+        async function applyBranding() {
+            const cfg = await getBrandingConfigAsync();
+            
+            document.querySelectorAll(".brand-name").forEach(el => el.innerText = cfg.name);
+            document.querySelectorAll(".brand-desc").forEach(el => el.innerText = cfg.description || defaultBranding.description);
+            
+            document.querySelectorAll(".brand-logo, .brand-logo-hero").forEach(el => {
+                if (cfg.logoUrl) {
+                    el.innerHTML = `<img src="${cfg.logoUrl}" class="w-full h-full object-cover rounded-full">`;
+                } else {
+                    const initial = (cfg.name || 'L').charAt(0).toUpperCase();
+                    el.innerHTML = initial;
+                }
+            });
+
+            // Fondo personalizado del Hero
+            const bgImg = cfg.bgUrl || defaultBranding.bgUrl || './spa_background.jpg';
+            const heroSection = document.getElementById('brandHeroSection');
+            if (heroSection) {
+                heroSection.style.backgroundImage = `url('${bgImg}')`;
+            }
+
+            renderUbicacionMapa(cfg);
+
+            const t = themesMap[cfg.theme] || themesMap.purple;
+
+            document.documentElement.style.setProperty('--primary', t.primary);
+            document.documentElement.style.setProperty('--primary-hover', t.hover);
+            document.documentElement.style.setProperty('--primary-text', t.text);
+            document.documentElement.style.setProperty('--accent', t.accent);
+            document.documentElement.style.setProperty('--border', t.border);
+        }
+
+        function formatPrecio(val) {
+            if (val === null || val === undefined) return '';
+            let str = val.toString().trim();
+            if (!str) return '';
+            let numOnly = str.replace(/[^0-9]/g, '');
+            if (!numOnly) return str;
+            let formatted = parseInt(numOnly, 10).toLocaleString('de-DE');
+            return `$${formatted}`;
+        }
+
+        const GET_WEBHOOK_URL = "https://n8n.neco-dev.cloud/webhook/get-demo-data";
+        const POST_WEBHOOK_URL = "https://n8n.neco-dev.cloud/webhook/post-turno";
+        
+        let bdGlobal = null;
+        let esClienteNuevo = false;
+        let clienteEncontrado = null;
+        let turnosActivosCliente = [];
+        let turnoActivoDeMismaEspecialidad = null;
+        let turnoActivoEncontrado = null;
+        let turno24hTarget = null;
+        
+        let selectedFechaGlobal = getLocalDateIso();
+        let selectedHoraGlobal = null;
+
+        let fpInstance = null;
+
+        function obtenerEspecialidadDeTurno(t) {
+            if (!t || !bdGlobal) return '';
+            const idSvc = (t.ID_Servicio || t.idServicio || t.Servicio || '').toString().trim().toLowerCase();
+            const serviciosList = bdGlobal.servicios || fallbackData.servicios;
+            const sObj = serviciosList.find(s => {
+                const sId = (s.ID_Servicio || '').toString().trim().toLowerCase();
+                const sNombre = (s.Nombre_Servicio || s.Nombre || s.Servicio || '').toString().trim().toLowerCase();
+                return (sId && sId === idSvc) || (sNombre && sNombre === idSvc);
+            });
+            return sObj ? (sObj.Especialidad || sObj.especialidad || '').toString().trim().toLowerCase() : '';
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await applyBranding();
+            
+            fpInstance = flatpickr("#btnOtraFecha", {
+                locale: "es",
+                dateFormat: "Y-m-d",
+                minDate: "today",
+                disable: [ function(date) { return (date.getDay() === 0); } ],
+                onChange: function(selectedDates, dateStr) {
+                    if (!dateStr) return;
+                    onCustomDatePicked(dateStr);
+                }
+            });
+
+            await cargarDatosEnVivo();
+            verificarParametros24h();
+        });
+
+        function verificarParametros24h() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetId = urlParams.get('confirmar') || urlParams.get('idTurno') || urlParams.get('id');
+            const action = (urlParams.get('action') || '').toLowerCase().trim();
+            const isConfirmarDirecto = action === 'confirmar_24h' || (urlParams.has('confirmar') && !action.includes('gestionar') && !action.includes('reprogramar') && !action.includes('cancelar'));
+            const isGestionar = action.includes('gestionar') || action.includes('reprogramar') || action.includes('cancelar');
+
+            if (targetId || isConfirmarDirecto || isGestionar) {
+                let t = (bdGlobal && bdGlobal.turnos) ? bdGlobal.turnos.find(x => (x.ID_Turno || x.idTurno) === targetId) : null;
+                if (!t) {
+                    t = {
+                        ID_Turno: targetId || '',
+                        Cliente: urlParams.get('cliente') || urlParams.get('nombre') || 'Cliente',
+                        Correo: urlParams.get('email') || urlParams.get('correo') || '',
+                        Telefono: urlParams.get('tel') || urlParams.get('telefono') || '',
+                        Fecha: urlParams.get('fecha') || '',
+                        Hora_Inicio: urlParams.get('hora') || '',
+                        ID_Servicio: urlParams.get('servicio') || '',
+                        Staff: urlParams.get('staff') || ''
+                    };
+                }
+                turno24hTarget = t;
+
+                if (isConfirmarDirecto) {
+                    // UN SOLO CLIC: Confirmar directamente sin tocar otro botón
+                    confirmarAsistencia24hAction(t);
+                } else if (isGestionar || targetId) {
+                    // Pantalla de reprogramar o cancelar
+                    mostrarPantallaGestionTurno(t);
+                }
+            }
+        }
+
+        function mostrarPantallaGestionTurno(t) {
+            document.getElementById('step1').classList.add('hide');
+            document.getElementById('step2').classList.add('hide');
+            document.getElementById('stepActiveTurno').classList.add('hide');
+
+            let nombreCliente = t.Cliente || t.Nombre || '';
+            const idC = (t.ID_Cliente || t.idCliente || '').toString().trim();
+            const emailC = (t.Correo || t.Email || t.email || '').toString().trim().toLowerCase();
+
+            if ((!nombreCliente || nombreCliente.toLowerCase() === 'cliente' || nombreCliente.startsWith('C178')) && bdGlobal && bdGlobal.clientes) {
+                const clienteObj = bdGlobal.clientes.find(c => {
+                    if (!c) return false;
+                    const cId = (c.ID_Cliente || c.idCliente || '').toString().trim();
+                    const ce = (c.Correo || c.Email || c.email || '').toString().trim().toLowerCase();
+                    return (idC && cId === idC) || (emailC && ce === emailC);
+                });
+                if (clienteObj) {
+                    nombreCliente = clienteObj.Nombre_Completo || clienteObj.Nombre || clienteObj.Cliente || nombreCliente;
+                }
+            }
+            if (!nombreCliente || nombreCliente.toLowerCase() === 'cliente') {
+                const urlParams = new URLSearchParams(window.location.search);
+                nombreCliente = urlParams.get('cliente') || urlParams.get('nombre') || 'Cliente';
+            }
+
+            const idSvc = t.ID_Servicio || t.idServicio || t.Servicio || '';
+            const servicioObj = bdGlobal && bdGlobal.servicios ? bdGlobal.servicios.find(s => s.ID_Servicio === idSvc || (s.Nombre_Servicio || s.Nombre || s.Servicio) === idSvc) : null;
+            const nombreServicio = servicioObj ? (servicioObj.Nombre_Servicio || servicioObj.Nombre || servicioObj.Servicio) : idSvc;
+            const staffNombre = t.Staff || t.staffNombre || t.ID_Staff || '';
+
+            const titleEl = document.getElementById('confirm24hTitle');
+            if (titleEl) titleEl.innerText = "Gestionar tu Cita";
+            const subEl = document.getElementById('confirm24hSubtitle');
+            if (subEl) subEl.innerText = "Aquí puedes reprogramar el día y horario de tu cita, o cancelarla si no vas a poder asistir:";
+
+            document.getElementById('confirm24hDetails').innerHTML = `
+                <div><strong>Cliente:</strong> ${nombreCliente}</div>
+                <div><strong>Servicio:</strong> ${nombreServicio}</div>
+                <div><strong>Fecha:</strong> ${normalizarFecha(t.Fecha || t.fecha)}</div>
+                <div><strong>Horario:</strong> ${t.Hora_Inicio || t.horaInicio} hs</div>
+                ${staffNombre ? `<div><strong>Profesional:</strong> ${staffNombre}</div>` : ''}
+            `;
+
+            document.getElementById('stepConfirmar24h').classList.remove('hide');
+            actualizarBotonVolverHeader();
+            const elConfirm = document.getElementById('stepConfirmar24h');
+            if (elConfirm) {
+                setTimeout(() => {
+                    elConfirm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 120);
+            }
+        }
+
+        function mostrarPantallaConfirmacion24h(t) {
+            mostrarPantallaGestionTurno(t);
+        }
+
+        async function confirmarAsistencia24hAction(turnoParam) {
+            const target = turnoParam || turno24hTarget || turnoActivoEncontrado;
+            if (!target) return;
+
+            const targetId = target.ID_Turno || target.idTurno || '';
+
+            if (targetId && bdGlobal && bdGlobal.turnos) {
+                const localT = bdGlobal.turnos.find(x => (x.ID_Turno || x.idTurno) === targetId);
+                if (localT) localT.Estado = "Confirmado 24h";
+            }
+
+            const cfg = await getBrandingConfigAsync();
+            const tColors = themesMap[cfg.theme] || themesMap.purple;
+
+            let nombreCliente = target.Cliente || target.Nombre || '';
+            let emailCliente = target.Correo || target.Email || target.email || '';
+
+            if ((!nombreCliente || nombreCliente === 'Cliente') && bdGlobal && bdGlobal.clientes) {
+                const idC = (target.ID_Cliente || target.idCliente || '').toString().trim();
+                const emailC = emailCliente.toString().trim().toLowerCase();
+                const clienteObj = bdGlobal.clientes.find(c => {
+                    if (!c) return false;
+                    const cId = (c.ID_Cliente || c.idCliente || '').toString().trim();
+                    const ce = (c.Correo || c.Email || c.email || '').toString().trim().toLowerCase();
+                    return (idC && cId === idC) || (emailC && ce === emailC);
+                });
+                if (clienteObj) {
+                    nombreCliente = clienteObj.Nombre_Completo || clienteObj.Nombre || nombreCliente;
+                    if (!emailCliente) emailCliente = clienteObj.Correo || clienteObj.Email || '';
+                }
+            }
+
+            const idSvc = target.ID_Servicio || target.idServicio || target.Servicio || '';
+            const servicioObj = bdGlobal && bdGlobal.servicios ? bdGlobal.servicios.find(s => s.ID_Servicio === idSvc || (s.Nombre_Servicio || s.Nombre || s.Servicio) === idSvc) : null;
+            const nombreServicio = servicioObj ? (servicioObj.Nombre_Servicio || servicioObj.Nombre || servicioObj.Servicio) : idSvc;
+            const staffNombre = target.Staff || target.staffNombre || target.ID_Staff || '';
+
+            const payload = {
+                action: "confirmacion_24hs",
+                idTurno: targetId,
+                estado: "Confirmado",
+                clienteInfo: {
+                    nombre: nombreCliente || 'Cliente',
+                    email: emailCliente
+                },
+                idServicio: nombreServicio,
+                fecha: normalizarFecha(target.Fecha || target.fecha),
+                horaInicio: target.Hora_Inicio || target.horaInicio || '',
+                staffNombre: staffNombre,
+                branding: {
+                    name: cfg.name || "Lumina Estética",
+                    theme: cfg.theme || "amber",
+                    colors: tColors,
+                    ownerEmail: cfg.ownerEmail || "",
+                    logoUrl: cfg.publicLogoUrl || "https://estetica.neco-dev.cloud/branding_logo.jpg",
+                    coverUrl: cfg.publicCoverUrl || "https://estetica.neco-dev.cloud/branding_cover.jpg"
+                }
+            };
+
+            try {
+                fetch(POST_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(e => console.warn(e));
+
+                document.getElementById('step1').classList.add('hide');
+                document.getElementById('step2').classList.add('hide');
+                document.getElementById('stepConfirmar24h').classList.add('hide');
+                document.getElementById('stepActiveTurno').classList.add('hide');
+
+                document.getElementById('successTitle').innerText = "¡Tu cita fue confirmada con éxito!";
+                document.getElementById('successMessage').innerText = "Muchas gracias por confirmar tu asistencia. ¡Te esperamos en Lumina Estética!";
+
+                const successDetails = document.getElementById('successTurnoDetails');
+                if (successDetails) {
+                    successDetails.innerHTML = `
+                        <div class="bg-accent/60 border border-theme/50 rounded-2xl p-4 text-left text-xs space-y-2.5 shadow-2xs">
+                            <div class="flex items-center justify-between gap-2 pb-2 border-b border-theme/30 text-xs">
+                                <span class="font-extrabold uppercase tracking-wider text-theme whitespace-nowrap text-[11px] sm:text-xs">📋 Detalles de tu Turno</span>
+                                <span class="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold text-[10.5px] sm:text-[11px] whitespace-nowrap shrink-0">✓ Asistencia Confirmada</span>
+                            </div>
+                            <div><strong>Cliente:</strong> ${nombreCliente || 'Cliente'}</div>
+                            <div><strong>Servicio:</strong> ${nombreServicio || 'Servicio'}</div>
+                            <div><strong>Fecha:</strong> ${normalizarFecha(target.Fecha || target.fecha)}</div>
+                            <div><strong>Horario:</strong> ${target.Hora_Inicio || target.horaInicio} hs</div>
+                            ${staffNombre ? `<div><strong>Profesional:</strong> ${staffNombre}</div>` : ''}
+                        </div>
+                    `;
+                    successDetails.classList.remove('hide');
+                }
+
+                document.getElementById('stepSuccess').classList.remove('hide');
+                actualizarBotonVolverHeader();
+                
+                const elSuccess = document.getElementById('stepSuccess');
+                if (elSuccess) {
+                    const scrollAction = () => elSuccess.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    setTimeout(scrollAction, 80);
+                    setTimeout(scrollAction, 350);
+                }
+
+            } catch(e) {
+                console.error(e);
+                alert("Error al confirmar asistencia.");
+            }
+        }
+
+        async function confirmarAsistenciaDesdeActiveTurno() {
+            if (!turnoActivoEncontrado) return;
+            turno24hTarget = turnoActivoEncontrado;
+            await confirmarAsistencia24hAction(turnoActivoEncontrado);
+        }
+
+        function reprogramarTurno24hAction() {
+            const target = turno24hTarget || turnoActivoEncontrado;
+            if (!target) return;
+
+            turnoActivoEncontrado = target;
+            turnoActivoDeMismaEspecialidad = target;
+
+            // Pre-cargar datos del cliente
+            const cEmailInput = document.getElementById('cEmail');
+            if (cEmailInput && (target.Correo || target.Email || target.email)) {
+                cEmailInput.value = target.Correo || target.Email || target.email;
+            }
+            const cNombreInput = document.getElementById('cNombre');
+            if (cNombreInput && (target.Cliente || target.Nombre || target.nombre)) {
+                cNombreInput.value = target.Cliente || target.Nombre || target.nombre;
+            }
+            const cTelInput = document.getElementById('cTel');
+            if (cTelInput && (target.Telefono || target.Tel || target.tel)) {
+                cTelInput.value = target.Telefono || target.Tel || target.tel;
+            }
+
+            // Preseleccionar servicio
+            const idSvc = target.ID_Servicio || target.idServicio || target.Servicio || '';
+            const servicioObj = bdGlobal && bdGlobal.servicios ? bdGlobal.servicios.find(s => s.ID_Servicio === idSvc || (s.Nombre_Servicio || s.Nombre || s.Servicio) === idSvc) : null;
+            const nombreServicio = servicioObj ? (servicioObj.Nombre_Servicio || servicioObj.Nombre || servicioObj.Servicio) : idSvc;
+
+            const selectSvc = document.getElementById('serviceSelect');
+            if (selectSvc && nombreServicio) {
+                selectSvc.value = nombreServicio;
+                onServiceChange();
+            }
+
+            document.getElementById('stepConfirmar24h').classList.add('hide');
+            document.getElementById('stepActiveTurno').classList.add('hide');
+            document.getElementById('step1').classList.add('hide');
+
+            const fNorm = normalizarFecha(target.Fecha || target.fecha);
+            const hNorm = target.Hora_Inicio || target.horaInicio;
+            const banner = document.getElementById('bannerReprogramando');
+            if (banner) {
+                banner.innerHTML = `🔒 <strong>Turno actual reservado (${fNorm} ${hNorm} hs).</strong> Explora libremente otros horarios. Tu turno actual no cambiará salvo que confirmes una nueva opción.`;
+                banner.classList.remove('hide');
+            }
+
+            document.getElementById('step2').classList.remove('hide');
+            actualizarBotonVolverHeader();
+            calcularDisponibilidad();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function cancelarTurno24hAction() {
+            if (!confirm("¿Estás seguro de que deseas cancelar tu turno?")) return;
+
+            const target = turno24hTarget || turnoActivoEncontrado;
+            if (!target) return;
+
+            const cfg = await getBrandingConfigAsync();
+            const tColors = themesMap[cfg.theme] || themesMap.purple;
+
+            const idSvc = target.ID_Servicio || target.idServicio || target.Servicio || '';
+            const servicioObj = bdGlobal && bdGlobal.servicios ? bdGlobal.servicios.find(s => s.ID_Servicio === idSvc || (s.Nombre_Servicio || s.Nombre || s.Servicio) === idSvc) : null;
+            const nombreServicio = servicioObj ? (servicioObj.Nombre_Servicio || servicioObj.Nombre || servicioObj.Servicio) : idSvc;
+
+            const payload = {
+                action: "cancelar",
+                idTurno: target.ID_Turno || target.idTurno,
+                clienteInfo: {
+                    nombre: target.Cliente || target.Nombre || 'Cliente',
+                    email: target.Correo || target.Email || ''
+                },
+                idServicio: nombreServicio,
+                fecha: normalizarFecha(target.Fecha || target.fecha),
+                horaInicio: target.Hora_Inicio || target.horaInicio || '',
+                branding: {
+                    name: cfg.name || "Lumina Estética",
+                    theme: cfg.theme || "amber",
+                    colors: tColors,
+                    ownerEmail: cfg.ownerEmail || "",
+                    logoUrl: cfg.publicLogoUrl || "https://estetica.neco-dev.cloud/branding_logo.jpg",
+                    coverUrl: cfg.publicCoverUrl || "https://estetica.neco-dev.cloud/branding_cover.jpg"
+                }
+            };
+
+            try {
+                fetch(POST_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(e => console.warn(e));
+
+                document.getElementById('stepConfirmar24h').classList.add('hide');
+                document.getElementById('stepActiveTurno').classList.add('hide');
+                document.getElementById('step1').classList.add('hide');
+                document.getElementById('step2').classList.add('hide');
+
+                document.getElementById('successTitle').innerText = "Turno Cancelado";
+                document.getElementById('successMessage').innerText = "Tu turno ha sido cancelado con éxito. Gracias por avisarnos.";
+
+                const successDetails = document.getElementById('successTurnoDetails');
+                if (successDetails) successDetails.classList.add('hide');
+
+                document.getElementById('stepSuccess').classList.remove('hide');
+                actualizarBotonVolverHeader();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            } catch(e) {
+                console.error(e);
+                alert("Error al cancelar.");
+            }
+        }
+
+        async function cargarDatosEnVivo() {
+            try {
+                let data = null;
+                try {
+                    const res = await fetch(GET_WEBHOOK_URL, { cache: 'no-store' });
+                    if (res.ok) data = await res.json();
+                } catch(err) {}
+
+                if (Array.isArray(data) && data.length > 0 && (data[0].staff || data[0].clientes || data[0].servicios || data[0].turnos)) {
+                    data = data[0];
+                }
+
+                // Recuperar caché local si n8n devuelve error o sin items
+                let localCache = null;
+                try {
+                    const cStr = localStorage.getItem('lumina_bd_cache');
+                    if (cStr) localCache = JSON.parse(cStr);
+                } catch(e) {}
+
+                const esValido = data && typeof data === 'object' && !data.message && (data.clientes || data.servicios || data.staff || data.turnos);
+
+                if (!esValido) {
+                    data = localCache || fallbackData;
+                }
+
+                if (!data.staff || !Array.isArray(data.staff) || data.staff.length === 0) {
+                    data.staff = (localCache && localCache.staff) ? localCache.staff : fallbackData.staff;
+                }
+                if (!data.servicios || !Array.isArray(data.servicios) || data.servicios.length === 0) {
+                    data.servicios = (localCache && localCache.servicios) ? localCache.servicios : fallbackData.servicios;
+                }
+                if (!data.clientes || !Array.isArray(data.clientes) || data.clientes.length === 0) {
+                    if (localCache && Array.isArray(localCache.clientes) && localCache.clientes.length > 0) {
+                        data.clientes = localCache.clientes;
+                    } else if (bdGlobal && Array.isArray(bdGlobal.clientes) && bdGlobal.clientes.length > 0) {
+                        data.clientes = bdGlobal.clientes;
+                    } else {
+                        data.clientes = [];
+                    }
+                }
+                if (!data.turnos || !Array.isArray(data.turnos)) {
+                    data.turnos = (localCache && Array.isArray(localCache.turnos)) ? localCache.turnos : [];
+                }
+
+                if (Array.isArray(data.clientes) && data.clientes.length > 0) {
+                    try {
+                        localStorage.setItem('lumina_bd_cache', JSON.stringify(data));
+                    } catch(e) {}
+                }
+
+                bdGlobal = data;
+
+                const select = document.getElementById('serviceSelect');
+                const valSelected = select.value;
+                select.innerHTML = '<option value="">Selecciona un servicio...</option>';
+                
+                const serviciosList = bdGlobal.servicios || fallbackData.servicios;
+                serviciosList.forEach(s => {
+                    const nombreSvc = s.Nombre_Servicio || s.Nombre || s.Servicio;
+                    const duracion = s.Duracion_Min ? `${s.Duracion_Min} min` : '';
+                    let costoStr = formatPrecio(s.Costo || s.Precio || s.costo || s.precio);
+
+                    let label = nombreSvc;
+                    if (costoStr && duracion) label += ` — ${costoStr} (${duracion})`;
+                    else if (costoStr) label += ` — ${costoStr}`;
+                    else if (duracion) label += ` — ${duracion}`;
+
+                    if (nombreSvc) {
+                        select.innerHTML += `<option value="${nombreSvc}">${label}</option>`;
+                    }
+                });
+                if (valSelected) select.value = valSelected;
+
+                renderDayTabs();
+                renderServiciosDisponibles();
+
+                document.getElementById('loadingState').classList.add('hide');
+                document.getElementById('bookingForm').classList.remove('hide');
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loadingState').classList.add('hide');
+                document.getElementById('bookingForm').classList.remove('hide');
+            }
+        }
+
+        let activeCategoriaFilter = 'ALL';
+
+        function getCategoryIcon(catName) {
+            if (!catName) return '✨';
+            const lower = catName.toLowerCase();
+            if (lower.includes('pelo') || lower.includes('peluquería') || lower.includes('corte')) return '💇‍♀️';
+            if (lower.includes('uña') || lower.includes('manicuría') || lower.includes('pedicuría')) return '💅';
+            if (lower.includes('ceja') || lower.includes('pestaña') || lower.includes('mirada')) return '✨';
+            if (lower.includes('facial') || lower.includes('rostro') || lower.includes('piel')) return '🧖‍♀️';
+            if (lower.includes('masaje') || lower.includes('corporal')) return '💆‍♀️';
+            return '✨';
+        }
+
+        function filterServiciosCategoria(cat, btnEl) {
+            activeCategoriaFilter = cat;
+            renderServiciosDisponibles();
+        }
+
+        function renderServiciosDisponibles() {
+            const grid = document.getElementById('serviciosGrid');
+            if (!grid) return;
+
+            const serviciosList = bdGlobal && bdGlobal.servicios ? bdGlobal.servicios : fallbackData.servicios;
+            if (!serviciosList || serviciosList.length === 0) {
+                grid.innerHTML = `<div class="text-stone-400 text-xs italic">No hay información de servicios en este momento.</div>`;
+                return;
+            }
+
+            const grupos = {};
+            serviciosList.forEach(s => {
+                const nombre = s.Nombre_Servicio || s.Nombre || s.Servicio;
+                if (!nombre) return;
+                const cat = (s.Especialidad || s.especialidad || 'General').trim();
+                if (!grupos[cat]) grupos[cat] = [];
+                grupos[cat].push(s);
+            });
+
+            let filterHtml = `
+                <div class="flex flex-wrap gap-1.5 pb-2 border-b border-stone-200/60 mb-3">
+                    <button type="button" onclick="filterServiciosCategoria('ALL', this)" class="cat-filter-btn px-3.5 py-1.5 rounded-xl text-xs border transition ${activeCategoriaFilter === 'ALL' ? 'bg-accent text-theme font-extrabold border-theme/60 shadow-2xs' : 'bg-white text-stone-700 font-bold border-stone-200 hover:bg-stone-50'}">
+                        Todos
+                    </button>
+            `;
+
+            Object.keys(grupos).forEach(cat => {
+                const icon = getCategoryIcon(cat);
+                const isSelected = activeCategoriaFilter === cat;
+                filterHtml += `
+                    <button type="button" onclick="filterServiciosCategoria('${cat.replace(/'/g, "\\'")}', this)" class="cat-filter-btn px-3.5 py-1.5 rounded-xl text-xs border transition ${isSelected ? 'bg-accent text-theme font-extrabold border-theme/60 shadow-2xs' : 'bg-white text-stone-700 font-bold border-stone-200 hover:bg-stone-50'}">
+                        ${icon} ${cat}
+                    </button>
+                `;
+            });
+            filterHtml += `</div>`;
+
+            let html = filterHtml;
+
+            Object.keys(grupos).forEach(cat => {
+                if (activeCategoriaFilter !== 'ALL' && activeCategoriaFilter !== cat) return;
+
+                const icon = getCategoryIcon(cat);
+                const items = grupos[cat];
+
+                html += `
+                    <div class="space-y-3 pt-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-stone-700 bg-accent px-3 py-1.5 rounded-xl border border-theme/40 shadow-2xs">
+                                ${icon} ${cat}
+                            </span>
+                            <div class="h-px bg-stone-200 flex-1"></div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-3">
+                `;
+
+                items.forEach(s => {
+                    const nombre = s.Nombre_Servicio || s.Nombre || s.Servicio;
+                    const duracion = s.Duracion_Min ? `${s.Duracion_Min} min` : '';
+                    const especialidad = s.Especialidad ? s.Especialidad : '';
+                    let costoStr = formatPrecio(s.Costo || s.Precio || s.costo || s.precio);
+                    let descripcion = s.Descripción || s.Descripcion || s.descripción || s.descripcion || "Servicio profesional de belleza y cuidado personal.";
+
+                    html += `
+                        <div onclick="seleccionarServicioDirecto('${nombre.replace(/'/g, "\\'")}')" class="bg-white/90 border border-stone-200/90 rounded-2xl p-4 shadow-xs transition hover:border-theme space-y-2.5 cursor-pointer active:scale-[0.99] group">
+                            <div class="flex items-start justify-between gap-2">
+                                <h4 class="font-bold text-stone-800 text-base group-hover:text-theme transition">${nombre}</h4>
+                                ${costoStr ? `<span class="font-extrabold text-theme text-sm shrink-0 bg-accent px-3 py-1 rounded-full border border-theme/40">${costoStr}</span>` : ''}
+                            </div>
+                            <div class="flex items-center gap-3 text-xs text-stone-500 font-semibold">
+                                ${duracion ? `<span>⏱️ ${duracion}</span>` : ''}
+                                ${especialidad ? `<span>✨ ${especialidad}</span>` : ''}
+                            </div>
+                            <p class="text-stone-700 text-sm font-medium leading-relaxed pt-1.5 border-t border-stone-100 text-justify service-desc-text">${descripcion}</p>
+                            
+                            <button type="button" class="w-full btn-pastel py-2.5 rounded-xl text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition mt-2 pointer-events-none">
+                                <span>📅</span> Agendar Este Turno ➔
+                            </button>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+        }
+
+        function seleccionarServicioDirecto(nombreServicio) {
+            if (!nombreServicio) return;
+
+            // 1. Pre-seleccionar el servicio en el selector del formulario
+            const select = document.getElementById('serviceSelect');
+            if (select) {
+                select.value = nombreServicio;
+                onServiceChange();
+            }
+
+            // 2. Mostrar aviso visual de servicio preseleccionado
+            const noticeDiv = document.getElementById('noticeServicioPreseleccionado');
+            const noticeText = document.getElementById('noticeServicioText');
+            if (noticeDiv && noticeText) {
+                noticeText.innerHTML = `✨ Vas a agendar: <strong>${nombreServicio}</strong>`;
+                noticeDiv.classList.remove('hide');
+            }
+
+            const emailInput = document.getElementById('cEmail');
+            const emailValue = emailInput ? emailInput.value.trim() : '';
+
+            // 3. Evaluar estado de ingreso de email
+            if (emailValue && emailValue.includes('@')) {
+                // Si el cliente ya escribió su mail -> verificar y pasar directamente a Selección de Turno (Paso 2)
+                procesarStep1();
+            } else {
+                // Si aún no ingresó su mail -> Llevarlo al Paso 1 con scroll suave para que ingrese mail/registre
+                irAlInicio();
+                const step1El = document.getElementById('step1');
+                if (step1El) step1El.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (emailInput) setTimeout(() => emailInput.focus(), 350);
+            }
+        }
+
+        function cancelarServicioPreseleccionado() {
+            const noticeDiv = document.getElementById('noticeServicioPreseleccionado');
+            if (noticeDiv) noticeDiv.classList.add('hide');
+            const select = document.getElementById('serviceSelect');
+            if (select) {
+                select.value = '';
+                onServiceChange();
+            }
+        }
+
+        function onCustomDatePicked(isoDate) {
+            if (!isoDate) return;
+            selectedFechaGlobal = isoDate;
+            renderDayTabs();
+            calcularDisponibilidad();
+        }
+
+        const diasNombres = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+        const mesesNombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+        function renderDayTabs() {
+            const container = document.getElementById('dayTabsBar');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const hoy = new Date();
+            let count = 0;
+            let standardIsos = [];
+
+            for (let i = 0; count < 5; i++) {
+                let d = new Date(hoy);
+                d.setDate(hoy.getDate() + i);
+                
+                if (d.getDay() === 0) continue; // Saltear domingos
+                
+                const iso = getLocalDateIso(d);
+                standardIsos.push(iso);
+
+                let label = "";
+                if (i === 0 && d.getDate() === hoy.getDate()) label = `Hoy (${diasNombres[d.getDay()]} ${d.getDate()})`;
+                else if (i <= 1 && d.getDate() === hoy.getDate() + 1) label = `Mañana (${diasNombres[d.getDay()]} ${d.getDate()})`;
+                else label = `${diasNombres[d.getDay()]} ${d.getDate()} ${mesesNombres[d.getMonth()]}`;
+
+                const isActive = (iso === selectedFechaGlobal);
+                container.innerHTML += `
+                    <button type="button" onclick="selectDayTab('${iso}')" class="day-tab ${isActive ? 'active' : ''}">
+                        ${label}
+                    </button>
+                `;
+                count++;
+            }
+
+            if (!standardIsos.includes(selectedFechaGlobal)) {
+                const parts = selectedFechaGlobal.split('-');
+                if (parts.length === 3) {
+                    const customDateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                    const customLabel = `📅 ${diasNombres[customDateObj.getDay()]} ${customDateObj.getDate()} ${mesesNombres[customDateObj.getMonth()]}`;
+                    container.innerHTML += `
+                        <button type="button" onclick="selectDayTab('${selectedFechaGlobal}')" class="day-tab active">
+                            ${customLabel}
+                        </button>
+                    `;
+                }
+            }
+        }
+
+        function selectDayTab(isoDate) {
+            selectedFechaGlobal = isoDate;
+            renderDayTabs();
+            calcularDisponibilidad();
+        }
+
+        function parseTime(timeStr) {
+            if(!timeStr) return 0;
+            const parts = timeStr.toString().split(':');
+            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        }
+        function formatTime(minutes) {
+            const h = Math.floor(minutes / 60);
+            const m = minutes % 60;
+            return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+        }
+        function normalizarFecha(str) {
+            if (!str) return "";
+            if (str.includes('/')) { 
+                const parts = str.split('/');
+                if (parts[2] && parts[2].length === 4) return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+            }
+            return str.toString().substring(0, 10);
+        }
+
+        function toggleRegistroManual() {
+            const div = document.getElementById('divNuevoCliente');
+            if (div.classList.contains('hide')) {
+                div.classList.remove('hide');
+                esClienteNuevo = true;
+                document.getElementById('cNombre').focus();
+            } else {
+                div.classList.add('hide');
+                esClienteNuevo = false;
+            }
+        }
+
+        function verificarClienteYEstado() {
+            const emailInput = document.getElementById('cEmail').value.trim().toLowerCase();
+            const nombreInput = document.getElementById('cNombre').value.trim().toLowerCase();
+            if(!emailInput || !bdGlobal) return;
+
+            clienteEncontrado = (bdGlobal && bdGlobal.clientes) ? bdGlobal.clientes.find(c => {
+                if (!c || typeof c !== 'object') return false;
+                for (let key in c) {
+                    const kLower = key.toLowerCase().trim();
+                    if (kLower.includes('correo') || kLower.includes('email') || kLower.includes('mail')) {
+                        if (c[key] && c[key].toString().trim().toLowerCase() === emailInput) {
+                            return true;
+                        }
+                    }
+                }
+                const fallbackEmail = (c.Correo || c.Email || c.email || c.correo || c.Mail || c.mail || "").toString().trim().toLowerCase();
+                return fallbackEmail === emailInput && emailInput !== "";
+            }) : null;
+
+            const hoyIso = getLocalDateIso();
+            turnosActivosCliente = (bdGlobal && bdGlobal.turnos) ? bdGlobal.turnos.filter(t => {
+                if(!t) return false;
+                const tIdCliente = (t.ID_Cliente || t.idCliente || "").toString().trim();
+                const tClienteName = (t.Cliente || t.Nombre || "").toString().trim().toLowerCase();
+                const tEmail = (t.Correo || t.Email || t.email || "").toString().trim().toLowerCase();
+                
+                const matchId = clienteEncontrado && tIdCliente && (tIdCliente === (clienteEncontrado.ID_Cliente || clienteEncontrado.idCliente));
+                const matchEmail = emailInput && tEmail && (tEmail === emailInput);
+                const matchName = clienteEncontrado && tClienteName && (tClienteName === (clienteEncontrado.Nombre_Completo || clienteEncontrado.Nombre || "").toLowerCase());
+                const matchInputName = nombreInput && tClienteName && (tClienteName === nombreInput);
+
+                const esMismoCliente = matchId || matchEmail || matchName || matchInputName;
+                const fNorm = normalizarFecha(t.Fecha || t.fecha);
+                const estado = (t.Estado || t.estado || "").toString().trim().toLowerCase();
+                const estaActivo = (estado !== 'cancelado') && (fNorm >= hoyIso);
+
+                return esMismoCliente && estaActivo;
+            }) : [];
+
+            turnoActivoEncontrado = turnosActivosCliente.length > 0 ? turnosActivosCliente[0] : null;
+
+            if (clienteEncontrado) {
+                esClienteNuevo = false;
+                const nombreC = clienteEncontrado.Nombre_Completo || clienteEncontrado.Nombre || "";
+                if (!document.getElementById('cNombre').value) {
+                    document.getElementById('cNombre').value = nombreC;
+                }
+                if (!document.getElementById('cTel').value) {
+                    document.getElementById('cTel').value = clienteEncontrado.Telefono || clienteEncontrado.Tel || "";
+                }
+
+                document.getElementById('divNuevoCliente').classList.add('hide');
+
+                if (turnosActivosCliente.length > 0) {
+                    document.getElementById('divClienteExistenteSinTurno').classList.remove('hide');
+                    const resumen = turnosActivosCliente.map(t => {
+                        const sName = t.ID_Servicio || t.Servicio;
+                        const f = normalizarFecha(t.Fecha || t.fecha);
+                        const h = t.Hora_Inicio || t.horaInicio;
+                        return `• ${sName} (${f} ${h}hs)`;
+                    }).join(' ');
+                    document.getElementById('divClienteExistenteSinTurno').innerText = `¡Hola, ${nombreC}! Tenés ${turnosActivosCliente.length} turno(s) agendado(s): ${resumen}. Podés agendar o reprogramar por especialidad al presionar Continuar.`;
+                } else {
+                    document.getElementById('divClienteExistenteSinTurno').classList.remove('hide');
+                    document.getElementById('divClienteExistenteSinTurno').innerText = `¡Hola, ${nombreC}! Qué bueno verte de nuevo. Presiona Continuar para seleccionar tu horario.`;
+                }
+
+            } else {
+                esClienteNuevo = true;
+                document.getElementById('divNuevoCliente').classList.remove('hide');
+                document.getElementById('divClienteExistenteSinTurno').classList.add('hide');
+            }
+        }
+
+        function esDentroDe24Horas(fechaStr, horaStr) {
+            if (!fechaStr) return false;
+            const fNorm = normalizarFecha(fechaStr);
+            const parts = fNorm.split('-');
+            if (parts.length !== 3) return false;
+            
+            let h = 9, m = 0;
+            if (horaStr) {
+                const hParts = horaStr.toString().split(':');
+                if (hParts.length >= 2) {
+                    h = parseInt(hParts[0]);
+                    m = parseInt(hParts[1]);
+                }
+            }
+            
+            const turnoDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), h, m);
+            const ahora = new Date();
+            
+            const diffMs = turnoDate.getTime() - ahora.getTime();
+            const diffHoras = diffMs / (1000 * 60 * 60);
+            
+            // Retorna true solo si faltan 24 horas o menos para el turno
+            return diffHoras <= 24 && diffHoras >= -2;
+        }
+
+        async function procesarStep1() {
+            const email = document.getElementById('cEmail').value.trim();
+            if(!email) { alert("Por favor ingresa tu correo electrónico."); return; }
+
+            await cargarDatosEnVivo();
+            verificarClienteYEstado();
+
+            const turnosConConfirmacionPendiente = turnosActivosCliente.filter(t => {
+                const estadoLower = (t.Estado || t.estado || '').toLowerCase();
+                const esConfirmado24h = estadoLower.includes('24h') || estadoLower.includes('24');
+                const esRecordatorioEnviado = estadoLower.includes('recordatorio') || estadoLower.includes('enviado');
+                const esFaltan24hOMenos = esDentroDe24Horas(t.Fecha || t.fecha, t.Hora_Inicio || t.horaInicio);
+                return !esConfirmado24h && (esRecordatorioEnviado || esFaltan24hOMenos);
+            });
+
+            if (turnosConConfirmacionPendiente.length > 0) {
+                const targetTurno = turnosConConfirmacionPendiente[0];
+                turnoActivoEncontrado = targetTurno;
+                const nombreC = clienteEncontrado ? (clienteEncontrado.Nombre_Completo || clienteEncontrado.Nombre) : (targetTurno.Cliente || "Cliente");
+                document.getElementById('activeTurnoGreeting').innerText = `¡Hola, ${nombreC}! Tienes un turno pendiente de confirmación (24hs)`;
+
+                const idSvc = targetTurno.ID_Servicio || targetTurno.idServicio || '';
+                const servicioObj = bdGlobal.servicios ? bdGlobal.servicios.find(s => s.ID_Servicio === idSvc || (s.Nombre_Servicio || s.Nombre || s.Servicio) === idSvc) : null;
+                const nombreServicio = servicioObj ? (servicioObj.Nombre_Servicio || servicioObj.Nombre || servicioObj.Servicio) : idSvc;
+
+                document.getElementById('activeTurnoDetails').innerHTML = `
+                    <div><strong>Servicio:</strong> ${nombreServicio}</div>
+                    <div><strong>Fecha:</strong> ${normalizarFecha(targetTurno.Fecha || targetTurno.fecha)}</div>
+                    <div><strong>Hora:</strong> ${targetTurno.Hora_Inicio || targetTurno.horaInicio} hs</div>
+                    <div class="pt-1"><span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold shadow-xs">📩 Recordatorio Enviado (Pendiente confirmación)</span></div>
+                `;
+
+                let actionsHtml = `
+                    <button onclick="confirmarAsistenciaDesdeActiveTurno()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-base active:scale-95">
+                        <span>✅</span> Confirmar Mi Asistencia
+                    </button>
+                    <button onclick="explorarHorariosSinPerderTurno()" class="w-full btn-pastel py-3 rounded-xl transition font-bold shadow-xs flex items-center justify-center gap-2 text-xs active:scale-95">
+                        <span>📅</span> Agendar / Explorar Otros Servicios
+                    </button>
+                    <button onclick="cancelarTurnoActivo()" class="w-full bg-white border border-stone-200 text-rose-600 font-semibold py-3 rounded-xl shadow-xs hover:bg-rose-50 transition flex items-center justify-center gap-2 text-xs">
+                        <span>❌</span> Cancelar Este Turno
+                    </button>
+                `;
+
+                document.getElementById('activeTurnoActionsContainer').innerHTML = actionsHtml;
+
+                document.getElementById('step1').classList.add('hide');
+                document.getElementById('stepActiveTurno').classList.remove('hide');
+                actualizarBotonVolverHeader();
+
+            } else {
+                if (esClienteNuevo) {
+                    const nombre = document.getElementById('cNombre').value.trim();
+                    const tel = document.getElementById('cTel').value.trim();
+                    if (!nombre || !tel) {
+                        document.getElementById('divNuevoCliente').classList.remove('hide');
+                        const box = document.getElementById('noticeNuevoClienteBox');
+                        if (box) {
+                            box.innerHTML = `📌 <strong>Correo no registrado:</strong> Este e-mail no figura en nuestra base de datos aún. Por favor completa tu <strong>Nombre</strong> y <strong>Teléfono Móvil</strong> a continuación para darte de alta y agendar tu turno:`;
+                            box.classList.add('border-amber-400', 'bg-amber-100');
+                        }
+                        if (!nombre) document.getElementById('cNombre').focus();
+                        else if (!tel) document.getElementById('cTel').focus();
+                        return;
+                    }
+                }
+
+                document.getElementById('step1').classList.add('hide');
+                document.getElementById('step2').classList.remove('hide');
+                actualizarBotonVolverHeader();
+                actualizarInfoServicioSeleccionado();
+                calcularDisponibilidad();
+            }
+        }
+
+        function explorarHorariosSinPerderTurno() {
+            document.getElementById('stepActiveTurno').classList.add('hide');
+            
+            if (turnoActivoEncontrado) {
+                const fNorm = normalizarFecha(turnoActivoEncontrado.Fecha || turnoActivoEncontrado.fecha);
+                const hNorm = turnoActivoEncontrado.Hora_Inicio || turnoActivoEncontrado.horaInicio;
+                const banner = document.getElementById('bannerReprogramando');
+                if (banner) {
+                    banner.innerHTML = `🔒 <strong>Turno actual reservado (${fNorm} ${hNorm} hs).</strong> Explora libremente otros horarios. Tu turno actual no cambiará salvo que confirmes una nueva opción.`;
+                    banner.classList.remove('hide');
+                }
+            }
+
+            document.getElementById('step2').classList.remove('hide');
+            actualizarBotonVolverHeader();
+            calcularDisponibilidad();
+        }
+
+        function volverAStep1() {
+            irAlInicio();
+        }
+
+        async function cancelarTurnoActivo() {
+            if(!confirm("¿Estás seguro de que deseas cancelar tu turno actual?")) return;
+
+            const cfg = await getBrandingConfigAsync();
+            const tColors = themesMap[cfg.theme] || themesMap.purple;
+
+            const idSvc = turnoActivoEncontrado ? (turnoActivoEncontrado.ID_Servicio || turnoActivoEncontrado.idServicio || '') : '';
+            const servicioObj = bdGlobal.servicios ? bdGlobal.servicios.find(s => s.ID_Servicio === idSvc || (s.Nombre_Servicio || s.Nombre || s.Servicio) === idSvc) : null;
+            const nombreServicio = servicioObj ? (servicioObj.Nombre_Servicio || servicioObj.Nombre || servicioObj.Servicio) : idSvc;
+            const targetIdTurno = turnoActivoEncontrado ? (turnoActivoEncontrado.ID_Turno || turnoActivoEncontrado.idTurno) : '';
+
+            const payload = {
+                action: "cancelar",
+                idTurno: targetIdTurno,
+                clienteInfo: {
+                    nombre: clienteEncontrado ? (clienteEncontrado.Nombre_Completo || clienteEncontrado.Nombre) : 'Cliente',
+                    email: document.getElementById('cEmail').value.trim()
+                },
+                idServicio: nombreServicio,
+                fecha: normalizarFecha(turnoActivoEncontrado ? (turnoActivoEncontrado.Fecha || turnoActivoEncontrado.fecha) : ''),
+                horaInicio: turnoActivoEncontrado ? (turnoActivoEncontrado.Hora_Inicio || turnoActivoEncontrado.horaInicio || '') : '',
+                branding: {
+                    name: cfg.name || "Lumina Estética",
+                    theme: cfg.theme || "amber",
+                    colors: tColors,
+                    ownerEmail: cfg.ownerEmail || "",
+                    logoUrl: cfg.publicLogoUrl || "https://estetica.neco-dev.cloud/branding_logo.jpg",
+                    coverUrl: cfg.publicCoverUrl || "https://estetica.neco-dev.cloud/branding_cover.jpg"
+                }
+            };
+
+            try {
+                fetch(POST_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(e => console.warn(e));
+
+                turnoActivoEncontrado = null;
+
+                document.getElementById('stepActiveTurno').classList.add('hide');
+                document.getElementById('step2').classList.add('hide');
+                document.getElementById('successTitle').innerText = "Turno Cancelado";
+                document.getElementById('successMessage').innerText = "Tu turno ha sido cancelado con éxito. Te enviamos la confirmación por correo.";
+                document.getElementById('stepSuccess').classList.remove('hide');
+                actualizarBotonVolverHeader();
+
+            } catch (e) {
+                console.error(e);
+                alert("Ocurrió un error al intentar cancelar. Intenta de nuevo.");
+            }
+        }
+
+        function onServiceChange() {
+            actualizarListaStaffPorServicio();
+            actualizarInfoServicioSeleccionado();
+            calcularDisponibilidad();
+        }
+
+        function actualizarInfoServicioSeleccionado() {
+            const servicioInput = document.getElementById('serviceSelect').value;
+            const infoPill = document.getElementById('serviceInfoPill');
+            
+            if (!servicioInput || !bdGlobal) {
+                if (infoPill) infoPill.classList.add('hide');
+                turnoActivoDeMismaEspecialidad = null;
+                return;
+            }
+
+            const serviciosList = bdGlobal.servicios || fallbackData.servicios;
+            const s = serviciosList.find(x => (x.Nombre_Servicio || x.Nombre || x.Servicio) === servicioInput);
+            if (!s) {
+                if (infoPill) infoPill.classList.add('hide');
+                turnoActivoDeMismaEspecialidad = null;
+                return;
+            }
+
+            const espSeleccionada = (s.Especialidad || s.especialidad || '').toString().trim().toLowerCase();
+
+            turnoActivoDeMismaEspecialidad = (turnosActivosCliente || []).find(t => {
+                const espT = obtenerEspecialidadDeTurno(t);
+                return espT && espSeleccionada && (espT === espSeleccionada);
+            }) || null;
+
+            const noticeBox = document.getElementById('noticeServicioPreseleccionado');
+            const noticeText = document.getElementById('noticeServicioText');
+            if (noticeBox && noticeText) {
+                if (turnoActivoDeMismaEspecialidad) {
+                    const fNorm = normalizarFecha(turnoActivoDeMismaEspecialidad.Fecha || turnoActivoDeMismaEspecialidad.fecha);
+                    const hIni = turnoActivoDeMismaEspecialidad.Hora_Inicio || turnoActivoDeMismaEspecialidad.horaInicio;
+                    const sPrev = turnoActivoDeMismaEspecialidad.ID_Servicio || turnoActivoDeMismaEspecialidad.Servicio;
+                    noticeText.innerHTML = `⚠️ <strong>Reprogramación de ${s.Especialidad || 'Especialidad'}:</strong> Ya tenés un turno activo de <em>${s.Especialidad || 'esta especialidad'}</em> (${sPrev} el ${fNorm} a las ${hIni}hs). Al agendar, reemplazarás tu turno anterior de esta categoría.`;
+                    noticeBox.classList.remove('hide');
+                } else {
+                    noticeText.innerHTML = `✨ Vas a agendar: <strong>${servicioInput}</strong>`;
+                    noticeBox.classList.remove('hide');
+                }
+            }
+
+            if (selectedHoraGlobal) {
+                const btnConfirmar = document.getElementById('btnConfirmar');
+                if (btnConfirmar) {
+                    if (turnoActivoDeMismaEspecialidad) {
+                        btnConfirmar.innerText = `✏️ Reprogramar a las ${selectedHoraGlobal} hs`;
+                    } else {
+                        btnConfirmar.innerText = `Confirmar a las ${selectedHoraGlobal} hs`;
+                    }
+                }
+            }
+
+            if (infoPill) {
+                const duracion = s.Duracion_Min ? `${s.Duracion_Min} min` : '30 min';
+                let costoStr = formatPrecio(s.Costo || s.Precio || s.costo || s.precio);
+
+                document.getElementById('serviceInfoDuracion').innerText = `⏱️ Duración: ${duracion}`;
+                const costoEl = document.getElementById('serviceInfoCosto');
+                if (costoStr) {
+                    costoEl.innerText = `💵 Valor: ${costoStr}`;
+                    costoEl.classList.remove('hide');
+                } else {
+                    costoEl.classList.add('hide');
+                }
+
+                infoPill.classList.remove('hide');
+            }
+        }
+
+        function actualizarListaStaffPorServicio() {
+            const servicioInput = document.getElementById('serviceSelect').value;
+            const staffSelect = document.getElementById('staffSelect');
+            if (!staffSelect) return;
+
+            staffSelect.innerHTML = '<option value="ANY">✨ Cualquier profesional disponible</option>';
+
+            if (!servicioInput || !bdGlobal) return;
+
+            const serviciosList = bdGlobal.servicios || fallbackData.servicios;
+            const servicioObj = serviciosList.find(s => (s.Nombre_Servicio || s.Nombre || s.Servicio) === servicioInput);
+            const espServicio = servicioObj ? (servicioObj.Especialidad || "").toLowerCase().trim() : "";
+
+            const staffList = bdGlobal.staff || fallbackData.staff;
+            
+            const staffFiltrado = staffList.filter(st => {
+                if (!espServicio) return true;
+                const espStaff = (st.Especialidad || "").toLowerCase().trim();
+                return espStaff.includes(espServicio) || espServicio.includes(espStaff);
+            });
+
+            const listaAMostrar = staffFiltrado.length > 0 ? staffFiltrado : staffList;
+
+            listaAMostrar.forEach(st => {
+                const nombreSt = st.Nombre || st.Nombre_Completo || st.ID_Staff;
+                const idSt = st.ID_Staff || st.idStaff;
+                const espSt = st.Especialidad ? ` (${st.Especialidad})` : '';
+                staffSelect.innerHTML += `<option value="${idSt}">${nombreSt}${espSt}</option>`;
+            });
+        }
+
+        function calcularDisponibilidad() {
+            const servicioInput = document.getElementById('serviceSelect').value;
+            const staffSelectedId = document.getElementById('staffSelect') ? document.getElementById('staffSelect').value : 'ANY';
+            const timeContainer = document.getElementById('timeGridContainer');
+            const btnConfirmar = document.getElementById('btnConfirmar');
+            
+            selectedHoraGlobal = null;
+            btnConfirmar.disabled = true;
+            btnConfirmar.classList.add('opacity-50', 'cursor-not-allowed');
+
+            if (turnoActivoEncontrado) {
+                btnConfirmar.innerText = "✏️ Cambiar a este Horario";
+            } else {
+                btnConfirmar.innerText = "Confirmar Reserva";
+            }
+
+            if (!servicioInput || !bdGlobal) {
+                timeContainer.innerHTML = `
+                    <div class="text-stone-400 text-sm italic bg-stone-50 p-4 rounded-xl text-center">
+                        Selecciona un servicio para ver los horarios disponibles.
+                    </div>
+                `;
+                return;
+            }
+
+            const serviciosList = bdGlobal.servicios || fallbackData.servicios;
+            const servicio = serviciosList.find(s => (s.Nombre_Servicio || s.Nombre || s.Servicio) === servicioInput);
+            if (!servicio) return;
+            const duracion = parseInt(servicio.Duracion_Min) || 30;
+
+            const espServicio = (servicio.Especialidad || "").toLowerCase().trim();
+            const staffList = bdGlobal.staff || fallbackData.staff;
+            
+            let candidatosStaff = staffList;
+            if (staffSelectedId && staffSelectedId !== 'ANY') {
+                candidatosStaff = staffList.filter(st => (st.ID_Staff || st.idStaff) === staffSelectedId);
+            } else if (espServicio) {
+                const filtrados = staffList.filter(st => (st.Especialidad || "").toLowerCase().trim().includes(espServicio));
+                if (filtrados.length > 0) candidatosStaff = filtrados;
+            }
+            if (candidatosStaff.length === 0) candidatosStaff = staffList;
+
+            const fechaNorm = normalizarFecha(selectedFechaGlobal);
+            const turnosList = bdGlobal.turnos || [];
+            
+            let minInicioGeneral = 24 * 60;
+            let minFinGeneral = 0;
+            candidatosStaff.forEach(st => {
+                const stIni = parseTime(st.Hora_Inicio || "08:00");
+                const stFin = parseTime(st.Hora_Fin || "20:00");
+                if (stIni < minInicioGeneral) minInicioGeneral = stIni;
+                if (stFin > minFinGeneral) minFinGeneral = stFin;
+            });
+
+            const slotsManana = [];
+            const slotsTarde = [];
+            const slotsNoche = [];
+
+            for (let minActual = minInicioGeneral; minActual + duracion <= minFinGeneral; minActual += 30) {
+                const minFinServicio = minActual + duracion;
+                let libreEnAlMenosUnStaff = false;
+
+                for (let staffCandidate of candidatosStaff) {
+                    const stIni = parseTime(staffCandidate.Hora_Inicio || "08:00");
+                    const stFin = parseTime(staffCandidate.Hora_Fin || "20:00");
+                    
+                    if (minActual < stIni || minFinServicio > stFin) continue;
+
+                    const turnosOcupadosStaff = turnosList.filter(t => {
+                        if(!t) return false;
+                        const idTurno = t.ID_Turno || t.idTurno;
+                        if (turnoActivoDeMismaEspecialidad && idTurno === (turnoActivoDeMismaEspecialidad.ID_Turno || turnoActivoDeMismaEspecialidad.idTurno)) {
+                            return false;
+                        }
+
+                        const tFechaNorm = normalizarFecha(t.Fecha || t.fecha || t.Date);
+                        const isSameDate = tFechaNorm === fechaNorm;
+                        const isSameStaff = (t.ID_Staff === staffCandidate.ID_Staff) || (t.Staff === staffCandidate.Nombre) || (t.ID_Staff === 'ALL');
+                        const estado = (t.Estado || t.estado || "").toString().trim().toLowerCase();
+                        return isSameDate && isSameStaff && (estado !== 'cancelado');
+                    });
+
+                    let choca = false;
+                    for (let t of turnosOcupadosStaff) {
+                        const tInicio = parseTime(t.Hora_Inicio);
+                        let tFin = parseTime(t.Hora_Fin);
+                        if (!tFin || tFin <= tInicio) {
+                            let durSvc = 60;
+                            if (bdGlobal && bdGlobal.servicios) {
+                                let sObj = bdGlobal.servicios.find(s => (s.ID_Servicio === t.ID_Servicio) || (s.Nombre_Servicio || s.Nombre || s.Servicio) === t.ID_Servicio);
+                                if (sObj && sObj.Duracion_Min) durSvc = parseInt(sObj.Duracion_Min) || 60;
+                            }
+                            tFin = tInicio + durSvc;
+                        }
+                        if (minActual < tFin && minFinServicio > tInicio) {
+                            choca = true; break;
+                        }
+                    }
+
+                    if (!choca) {
+                        libreEnAlMenosUnStaff = true;
+                        break;
+                    }
+                }
+                
+                const hoyIso = getLocalDateIso();
+                if(fechaNorm === hoyIso) {
+                    const ahoraMin = new Date().getHours() * 60 + new Date().getMinutes();
+                    if(minActual <= ahoraMin + 60) libreEnAlMenosUnStaff = false;
+                }
+
+                if (libreEnAlMenosUnStaff) {
+                    const horaStr = formatTime(minActual);
+                    if (minActual < 13 * 60) slotsManana.push(horaStr);
+                    else if (minActual < 18 * 60) slotsTarde.push(horaStr);
+                    else slotsNoche.push(horaStr);
+                }
+            }
+
+            const totalDisponibles = slotsManana.length + slotsTarde.length + slotsNoche.length;
+
+            if (totalDisponibles === 0) {
+                timeContainer.innerHTML = `
+                    <div class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl text-center text-xs font-semibold">
+                        ⚠️ No hay horarios disponibles para esta fecha con la duración de ${duracion} min. Intenta seleccionando otro día o profesional.
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+
+            if (slotsManana.length > 0) {
+                html += `<div>
+                    <div class="text-xs font-bold text-stone-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                        <span>🌅</span> Mañana (09:00 - 13:00)
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        ${slotsManana.map(h => `<button type="button" onclick="selectTimePill('${h}', this)" class="time-pill">${h} hs</button>`).join('')}
+                    </div>
+                </div>`;
+            }
+
+            if (slotsTarde.length > 0) {
+                html += `<div>
+                    <div class="text-xs font-bold text-stone-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                        <span>☀️</span> Tarde (13:00 - 18:00)
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        ${slotsTarde.map(h => `<button type="button" onclick="selectTimePill('${h}', this)" class="time-pill">${h} hs</button>`).join('')}
+                    </div>
+                </div>`;
+            }
+
+            if (slotsNoche.length > 0) {
+                html += `<div>
+                    <div class="text-xs font-bold text-stone-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                        <span>🌙</span> Noche (18:00 - 20:00)
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        ${slotsNoche.map(h => `<button type="button" onclick="selectTimePill('${h}', this)" class="time-pill">${h} hs</button>`).join('')}
+                    </div>
+                </div>`;
+            }
+
+            timeContainer.innerHTML = html;
+        }
+
+        function selectTimePill(horaStr, btnEl) {
+            document.querySelectorAll('.time-pill').forEach(b => b.classList.remove('selected'));
+            btnEl.classList.add('selected');
+            selectedHoraGlobal = horaStr;
+
+            const btnConfirmar = document.getElementById('btnConfirmar');
+            btnConfirmar.disabled = false;
+            btnConfirmar.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            if (turnoActivoDeMismaEspecialidad) {
+                btnConfirmar.innerText = `✏️ Reprogramar a las ${horaStr} hs`;
+            } else {
+                btnConfirmar.innerText = `Confirmar a las ${horaStr} hs`;
+            }
+        }
+
+        async function confirmarReserva() {
+            const servicioName = document.getElementById('serviceSelect').value;
+            const fecha = selectedFechaGlobal;
+            const hora = selectedHoraGlobal;
+            const staffSelectedId = document.getElementById('staffSelect') ? document.getElementById('staffSelect').value : 'ANY';
+            
+            if(!servicioName || !fecha || !hora) {
+                alert("Por favor selecciona un horario disponible."); return;
+            }
+
+            const btn = document.getElementById('btnConfirmar');
+            btn.innerText = "Procesando..."; btn.disabled = true;
+
+            const email = document.getElementById('cEmail').value.trim();
+            const tel = document.getElementById('cTel').value.trim();
+            const nombre = document.getElementById('cNombre').value.trim();
+
+            const cfg = await getBrandingConfigAsync();
+            const tColors = themesMap[cfg.theme] || themesMap.purple;
+
+            if (turnoActivoDeMismaEspecialidad) {
+                const targetOldIdTurno = turnoActivoDeMismaEspecialidad.ID_Turno || turnoActivoDeMismaEspecialidad.idTurno;
+                const oldSvcId = turnoActivoDeMismaEspecialidad.ID_Servicio || turnoActivoDeMismaEspecialidad.idServicio || '';
+                
+                try {
+                    fetch(POST_WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: "cancelar",
+                            idTurno: targetOldIdTurno,
+                            clienteInfo: { nombre: nombre, email: email },
+                            idServicio: oldSvcId,
+                            fecha: normalizarFecha(turnoActivoDeMismaEspecialidad.Fecha || turnoActivoDeMismaEspecialidad.fecha),
+                            horaInicio: turnoActivoDeMismaEspecialidad.Hora_Inicio || turnoActivoDeMismaEspecialidad.horaInicio || '',
+                            branding: {
+                                name: cfg.name,
+                                theme: cfg.theme,
+                                colors: tColors,
+                                logoUrl: cfg.publicLogoUrl || "https://estetica.neco-dev.cloud/branding_logo.jpg",
+                                coverUrl: cfg.publicCoverUrl || "https://estetica.neco-dev.cloud/branding_cover.jpg"
+                            }
+                        })
+                    }).catch(e => console.warn(e));
+                } catch(e) {}
+            }
+
+            let clienteObj = {
+                idCliente: clienteEncontrado ? clienteEncontrado.ID_Cliente : 'C' + Math.floor(Date.now() / 1000),
+                nombre: nombre,
+                tel: tel,
+                email: email
+            };
+
+            const serviciosList = bdGlobal.servicios || fallbackData.servicios;
+            const servicio = serviciosList.find(s => (s.Nombre_Servicio || s.Nombre || s.Servicio) === servicioName);
+            const duracionMin = parseInt(servicio.Duracion_Min) || 30;
+            const horaFin = formatTime(parseTime(hora) + duracionMin);
+
+            const espServicio = (servicio ? servicio.Especialidad || "" : "").toLowerCase().trim();
+            const staffList = bdGlobal.staff || fallbackData.staff;
+            
+            let candidatosStaff = staffList;
+            if (staffSelectedId && staffSelectedId !== 'ANY') {
+                candidatosStaff = staffList.filter(st => (st.ID_Staff || st.idStaff) === staffSelectedId);
+            } else if (espServicio) {
+                const filtrados = staffList.filter(st => (st.Especialidad || "").toLowerCase().trim().includes(espServicio));
+                if (filtrados.length > 0) candidatosStaff = filtrados;
+            }
+            if (candidatosStaff.length === 0) candidatosStaff = staffList;
+
+            const turnosList = bdGlobal.turnos || [];
+            const fechaNorm = normalizarFecha(fecha);
+            const slotStart = parseTime(hora);
+            const slotEnd = slotStart + duracionMin;
+
+            let staffElegido = candidatosStaff.find(st => {
+                const stIni = parseTime(st.Hora_Inicio || "09:00");
+                const stFin = parseTime(st.Hora_Fin || "20:00");
+                if (slotStart < stIni || slotEnd > stFin) return false;
+
+                const ocupado = turnosList.some(t => {
+                    if (!t) return false;
+                    const idT = t.ID_Turno || t.idTurno;
+                    if (turnoActivoEncontrado && idT === (turnoActivoEncontrado.ID_Turno || turnoActivoEncontrado.idTurno)) return false;
+
+                    const tFechaNorm = normalizarFecha(t.Fecha || t.fecha);
+                    const sameDate = tFechaNorm === fechaNorm;
+                    const sameStaff = (t.ID_Staff === st.ID_Staff || t.Staff === st.Nombre || t.ID_Staff === 'ALL');
+                    const estado = (t.Estado || "").toLowerCase();
+                    if (!sameDate || !sameStaff || estado === 'cancelado') return false;
+                    
+                    let tFin = parseTime(t.Hora_Fin);
+                    let tIni = parseTime(t.Hora_Inicio);
+                    if (!tFin || tFin <= tIni) {
+                        let durSvc = 60;
+                        if (bdGlobal && bdGlobal.servicios) {
+                            let sObj = bdGlobal.servicios.find(s => (s.ID_Servicio === t.ID_Servicio) || (s.Nombre_Servicio || s.Nombre || s.Servicio) === t.ID_Servicio);
+                            if (sObj && sObj.Duracion_Min) durSvc = parseInt(sObj.Duracion_Min) || 60;
+                        }
+                        tFin = tIni + durSvc;
+                    }
+                    return slotStart < tFin && slotEnd > tIni;
+                });
+                return !ocupado;
+            }) || candidatosStaff[0] || staffList[0];
+
+            const nuevoTurno = {
+                ID_Turno: "T" + Math.floor(Date.now() / 1000),
+                Fecha: fechaNorm,
+                Hora_Inicio: hora,
+                Hora_Fin: horaFin,
+                ID_Cliente: clienteObj.idCliente,
+                Cliente: clienteObj.nombre,
+                Correo: email,
+                ID_Staff: staffElegido ? staffElegido.ID_Staff : 'S01',
+                ID_Servicio: servicioName,
+                Estado: "Agendado"
+            };
+
+            const payload = {
+                action: esClienteNuevo ? "crear" : "nuevo_turno",
+                esNuevoCliente: esClienteNuevo,
+                clienteInfo: clienteObj,
+                fecha: nuevoTurno.Fecha,
+                horaInicio: hora,
+                horaFin: horaFin,
+                idStaff: nuevoTurno.ID_Staff,
+                staffNombre: staffElegido ? (staffElegido.Nombre || staffElegido.Nombre_Staff || staffElegido.nombre || nuevoTurno.ID_Staff) : nuevoTurno.ID_Staff,
+                idServicio: servicioName,
+                idTurno: nuevoTurno.ID_Turno,
+                estado: "Agendado",
+                branding: {
+                    name: cfg.name || "Lumina Estética",
+                    theme: cfg.theme || "amber",
+                    colors: tColors,
+                    ownerEmail: cfg.ownerEmail || "",
+                    logoUrl: cfg.publicLogoUrl || "https://estetica.neco-dev.cloud/branding_logo.jpg",
+                    coverUrl: cfg.publicCoverUrl || "https://estetica.neco-dev.cloud/branding_cover.jpg"
+                }
+            };
+
+            try {
+                fetch(POST_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(e => console.warn(e));
+
+                document.getElementById('step2').classList.add('hide');
+                const serviciosSec = document.getElementById('serviciosDisponiblesSection');
+                if (serviciosSec) serviciosSec.classList.add('hide');
+                
+                if (turnoActivoDeMismaEspecialidad) {
+                    document.getElementById('successTitle').innerText = "¡Turno Reprogramado!";
+                    document.getElementById('successMessage').innerText = `Tu turno fue reprogramado exitosamente para el ${fechaNorm} a las ${hora} hs. Te enviamos la confirmación por correo.`;
+                } else {
+                    document.getElementById('successTitle').innerText = "¡Reserva Confirmada!";
+                    document.getElementById('successMessage').innerText = "Te hemos enviado un correo con todos los detalles de tu turno. ¡Te esperamos!";
+                }
+
+                const elSuccess = document.getElementById('stepSuccess');
+                elSuccess.classList.remove('hide');
+                actualizarBotonVolverHeader();
+                setTimeout(() => {
+                    elSuccess.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 50);
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('step2').classList.add('hide');
+                const serviciosSec = document.getElementById('serviciosDisponiblesSection');
+                if (serviciosSec) serviciosSec.classList.add('hide');
+                const elSuccess = document.getElementById('stepSuccess');
+                elSuccess.classList.remove('hide');
+                actualizarBotonVolverHeader();
+                setTimeout(() => {
+                    elSuccess.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 50);
+            } finally {
+                turnoActivoEncontrado = null;
+            }
+        }
+    </script>
+
+    <!-- Botón Flotante de WhatsApp Adaptado al Tema -->
+    <a id="btnWhatsappFloating" href="https://api.whatsapp.com/send/?phone=%2B5491166266845&text&type=phone_number&app_absent=0" target="_blank" class="fixed bottom-5 right-5 z-50 btn-pastel p-3.5 rounded-full shadow-lg transition transform hover:scale-110 flex items-center justify-center border-2 border-theme" title="Contactar por WhatsApp">
+        <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+    </a>
+</body>
+</html>

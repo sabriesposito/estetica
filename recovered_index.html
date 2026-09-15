@@ -1,0 +1,2073 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-width=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Panel Móvil - Lumina Estética</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Flatpickr (Calendario) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+
+<script>
+tailwind.config = {
+theme: {
+extend: {
+fontFamily: { sans: ['Outfit', 'sans-serif'] },
+colors: {
+bgLight: '#faf7f2',
+card: '#ffffff',
+textMain: '#57534e',
+textMuted: '#a8a29e',
+borderSoft: '#f5f5f4'
+}
+}
+}
+}
+</script>
+<style>
+:root {
+--primary: #bae6fd;
+--primary-hover: #7dd3fc;
+--primary-text: #075985;
+--accent: #e0f2fe;
+--border: #bae6fd;
+
+--card-bg: #e0f2fe;
+--card-border: #38bdf8;
+--card-text: #0369a1;
+
+--card-bg2: #dbeafe;
+--card-border2: #60a5fa;
+--card-text2: #1e3a8a;
+}
+
+body { background-color: #f5f5f4; color: #57534e; }
+.hide { display: none !important; }
+.glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid #e7e5e4; }
+
+.btn-pastel { background-color: var(--primary) !important; color: var(--primary-text) !important; font-weight: 600; }
+.btn-pastel:hover { background-color: var(--primary-hover) !important; }
+
+.btn-outline { border: 1px solid var(--border) !important; color: var(--primary-text) !important; font-weight: 600; background: transparent; }
+.btn-outline:hover { background-color: var(--accent) !important; }
+
+.bg-accent { background-color: var(--accent) !important; color: var(--primary-text) !important; }
+.badge-theme { background-color: var(--accent) !important; color: var(--primary-text) !important; }
+.text-theme { color: var(--primary-text) !important; }
+.border-theme { border-color: var(--border) !important; }
+
+.cal-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.cal-grid { display: grid; grid-template-columns: 45px repeat(3, minmax(105px, 1fr)); gap: 1px; background: #e7e5e4; min-width: 100%; }
+.cal-header { background: #faf7f2; padding: 10px 4px; text-align: center; font-size: 12px; font-weight: 600; color: #78716c; position: sticky; top: 0; z-index: 20; }
+.cal-cell { background: #ffffff; min-height: 45px; position: relative; border-bottom: 1px solid #f5f5f4; }
+.cal-time { background: #faf7f2; padding: 4px 4px; font-size: 10px; color: #a8a29e; text-align: right; border-bottom: 1px solid #f5f5f4; position: sticky; left: 0; z-index: 10; font-weight: 500; }
+
+/* Estilo Elegante para Bloqueo de Agenda */
+.cal-cell-blocked {
+background: repeating-linear-gradient(-45deg, #f5f5f4, #f5f5f4 8px, #e7e5e4 8px, #e7e5e4 16px) !important;
+}
+.turno-block-badge {
+position: absolute; left: 3px; right: 3px; top: 4px;
+background: rgba(255, 255, 255, 0.92);
+border: 1px solid #d6d3d1; color: #44403c;
+border-radius: 6px; padding: 3px 5px; font-size: 10px; font-weight: 600;
+display: flex; items-center: center; gap: 3px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+z-index: 15; backdrop-filter: blur(4px);
+}
+
+.turno { position: absolute; left: 2px; right: 2px; border-radius: 6px; padding: 4px 6px; font-size: 10px; overflow: hidden; line-height: 1.2; z-index: 25; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.turno-unas { background: var(--card-bg, #f3e8ff); border-left: 3px solid var(--card-border, #c084fc); color: var(--card-text, #581c87); } 
+.turno-pelo { background: var(--card-bg2, #fae8ff); border-left: 3px solid var(--card-border2, #e879f9); color: var(--card-text2, #701a75); } 
+.turno-depi { background: var(--accent, #f3e8ff); border-left: 3px solid var(--primary-hover, #d8b4fe); color: var(--primary-text, #6b21a8); } 
+
+.phone-container {
+width: 100%; max-width: 430px; margin: 0 auto; min-height: 100vh;
+background-color: #faf7f2; position: relative;
+box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #faf7f2; }
+::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+
+.input-pastel { width: 100%; background: #ffffff; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px; color: #57534e; outline: none; transition: border 0.3s; }
+.input-pastel:focus { border-color: var(--border); box-shadow: 0 0 0 2px rgba(186, 230, 253, 0.4); }
+
+/* Evitar que Chrome fuerce fondo azul al autocompletar email o teléfono */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+-webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+-webkit-text-fill-color: #57534e !important;
+transition: background-color 5000s ease-in-out 0s;
+}
+
+.flatpickr-calendar { font-family: 'Outfit', sans-serif; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important; border: none !important; border-radius: 16px !important; }
+
+.flatpickr-day.selected, 
+.flatpickr-day.startRange, 
+.flatpickr-day.endRange, 
+.flatpickr-day.selected.inRange, 
+.flatpickr-day.selected:focus, 
+.flatpickr-day.selected:hover, 
+.flatpickr-day.selected.prevMonthDay, 
+.flatpickr-day.selected.nextMonthDay {
+background: var(--primary) !important;
+border-color: var(--border) !important;
+color: var(--primary-text) !important;
+font-weight: bold !important;
+}
+
+.flatpickr-day.today {
+border-color: var(--border) !important;
+}
+.flatpickr-day.today:hover,
+.flatpickr-day.today:focus,
+.flatpickr-day:hover {
+background: var(--accent) !important;
+color: var(--primary-text) !important;
+}
+</style>
+<style id="dynamic-theme-styles"></style>
+</head>
+<body class="antialiased">
+
+<div class="phone-container flex flex-col">
+<!-- Header Principal Espacioso y Limpio -->
+<header class="glass sticky top-0 z-40 px-4 py-3.5 border-b border-stone-200">
+<div class="flex items-center justify-between gap-2">
+<!-- Marca -->
+<div class="flex items-center gap-3 min-w-0">
+<div class="brand-logo w-10 h-10 rounded-full bg-accent flex items-center justify-center font-bold text-lg overflow-hidden shrink-0 shadow-xs border border-white">L</div>
+<div class="min-w-0">
+<h1 class="brand-name text-base font-bold tracking-wide text-stone-800 truncate leading-snug">Lumina Estética</h1>
+</div>
+</div>
+
+<!-- Acciones -->
+<div class="flex items-center gap-1.5 shrink-0">
+<button onclick="forzarSincronizacionSheets(this)" title="Forzar Sincronización con Google Sheets" class="p-1.5 rounded-lg border border-stone-200 bg-white text-stone-700 hover:bg-stone-50 text-xs font-semibold flex items-center gap-1 shadow-xs transition">
+<span id="syncIcon">🔄</span>
+</button>
+<button onclick="openModal('metricsModal')" title="Ver Métricas y Rendimiento" class="px-2 py-1.5 rounded-lg border border-stone-200 bg-white text-stone-700 hover:bg-stone-50 text-xs font-semibold flex items-center gap-1 shadow-xs transition">
+<span>📊</span> Métricas
+</button>
+<button onclick="openModal('brandModal')" title="Configurar Marca" class="px-2 py-1.5 rounded-lg border border-stone-200 bg-white text-stone-700 hover:bg-stone-50 text-xs font-semibold flex items-center gap-1 shadow-xs transition">
+<span>⚙️</span> Marca
+</button>
+<select id="roleSelector" class="bg-white border border-stone-200 text-stone-700 text-xs font-medium rounded-lg shadow-xs p-1.5 outline-none max-w-[130px]" onchange="switchRole(this.value)">
+<option value="owner">Modo: Admin</option>
+</select>
+</div>
+</div>
+</header>
+
+<main class="flex-1 p-4 pb-24 overflow-x-hidden">
+
+<!-- VISTA DUEÑO (ADMIN) -->
+<div id="view-owner" class="fade-in">
+<div class="mb-4">
+<p class="text-stone-400 text-xs font-medium uppercase tracking-wider">Panel General de Gestión</p>
+<h2 class="text-2xl font-bold text-stone-700">Resumen General</h2>
+</div>
+
+<!-- Botones Superiores de Acción Rápida -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+<button onclick="openModal('newTurnoModal')" class="btn-pastel py-3 px-2 rounded-2xl font-bold text-xs flex items-center justify-center gap-1 shadow-sm transition active:scale-95">
+<span>➕</span> Nuevo Turno
+</button>
+<button onclick="openModal('newClientModal')" class="bg-white border border-stone-200 text-stone-700 hover:bg-stone-50 py-3 px-2 rounded-2xl font-semibold text-xs flex items-center justify-center gap-1 shadow-xs transition active:scale-95">
+<span>👤</span> Cliente
+</button>
+<button onclick="openModal('newStaffModal')" class="bg-white border border-stone-200 text-stone-700 hover:bg-stone-50 py-3 px-2 rounded-2xl font-semibold text-xs flex items-center justify-center gap-1 shadow-xs transition active:scale-95">
+<span>✨</span> Staff
+</button>
+<button onclick="openModal('newServiceModal')" class="bg-white border border-stone-200 text-stone-700 hover:bg-stone-50 py-3 px-2 rounded-2xl font-semibold text-xs flex items-center justify-center gap-1 shadow-xs transition active:scale-95">
+<span>💅</span> Servicio
+</button>
+</div>
+
+<div class="grid grid-cols-2 gap-3 mb-4">
+<div class="bg-white shadow-sm border border-stone-100 rounded-2xl p-4 text-center">
+<div class="text-xs text-stone-400 mb-1 font-medium">Turnos Hoy</div>
+<div id="adminTurnosCount" class="text-2xl font-bold text-stone-700">0</div>
+</div>
+<button onclick="openModal('metricsModal')" class="bg-white shadow-sm border border-stone-200/80 rounded-2xl p-4 text-center hover:bg-stone-50 transition cursor-pointer flex flex-col items-center justify-center group active:scale-95">
+<div class="text-xs text-theme mb-1 font-semibold flex items-center gap-1"><span>📊</span> Estadísticas</div>
+<div class="text-xs font-bold text-stone-700 group-hover:text-theme transition">Ver Métricas ➔</div>
+</button>
+</div>
+
+<div class="mb-5">
+<button onclick="openModal('blockModal')" class="btn-outline text-xs py-2.5 rounded-xl w-full font-semibold shadow-xs flex items-center justify-center gap-2">
+<span>🔒</span> Bloquear Agenda
+</button>
+</div>
+
+<!-- CONTROLES Y NAVEGADOR DE FECHAS DE CALENDARIO (3 DÍAS PERMANENTE) -->
+<div class="bg-white border border-stone-200 p-3 rounded-2xl mb-3 shadow-xs flex flex-col gap-2">
+<div class="flex items-center justify-between gap-2">
+<button onclick="shiftCalendarDays(-1)" title="Día anterior" class="w-8 h-8 rounded-lg bg-stone-100 text-stone-600 font-bold hover:bg-stone-200 flex items-center justify-center transition">◀</button>
+
+<div class="flex items-center gap-1.5 min-w-0 flex-1 justify-center">
+<input type="text" id="adminDatePicker" placeholder="Ver Fecha..." class="text-xs font-bold text-stone-700 text-center bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 cursor-pointer outline-none max-w-[160px]">
+</div>
+
+<button onclick="resetCalendarToToday()" class="text-xs font-bold text-theme badge-theme px-2.5 py-1.5 rounded-lg border border-theme hover:opacity-90 transition">Hoy</button>
+<button onclick="shiftCalendarDays(1)" title="Día siguiente" class="w-8 h-8 rounded-lg bg-stone-100 text-stone-600 font-bold hover:bg-stone-200 flex items-center justify-center transition">▶</button>
+</div>
+</div>
+
+<div class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-xs">
+<div class="cal-wrapper">
+<div class="cal-grid" id="main-calendar">
+<!-- Se llena dinámicamente con JS (Vista estricta de 3 días) -->
+</div>
+</div>
+</div>
+</div>
+
+<!-- VISTA STAFF -->
+<div id="view-staff" class="hide fade-in">
+<div class="mb-5">
+<h2 id="staffTitleName" class="text-2xl font-bold text-stone-700 mb-1">Mi Agenda</h2>
+<p id="staffTitleEspec" class="text-stone-400 text-sm">Profesional</p>
+</div>
+
+<div class="grid grid-cols-2 gap-3 mb-4">
+<div class="bg-white shadow-sm border border-stone-100 rounded-2xl p-3 text-center">
+<div class="text-xs text-stone-400 mb-1">Turnos Asignados</div>
+<div id="staffTurnosCount" class="text-2xl font-bold text-stone-700">0</div>
+</div>
+<div class="bg-white shadow-sm border border-stone-100 rounded-2xl p-3 text-center">
+<div class="text-xs text-stone-400 mb-1">Próximo Turno</div>
+<div class="text-2xl font-bold text-theme">En 45 min</div>
+</div>
+</div>
+
+<div class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-xs">
+<div class="cal-wrapper">
+<div class="cal-grid" id="staff-calendar">
+<!-- Se llena dinámicamente con JS (3 días) -->
+</div>
+</div>
+</div>
+</div>
+
+</main>
+
+<!-- Modal Detalle del Turno -->
+<div id="turnoDetailModal" class="fixed inset-0 bg-stone-900/40 flex items-end sm:items-center justify-center z-[90] hide transition-opacity backdrop-blur-sm">
+<div class="bg-white border border-stone-100 rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-[430px] sm:max-w-sm shadow-2xl relative">
+<button onclick="closeModal('turnoDetailModal')" class="absolute top-5 right-5 text-stone-400 hover:text-stone-600 bg-stone-100 rounded-full w-8 h-8 flex justify-center items-center">✕</button>
+<h3 id="tdtTitle" class="text-xl font-bold text-stone-700 mb-4">📋 Detalle del Turno</h3>
+
+<div id="tdtBody">
+<!-- Contenido JS -->
+</div>
+
+<div class="mt-4">
+<button onclick="closeModal('turnoDetailModal')" class="w-full bg-stone-100 text-stone-600 font-bold py-3 rounded-xl hover:bg-stone-200 transition text-xs">Cerrar</button>
+</div>
+</div>
+</div>
+
+<!-- Modal Nuevo Turno -->
+<div id="newTurnoModal" class="fixed inset-0 bg-stone-900/40 flex items-end sm:items-center justify-center z-[60] hide transition-opacity backdrop-blur-sm">
+<div class="bg-white border border-stone-100 rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-[430px] sm:max-w-sm shadow-2xl relative max-h-[90vh] overflow-y-auto">
+<button onclick="closeModal('newTurnoModal')" class="absolute top-5 right-5 text-stone-400 hover:text-stone-600 bg-stone-100 rounded-full w-8 h-8 flex justify-center items-center">✕</button>
+<h3 class="text-xl font-bold text-stone-700 mb-1">Agendar Turno Manual</h3>
+<p class="text-xs text-stone-500 mb-4">Ingresa los datos para agendar desde el panel.</p>
+
+<div class="space-y-4">
+<div>
+<div class="flex justify-between items-center mb-1">
+<label class="block text-xs font-semibold text-stone-500">Cliente *</label>
+<button type="button" onclick="openModal('newClientModal')" class="text-xs text-theme font-bold hover:underline">+ Dar de alta</button>
+</div>
+<select id="clienteSelect" class="input-pastel text-xs appearance-none bg-white font-medium text-stone-700" onchange="handleClienteSelectChange(this.value)">
+<option value="">Selecciona un cliente de la lista...</option>
+<option value="MANUAL_NAME">✍️ Escribir otro nombre (Cliente manual)</option>
+</select>
+<div id="divManualClientInput" class="hide mt-2">
+<input type="text" id="clienteManualInput" placeholder="Ingresa el nombre del cliente..." class="input-pastel text-xs">
+</div>
+</div>
+
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Servicio *</label>
+<select id="serviceSelect" class="input-pastel text-xs appearance-none bg-white">
+<option value="">Selecciona un servicio</option>
+</select>
+</div>
+
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Fecha *</label>
+<input type="text" id="datePicker" placeholder="Seleccionar" class="input-pastel text-xs cursor-pointer text-center bg-white" onchange="calcularDisponibilidad()">
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Hora *</label>
+<select id="timeSelect" class="input-pastel text-xs appearance-none text-center bg-white">
+<option value="">Selecciona fecha</option>
+</select>
+</div>
+</div>
+</div>
+
+<div class="mt-6">
+<button id="btnConfirmarTurno" onclick="confirmTurnoAction()" class="w-full btn-pastel py-3 rounded-xl transition font-semibold shadow-sm">Confirmar Turno</button>
+</div>
+</div>
+</div>
+
+<!-- Modal Crear Cliente Nuevo -->
+<div id="newClientModal" class="fixed inset-0 bg-stone-900/50 flex items-end sm:items-center justify-center z-[80] hide transition-opacity backdrop-blur-sm">
+<div class="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-[430px] sm:max-w-sm shadow-2xl relative">
+<button onclick="closeModal('newClientModal')" class="absolute top-5 right-5 text-stone-400 hover:text-stone-600 bg-stone-100 rounded-full w-8 h-8 flex justify-center items-center">✕</button>
+<h3 class="text-xl font-bold text-stone-700 mb-1">Alta de Cliente</h3>
+<p class="text-xs text-stone-500 mb-4">Registrar nuevo cliente en la base de datos.</p>
+
+<div class="space-y-3">
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Nombre Completo *</label>
+<input type="text" id="ncNombre" placeholder="Ej. Ana García" class="input-pastel text-xs">
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Teléfono Móvil</label>
+<input type="tel" id="ncTel" placeholder="+54 9 11 1234-5678" class="input-pastel text-xs">
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Correo Electrónico *</label>
+<input type="email" id="ncEmail" placeholder="ana@ejemplo.com" class="input-pastel text-xs">
+</div>
+</div>
+
+<div class="mt-6">
+<button onclick="saveNewClient()" class="w-full btn-pastel py-3 rounded-xl transition font-semibold shadow-sm">Guardar Cliente</button>
+</div>
+</div>
+</div>
+
+<!-- Modal Crear Integrante del Staff -->
+<div id="newStaffModal" class="fixed inset-0 bg-stone-900/50 flex items-end sm:items-center justify-center z-[80] hide transition-opacity backdrop-blur-sm">
+<div class="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-[430px] sm:max-w-sm shadow-2xl relative">
+<button onclick="closeModal('newStaffModal')" class="absolute top-5 right-5 text-stone-400 hover:text-stone-600 bg-stone-100 rounded-full w-8 h-8 flex justify-center items-center">✕</button>
+<h3 class="text-xl font-bold text-stone-700 mb-1">Alta de Staff / Profesional</h3>
+<p class="text-xs text-stone-500 mb-4">Ingresa los datos para sumar un integrante al equipo.</p>
+
+<div class="space-y-3">
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Nombre Completo *</label>
+<input type="text" id="nsNombre" placeholder="Ej. Camila López" class="input-pastel text-xs">
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Especialidad *</label>
+<input type="text" id="nsEspecialidad" placeholder="Ej. Pelo, Uñas, Masajes" class="input-pastel text-xs">
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Hora Inicio</label>
+<input type="time" id="nsHoraInicio" value="08:00" class="input-pastel text-xs">
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Hora Fin</label>
+<input type="time" id="nsHoraFin" value="20:00" class="input-pastel text-xs">
+</div>
+</div>
+</div>
+
+<div class="mt-6">
+<button onclick="saveNewStaff()" class="w-full btn-pastel py-3 rounded-xl transition font-semibold shadow-sm">Guardar Integrante</button>
+</div>
+</div>
+</div>
+
+<!-- Modal Crear Nuevo Servicio -->
+<div id="newServiceModal" class="fixed inset-0 bg-stone-900/50 flex items-end sm:items-center justify-center z-[80] hide transition-opacity backdrop-blur-sm">
+<div class="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-[430px] sm:max-w-sm shadow-2xl relative max-h-[90vh] overflow-y-auto">
+<button onclick="closeModal('newServiceModal')" class="absolute top-5 right-5 text-stone-400 hover:text-stone-600 bg-stone-100 rounded-full w-8 h-8 flex justify-center items-center">✕</button>
+<h3 class="text-xl font-bold text-stone-700 mb-1">Alta de Servicio</h3>
+<p class="text-xs text-stone-500 mb-4">Agregar un nuevo tratamiento o servicio al catálogo.</p>
+
+<div class="space-y-3">
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Nombre del Servicio *</label>
+<input type="text" id="nsvcNombre" placeholder="Ej. Perfilado de Cejas" class="input-pastel text-xs">
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Precio ($) *</label>
+<input type="text" id="nsvcCosto" placeholder="Ej. 15000" class="input-pastel text-xs">
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Duración (min) *</label>
+<input type="number" id="nsvcDuracion" value="45" step="15" min="15" class="input-pastel text-xs">
+</div>
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Especialidad *</label>
+<input type="text" id="nsvcEspecialidad" placeholder="Ej. Pelo, Uñas, Cejas, Facial" class="input-pastel text-xs">
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Descripción</label>
+<textarea id="nsvcDescripcion" rows="2" placeholder="Descripción breve del tratamiento..." class="input-pastel text-xs resize-none"></textarea>
+</div>
+</div>
+
+<div class="mt-6">
+<button onclick="saveNewService()" class="w-full btn-pastel py-3 rounded-xl transition font-semibold shadow-sm">Guardar Servicio</button>
+</div>
+</div>
+</div>
+
+<!-- Modal Configuración de Marca -->
+<div id="brandModal" class="fixed inset-0 bg-stone-900/40 flex items-end sm:items-center justify-center z-[70] hide transition-opacity backdrop-blur-sm">
+<div class="bg-white border border-stone-100 rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-[430px] sm:max-w-sm shadow-2xl relative max-h-[90vh] overflow-y-auto">
+<!-- Cabecera Pegada con Botón X de Cierre -->
+<div class="sticky top-0 bg-white pt-1 pb-3 mb-3 border-b border-stone-100 z-30 flex items-center justify-between">
+<div>
+<h3 class="text-lg font-bold text-stone-800">Personalizar Marca</h3>
+<p class="text-[11px] text-stone-400">Se reflejará en el panel y portal cliente</p>
+</div>
+<button onclick="closeModal('brandModal')" class="text-stone-500 hover:text-stone-800 bg-stone-100 hover:bg-stone-200 rounded-full w-8 h-8 flex justify-center items-center font-bold text-sm transition shrink-0 shadow-xs" title="Cancelar sin guardar">✕</button>
+</div>
+
+<!-- Vista previa circular del Logo -->
+<div id="bmPreviewCircle" class="w-16 h-16 rounded-full bg-accent flex items-center justify-center mx-auto mb-4 overflow-hidden shadow-sm border border-stone-200 font-bold text-2xl">
+L
+</div>
+
+<div class="space-y-4">
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Cargar Foto de Perfil / Logo</label>
+<input type="file" id="bmFileInput" accept="image/*" onchange="handleLogoFileSelect(event)" class="w-full text-xs text-stone-500 bg-stone-50 p-2 rounded-xl border border-stone-200 cursor-pointer">
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">O pegar URL de Logo</label>
+<input type="url" id="bmLogoUrl" placeholder="https://ejemplo.com/logo.png" oninput="handleLogoUrlInput()" class="w-full bg-white border border-stone-200 rounded-xl p-2.5 text-stone-700 text-xs outline-none focus:border-rose-300 transition">
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">🖼️ Foto de Fondo del Portal (Opcional)</label>
+<input type="file" id="bmBgFileInput" accept="image/*" onchange="handleBgFileSelect(event)" class="w-full text-xs text-stone-500 bg-stone-50 p-2 rounded-xl border border-stone-200 cursor-pointer mb-1">
+<input type="url" id="bmBgUrl" placeholder="https://ejemplo.com/fondo.jpg" oninput="handleBgUrlInput()" class="w-full bg-white border border-stone-200 rounded-xl p-2.5 text-stone-700 text-xs outline-none focus:border-rose-300 transition">
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Nombre del Negocio</label>
+<input type="text" id="bmName" placeholder="Ej. Lumina Estética" class="w-full bg-white border border-stone-200 rounded-xl p-2.5 text-stone-700 text-xs outline-none focus:border-rose-300 transition">
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Descripción / Subtítulo del Portal</label>
+<textarea id="bmDesc" rows="7" placeholder="Ej. Bienvenida a Lumina Estética..." class="w-full bg-white border border-stone-200 rounded-xl p-3 text-stone-700 text-xs outline-none focus:border-rose-300 transition min-h-[150px] leading-relaxed resize-y"></textarea>
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">📍 Dirección del Local / Sucursal</label>
+<input type="text" id="bmAddress" placeholder="Ej. Av. Cabildo 2040, Belgrano, CABA" class="w-full bg-white border border-stone-200 rounded-xl p-2.5 text-stone-700 text-xs outline-none focus:border-rose-300 transition">
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">🗺️ URL de Mapa Personalizado (Opcional)</label>
+<input type="url" id="bmMapUrl" placeholder="https://maps.google.com/?q=..." class="w-full bg-white border border-stone-200 rounded-xl p-2.5 text-stone-700 text-xs outline-none focus:border-rose-300 transition">
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">💬 Enlace o Número de WhatsApp del Negocio</label>
+<input type="text" id="bmWhatsapp" placeholder="https://api.whatsapp.com/send/?phone=..." class="w-full bg-white border border-stone-200 rounded-xl p-2.5 text-stone-700 text-xs outline-none focus:border-rose-300 transition">
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Paleta de Colores de la Marca</label>
+<select id="bmTheme" class="w-full bg-white border border-stone-200 rounded-xl p-2.5 text-stone-700 text-xs outline-none focus:border-rose-300 appearance-none">
+<option value="purple">🔮 Lila Elegante</option>
+<option value="sky">💧 Celeste Suave</option>
+<option value="rose">🌸 Rosa Pastel</option>
+<option value="emerald">🌿 Verde Menta</option>
+<option value="amber">☀️ Dorado / Arena</option>
+</select>
+</div>
+</div>
+
+<div class="mt-6 flex gap-2">
+<button onclick="closeModal('brandModal')" class="w-1/3 bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold py-3 rounded-xl transition text-xs">Cancelar</button>
+<button id="btnSaveBrandModal" onclick="saveBrandingConfigFromModal()" class="w-2/3 btn-pastel py-3 rounded-xl transition font-semibold shadow-sm text-xs">Guardar Cambios</button>
+</div>
+</div>
+</div>
+
+<!-- Modal Bloqueo Agenda -->
+<div id="blockModal" class="fixed inset-0 bg-stone-900/40 flex items-end sm:items-center justify-center z-50 hide transition-opacity backdrop-blur-sm">
+<div class="bg-white border border-stone-100 rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-[430px] sm:max-w-sm shadow-2xl relative">
+<button onclick="closeModal('blockModal')" class="absolute top-5 right-5 text-stone-400 hover:text-stone-600 bg-stone-100 rounded-full w-8 h-8 flex justify-center items-center">✕</button>
+<h3 class="text-xl font-bold text-stone-700 mb-1">Bloquear Agenda</h3>
+<p class="text-xs text-stone-500 mb-4">Selecciona a quién bloquear y el rango horario o día.</p>
+
+<div class="space-y-4">
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">¿A quién deseas bloquear? *</label>
+<select id="blockStaffSelect" class="input-pastel text-xs bg-white">
+<option value="ALL">🏢 Toda la Estética (Todo el Staff)</option>
+</select>
+</div>
+
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Tipo de Bloqueo *</label>
+<select id="blockType" onchange="updateBlockForm()" class="input-pastel text-xs">
+<option value="dia">Día Completo</option>
+<option value="franja">Franja Horaria de un Día</option>
+<option value="periodo">Período de Vacaciones / Rango Días</option>
+</select>
+</div>
+
+<div id="fg-fecha" class="block">
+<label class="block text-xs font-semibold text-stone-500 mb-1">Fecha a Bloquear</label>
+<input type="text" id="blockSingleDate" placeholder="Seleccionar Fecha" class="input-pastel text-xs cursor-pointer bg-white">
+</div>
+
+<div id="fg-rango-fechas" class="hidden">
+<label class="block text-xs font-semibold text-stone-500 mb-1">Rango de Fechas (Vacaciones)</label>
+<input type="text" id="blockRangeDates" placeholder="Seleccionar Fecha Inicio a Fecha Fin" class="input-pastel text-xs cursor-pointer bg-white">
+</div>
+
+<div id="fg-horas" class="hidden grid grid-cols-2 gap-3">
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Desde Hora</label>
+<select id="blockTimeFrom" class="input-pastel text-xs bg-white">
+<option value="09:00">09:00 hs</option>
+<option value="10:00">10:00 hs</option>
+<option value="11:00">11:00 hs</option>
+<option value="12:00">12:00 hs</option>
+<option value="13:00">13:00 hs</option>
+<option value="14:00">14:00 hs</option>
+<option value="15:00">15:00 hs</option>
+<option value="16:00">16:00 hs</option>
+<option value="17:00">17:00 hs</option>
+<option value="18:00">18:00 hs</option>
+</select>
+</div>
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Hasta Hora</label>
+<select id="blockTimeTo" class="input-pastel text-xs bg-white">
+<option value="10:00">10:00 hs</option>
+<option value="12:00">12:00 hs</option>
+<option value="14:00">14:00 hs</option>
+<option value="16:00">16:00 hs</option>
+<option value="18:00">18:00 hs</option>
+<option value="20:00">20:00 hs</option>
+</select>
+</div>
+</div>
+
+<div>
+<label class="block text-xs font-semibold text-stone-500 mb-1">Motivo (Opcional)</label>
+<input type="text" id="blockMotivo" placeholder="Ej. Vacaciones, Feriado, Mantenimiento" class="input-pastel text-xs">
+</div>
+</div>
+
+<div class="mt-6">
+<button onclick="applyAgendaBlock()" class="w-full btn-pastel py-3 rounded-xl transition font-semibold shadow-sm">Aplicar Bloqueo de Agenda</button>
+</div>
+</div>
+</div>
+
+<!-- MODAL DE MÉTRICAS Y ESTADÍSTICAS DEL NEGOCIO -->
+<div id="metricsModal" class="fixed inset-0 bg-stone-900/40 flex items-end sm:items-center justify-center z-[60] hide transition-opacity backdrop-blur-sm">
+<div class="bg-white border border-stone-100 rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-[480px] sm:max-w-md shadow-2xl relative max-h-[90vh] overflow-y-auto">
+<button onclick="closeModal('metricsModal')" class="absolute top-5 right-5 text-stone-400 hover:text-stone-600 bg-stone-100 rounded-full w-8 h-8 flex justify-center items-center">✕</button>
+
+<div class="flex items-center gap-2 mb-1">
+<span class="text-xl">📊</span>
+<h3 class="text-xl font-bold text-stone-800">Métricas & Rendimiento</h3>
+</div>
+<p class="text-xs text-stone-500 mb-5">Estadísticas en tiempo real de tu estética.</p>
+
+<!-- Grid de Métricas Clave -->
+<div class="grid grid-cols-2 gap-3 mb-5">
+<div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-4 text-center">
+<div class="text-xs text-stone-500 mb-1 font-semibold">📅 Turnos Hoy</div>
+<div id="metricTurnosHoy" class="text-2xl font-bold text-stone-800">0</div>
+</div>
+<div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-4 text-center">
+<div class="text-xs text-stone-500 mb-1 font-semibold">📆 Próx. 7 Días</div>
+<div id="metricTurnosSemana" class="text-2xl font-bold text-theme">0</div>
+</div>
+<div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-4 text-center">
+<div class="text-xs text-stone-500 mb-1 font-semibold">👥 Clientes Registrados</div>
+<div id="metricClientesTotales" class="text-2xl font-bold text-stone-800">0</div>
+</div>
+<div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-4 text-center">
+<div class="text-xs text-stone-500 mb-1 font-semibold">✅ Confirmados 24hs</div>
+updateCalendarDateDisplay();
+renderCalendars();
+}
+}
+
+const fallbackData = {
+clientes: [
+{ ID_Cliente: "C1787797749", Nombre_Completo: "Sabri", Correo: "espositosabrina29@gmail.com", Telefono: "+5491166266845" },
+{ ID_Cliente: "C1787799907", Nombre_Completo: "Sabri2", Correo: "siempresina23@gmail.com", Telefono: "+5491166266845" }
+</div>
+
+<div class="bg-stone-50 border border-stone-200/80 rounded-2xl p-4">
+<div class="text-xs font-semibold text-stone-500 mb-3">👤 Ocupación por Profesional</div>
+<div id="metricStaffBreakdown" class="space-y-2 text-xs">
+<!-- Se genera dinámicamente -->
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+<script>
+const GET_WEBHOOK_URL = "https://n8n.neco-dev.cloud/webhook/get-demo-data";
+const POST_WEBHOOK_URL = "https://n8n.neco-dev.cloud/webhook/post-turno";
+
+async function fetchDemoData() {
+try {
+let data = null;
+try {
+const res = await fetch(GET_WEBHOOK_URL, { cache: 'no-store' });
+if (res.ok) data = await res.json();
+} catch(err) {}
+
+if (Array.isArray(data) && data.length > 0 && (data[0].staff || data[0].clientes || data[0].servicios || data[0].turnos)) {
+data = data[0];
+}
+
+let localCache = null;
+try {
+const cStr = localStorage.getItem('lumina_bd_cache');
+if (cStr) localCache = JSON.parse(cStr);
+} catch(e) {}
+
+const esValido = data && typeof data === 'object' && !data.message && (data.clientes || data.servicios || data.staff || data.turnos);
+
+if (!esValido) {
+data = localCache || fallbackData;
+}
+
+if (!data.staff || !Array.isArray(data.staff) || data.staff.length === 0) {
+data.staff = (localCache && localCache.staff) ? localCache.staff : fallbackData.staff;
+}
+if (!data.servicios || !Array.isArray(data.servicios) || data.servicios.length === 0) {
+data.servicios = (localCache && localCache.servicios) ? localCache.servicios : fallbackData.servicios;
+}
+if (!data.clientes || !Array.isArray(data.clientes) || data.clientes.length === 0) {
+data.clientes = (localCache && localCache.clientes) ? localCache.clientes : fallbackData.clientes;
+}
+if (!data.turnos || !Array.isArray(data.turnos)) {
+data.turnos = (localCache && localCache.turnos) ? localCache.turnos : [];
+}
+
+bdGlobal = data;
+try {
+localStorage.setItem('lumina_bd_cache', JSON.stringify(bdGlobal));
+} catch(e) {}
+
+if (typeof renderCalendars === 'function') {
+renderCalendars();
+}
+} catch (err) {
+console.error("Error en fetchDemoData:", err);
+}
+}
+
+function getLocalDateIso(dObj) {
+const d = dObj || new Date();
+const year = d.getFullYear();
+updateCalendarDateDisplay();
+renderCalendars();
+}
+}
+
+const fallbackData = {
+clientes: [
+{ ID_Cliente: "C1787797749", Nombre_Completo: "Sabri", Correo: "espositosabrina29@gmail.com", Telefono: "+5491166266845" },
+{ ID_Cliente: "C1787799907", Nombre_Completo: "Paola", Correo: "siempresina23@gmail.com", Telefono: "+5491166266845" },
+{ ID_Cliente: "C1787799908", Nombre_Completo: "Candela", Correo: "prueba@gmail.com", Telefono: "+5491166266846" }
+],
+servicios: [
+{ ID_Servicio: "SRV01", Nombre_Servicio: "Corte Mujer", Duracion_Min: 60, Especialidad: "Pelo", Costo: "$20.000", Descripción: "Corte adaptado al estilo y forma del rostro, incluye lavado y peinado." },
+{ ID_Servicio: "SRV02", Nombre_Servicio: "Corte Hombre", Duracion_Min: 30, Especialidad: "Pelo", Costo: "$15.000", Descripción: "Corte clásico o moderno con tijera y máquina, terminado impecable." },
+{ ID_Servicio: "SRV03", Nombre_Servicio: "Manicuría", Duracion_Min: 30, Especialidad: "Uñas", Costo: "$18.000", Descripción: "Limpieza de cutículas, limado y esmaltado tradicional o gel." },
+{ ID_Servicio: "SRV04", Nombre_Servicio: "Uñas Esculpidas Acrílico", Duracion_Min: 90, Especialidad: "Uñas", Costo: "$30.000", Descripción: "Construcción completa de uñas acrílicas con acabado duradero y natural." },
+{ ID_Servicio: "SRV05", Nombre_Servicio: "Kapping Gel", Duracion_Min: 60, Especialidad: "Uñas", Costo: "$25.000", Descripción: "Capa protectora de gel sobre la uña natural para fortalecerla y evitar quebraduras." }
+],
+staff: [
+{ ID_Staff: "S01", Nombre: "Valeria Gomez", Especialidad: "Uñas", Hora_Inicio: "08:00", Hora_Fin: "18:00" },
+{ ID_Staff: "S02", Nombre: "Marcos Silva", Especialidad: "Pelo", Hora_Inicio: "15:00", Hora_Fin: "20:00" }
+],
+turnos: []
+};
+
+let currentStaffRole = null;
+function switchRole(role) {
+document.getElementById('view-owner').classList.add('hide');
+document.getElementById('view-staff').classList.add('hide');
+
+if (role === 'owner') {
+document.getElementById('view-owner').classList.remove('hide');
+} else {
+document.getElementById('view-staff').classList.remove('hide');
+currentStaffRole = role;
+
+const staffList = (bdGlobal && bdGlobal.staff && bdGlobal.staff.length > 0) ? bdGlobal.staff : fallbackData.staff;
+let st = staffList.find(x => (x.ID_Staff || x.ID_Staff) === role);
+if(st) {
+const nombreSt = st.Nombre || st.Nombre_Completo || st.ID_Staff;
+document.getElementById('staffTitleName').innerText = "Mi Agenda (" + nombreSt + ")";
+document.getElementById('staffTitleEspec').innerText = st.Especialidad || "";
+}
+renderCalendars();
+}
+}
+
+function updateBlockForm() {
+const type = document.getElementById('blockType').value;
+const fgFecha = document.getElementById('fg-fecha');
+const fgRangoFechas = document.getElementById('fg-rango-fechas');
+const fgHoras = document.getElementById('fg-horas');
+
+fgFecha.classList.add('hidden'); fgFecha.classList.remove('block');
+fgRangoFechas.classList.add('hidden'); fgHoras.classList.add('hidden');
+
+if (type === 'dia') {
+fgFecha.classList.remove('hidden'); fgFecha.classList.add('block');
+} else if (type === 'franja') {
+fgFecha.classList.remove('hidden'); fgFecha.classList.add('block');
+fgHoras.classList.remove('hidden');
+} else if (type === 'periodo') {
+fgRangoFechas.classList.remove('hidden');
+}
+}
+
+function actualizarDesplegableClientes() {
+const select = document.getElementById('clienteSelect');
+if (!select) return;
+
+let listaClientes = [];
+if (bdGlobal && Array.isArray(bdGlobal.clientes) && bdGlobal.clientes.length > 0) {
+listaClientes = bdGlobal.clientes;
+} else {
+let savedStr = localStorage.getItem('lumina_bd_cache');
+if (savedStr) {
+try {
+let parsed = JSON.parse(savedStr);
+if (parsed && Array.isArray(parsed.clientes) && parsed.clientes.length > 0) {
+listaClientes = parsed.clientes;
+}
+} catch(e) {}
+}
+}
+
+if (!listaClientes || listaClientes.length === 0) {
+listaClientes = fallbackData.clientes;
+}
+
+const valActual = select.value;
+select.innerHTML = '<option value="">Selecciona un cliente de la lista...</option>';
+
+listaClientes.forEach(c => {
+const nombre = c.Nombre_Completo || c.Nombre || c.Name;
+const email = c.Correo || c.Email || c.email;
+const infoExtra = email ? ` (${email})` : '';
+if (nombre) {
+select.innerHTML += `<option value="${nombre}">👤 ${nombre}${infoExtra}</option>`;
+}
+});
+
+select.innerHTML += '<option value="MANUAL_NAME">✍️ Escribir otro nombre (Cliente manual)</option>';
+if (valActual) select.value = valActual;
+}
+],
+turnos: []
+};
+
+let currentStaffRole = null;
+function switchRole(role) {
+document.getElementById('view-owner').classList.add('hide');
+document.getElementById('view-staff').classList.add('hide');
+
+if (role === 'owner') {
+document.getElementById('view-owner').classList.remove('hide');
+} else {
+document.getElementById('view-staff').classList.remove('hide');
+currentStaffRole = role;
+
+const staffList = (bdGlobal && bdGlobal.staff && bdGlobal.staff.length > 0) ? bdGlobal.staff : fallbackData.staff;
+let st = staffList.find(x => (x.ID_Staff || x.ID_Staff) === role);
+if(st) {
+const nombreSt = st.Nombre || st.Nombre_Completo || st.ID_Staff;
+document.getElementById('staffTitleName').innerText = "Mi Agenda (" + nombreSt + ")";
+document.getElementById('staffTitleEspec').innerText = st.Especialidad || "";
+if(id === 'metricsModal') calcularMetricas();
+}
+}
+function closeModal(id) { document.getElementById(id).classList.add('hide'); }
+
+function calcularMetricas() {
+if (!bdGlobal) return;
+
+const hoyIso = getLocalDateIso();
+const turnosList = bdGlobal.turnos || [];
+const clientesList = bdGlobal.clientes || [];
+const serviciosList = bdGlobal.servicios || [];
+const staffList = bdGlobal.staff || [];
+
+// 1. Turnos Hoy
+const turnosHoy = turnosList.filter(t => normalizarFecha(t.Fecha) === hoyIso && (t.Estado||'').toLowerCase() !== 'cancelado');
+if (document.getElementById('metricTurnosHoy')) document.getElementById('metricTurnosHoy').innerText = turnosHoy.length;
+if (document.getElementById('adminTurnosCount')) document.getElementById('adminTurnosCount').innerText = turnosHoy.length;
+
+// 2. Turnos esta Semana (próximos 7 días)
+const dHoy = new Date();
+const dMax = new Date();
+dMax.setDate(dHoy.getDate() + 7);
+const isoMax = getLocalDateIso(dMax);
+dMax.setDate(dHoy.getDate() + 7);
+const isoMax = getLocalDateIso(dMax);
+const turnosSemana = turnosList.filter(t => {
+const f = normalizarFecha(t.Fecha);
+return f >= hoyIso && f <= isoMax && (t.Estado||'').toLowerCase() !== 'cancelado';
+});
+if (document.getElementById('metricTurnosSemana')) document.getElementById('metricTurnosSemana').innerText = turnosSemana.length;
+
+// 3. Clientes Totales
+if (document.getElementById('metricClientesTotales')) document.getElementById('metricClientesTotales').innerText = clientesList.length;
+
+// 4. Confirmados 24h
+const confirmados24h = turnosList.filter(t => {
+const est = (t.Estado||'').toLowerCase();
+return est.includes('24h') || est.includes('confirmado');
+});
+if (document.getElementById('metricConfirmados24h')) document.getElementById('metricConfirmados24h').innerText = confirmados24h.length;
+
+// 5. Tratamiento más reservado
+const svcCounts = {};
+turnosList.forEach(t => {
+const sName = t.ID_Servicio || t.Servicio;
+if (sName && sName !== 'BLOQUEADO') {
+svcCounts[sName] = (svcCounts[sName] || 0) + 1;
+}
+});
+let topSvc = "-";
+let maxCount = 0;
+for (const [svc, count] of Object.entries(svcCounts)) {
+if (count > maxCount) {
+if (nombre) {
+select.innerHTML += `<option value="${nombre}">👤 ${nombre}${infoExtra}</option>`;
+}
+});
+
+select.innerHTML += '<option value="MANUAL_NAME">✍️ Escribir otro nombre (Cliente manual)</option>';
+if (valActual) select.value = valActual;
+}
+
+function openModal(id) { 
+const modal = document.getElementById(id);
+if(modal) {
+modal.classList.remove('hide'); 
+if(id === 'newTurnoModal') {
+actualizarDesplegableClientes();
+}
+if(id === 'blockModal') {
+updateBlockForm();
+const blockStaffSel = document.getElementById('blockStaffSelect');
+if (blockStaffSel) {
+blockStaffSel.innerHTML = '<option value="ALL">🏢 Toda la Estética (Todo el Staff)</option>';
+const staffList = (bdGlobal && bdGlobal.staff && bdGlobal.staff.length > 0) ? bdGlobal.staff : fallbackData.staff;
+staffList.forEach(st => {
+let nombre = st.Nombre || st.Nombre_Completo || st.ID_Staff;
+let esp = st.Especialidad ? ` (${st.Especialidad})` : '';
+let idSt = st.ID_Staff || st.ID_Staff;
+blockStaffSel.innerHTML += `<option value="${idSt}">👤 Staff: ${nombre}${esp}</option>`;
+});
+}
+}
+if(id === 'brandModal') initBrandModalForm();
+if(id === 'metricsModal') calcularMetricas();
+}
+}
+function closeModal(id) { document.getElementById(id).classList.add('hide'); }
+
+function calcularMetricas() {
+if (!bdGlobal) return;
+
+const hoyIso = getLocalDateIso();
+const turnosList = bdGlobal.turnos || [];
+const clientesList = bdGlobal.clientes || [];
+const serviciosList = bdGlobal.servicios || [];
+const staffList = bdGlobal.staff || [];
+
+// 1. Turnos Hoy
+const turnosHoy = turnosList.filter(t => normalizarFecha(t.Fecha) === hoyIso && (t.Estado||'').toLowerCase() !== 'cancelado');
+if (document.getElementById('metricTurnosHoy')) document.getElementById('metricTurnosHoy').innerText = turnosHoy.length;
+if (document.getElementById('adminTurnosCount')) document.getElementById('adminTurnosCount').innerText = turnosHoy.length;
+
+// 2. Turnos esta Semana (próximos 7 días)
+document.getElementById('tdtTitle').innerText = "📋 Detalle del Turno";
+
+let cliente = bdGlobal.clientes ? bdGlobal.clientes.find(c => c.ID_Cliente === t.ID_Cliente || (c.Nombre_Completo||c.Nombre) === t.Cliente) : null;
+let nombreCliente = cliente ? (cliente.Nombre_Completo || cliente.Nombre) : (t.Cliente || 'Cliente');
+let emailCliente = cliente ? (cliente.Correo || cliente.Email || '-') : (t.Correo || '-');
+let telCliente = cliente ? (cliente.Telefono || cliente.Tel || '-') : '-';
+let waLink = telCliente !== '-' ? `https://wa.me/${telCliente.replace(/[^0-9]/g, '')}` : null;
+
+let servicio = bdGlobal.servicios ? bdGlobal.servicios.find(s => s.ID_Servicio === t.ID_Servicio || (s.Nombre_Servicio||s.Nombre) === (t.Servicio||t.ID_Servicio)) : null;
+let nombreSvc = servicio ? (servicio.Nombre_Servicio || servicio.Nombre) : (t.Servicio || t.ID_Servicio);
+let durSvc = servicio ? (servicio.Duracion_Min + ' min') : '60 min';
+let costoRaw = servicio ? (servicio.Costo || servicio.Precio || '') : '';
+let costoStr = costoRaw ? (costoRaw.toString().startsWith('$') ? costoRaw : `$${costoRaw}`) : "No especificado";
+
+let staff = bdGlobal.staff ? bdGlobal.staff.find(st => st.ID_Staff === t.ID_Staff) : null;
+let nombreStaff = staff ? (staff.Nombre || staff.Nombre_Completo) : (t.ID_Staff || 'Valeria Gomez');
+
+const estadoRaw = (t.Estado || t.estado || "Agendado").trim();
+const estadoLower = estadoRaw.toLowerCase();
+let estadoBadge = "";
+
+if (estadoLower.includes('24h') || estadoLower.includes('24')) {
+estadoBadge = `<span class="px-2.5 py-1 rounded-full bg-emerald-500 text-white font-bold shadow-xs">✅ Confirmado (Asistencia 24hs)</span>`;
+} else if (estadoLower.includes('recordatorio') || estadoLower.includes('enviado')) {
+}
+}
+
+// --- DETALLE DE TURNO AL HACER CLIC Y ESTADOS CLAROS ---
+function openTurnoDetailModal(idTurno) {
+if (!bdGlobal || !bdGlobal.turnos) return;
+const t = bdGlobal.turnos.find(x => (x.ID_Turno || x.idTurno) === idTurno);
+if (!t) return;
+
+const modal = document.getElementById('turnoDetailModal');
+if (!modal) return;
+
+const isBlock = (t.Estado || "").toLowerCase() === 'bloqueado' || t.ID_Servicio === 'BLOQUEADO';
+const targetIdTurno = t.ID_Turno || t.idTurno || '';
+
+if (isBlock) {
+document.getElementById('tdtTitle').innerText = "🔒 Agenda Bloqueada";
+document.getElementById('tdtBody').innerHTML = `
+<div class="bg-amber-50 border border-amber-200 p-4 rounded-xl space-y-2 text-xs text-amber-900 mb-4">
+<div><strong>Motivo:</strong> ${t.Motivo || t.Cliente || 'Agenda Bloqueada'}</div>
+<div><strong>Fecha:</strong> ${normalizarFecha(t.Fecha)}</div>
+<div><strong>Horario:</strong> ${t.Hora_Inicio} hs - ${t.Hora_Fin} hs</div>
+<div><strong>Personal afectado:</strong> ${t.ID_Staff === 'ALL' ? 'Toda la estética' : t.ID_Staff}</div>
+</div>
+<button onclick="eliminarBloqueoAgendaAction('${targetIdTurno}')" class="w-full bg-rose-600 text-white font-bold py-3.5 rounded-xl hover:bg-rose-700 transition text-xs flex items-center justify-center gap-2 shadow-xs active:scale-95">
+<span>🔓</span> Eliminar Bloqueo de Agenda
+</button>
+`;
+} else {
+document.getElementById('tdtTitle').innerText = "📋 Detalle del Turno";
+
+let cliente = bdGlobal.clientes ? bdGlobal.clientes.find(c => c.ID_Cliente === t.ID_Cliente || (c.Nombre_Completo||c.Nombre) === t.Cliente) : null;
+let nombreCliente = cliente ? (cliente.Nombre_Completo || cliente.Nombre) : (t.Cliente || 'Cliente');
+let emailCliente = cliente ? (cliente.Correo || cliente.Email || '-') : (t.Correo || '-');
+let telCliente = cliente ? (cliente.Telefono || cliente.Tel || '-') : '-';
+let waLink = telCliente !== '-' ? `https://wa.me/${telCliente.replace(/[^0-9]/g, '')}` : null;
+
+let servicio = bdGlobal.servicios ? bdGlobal.servicios.find(s => s.ID_Servicio === t.ID_Servicio || (s.Nombre_Servicio||s.Nombre) === (t.Servicio||t.ID_Servicio)) : null;
+let nombreSvc = servicio ? (servicio.Nombre_Servicio || servicio.Nombre) : (t.Servicio || t.ID_Servicio);
+let durSvc = servicio ? (servicio.Duracion_Min + ' min') : '60 min';
+let costoRaw = servicio ? (servicio.Costo || servicio.Precio || '') : '';
+let costoStr = costoRaw ? (costoRaw.toString().startsWith('$') ? costoRaw : `$${costoRaw}`) : "No especificado";
+
+let staff = bdGlobal.staff ? bdGlobal.staff.find(st => st.ID_Staff === t.ID_Staff) : null;
+let nombreStaff = staff ? (staff.Nombre || staff.Nombre_Completo) : (t.ID_Staff || 'Valeria Gomez');
+
+const estadoRaw = (t.Estado || t.estado || "Agendado").trim();
+const estadoLower = estadoRaw.toLowerCase();
+let estadoBadge = "";
+
+if (estadoLower.includes('24h') || estadoLower.includes('24')) {
+estadoBadge = `<span class="px-2.5 py-1 rounded-full bg-emerald-500 text-white font-bold shadow-xs">✅ Confirmado (Asistencia 24hs)</span>`;
+} else if (estadoLower.includes('recordatorio') || estadoLower.includes('enviado')) {
+estadoBadge = `<span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold shadow-xs">📩 Recordatorio 24hs Enviado</span>`;
+} else if (estadoLower.includes('cancelado')) {
+</div>
+<button onclick="eliminarBloqueoAgendaAction('${targetIdTurno}')" class="w-full bg-rose-600 text-white font-bold py-3.5 rounded-xl hover:bg-rose-700 transition text-xs flex items-center justify-center gap-2 shadow-xs active:scale-95">
+<span>🔓</span> Eliminar Bloqueo de Agenda
+</button>
+`;
+} else {
+document.getElementById('tdtTitle').innerText = "📋 Detalle del Turno";
+
+let cliente = bdGlobal.clientes ? bdGlobal.clientes.find(c => c.ID_Cliente === t.ID_Cliente || (c.Nombre_Completo||c.Nombre) === t.Cliente) : null;
+let nombreCliente = cliente ? (cliente.Nombre_Completo || cliente.Nombre) : (t.Cliente || 'Cliente');
+let emailCliente = cliente ? (cliente.Correo || cliente.Email || '-') : (t.Correo || '-');
+let telCliente = cliente ? (cliente.Telefono || cliente.Tel || '-') : '-';
+let waLink = telCliente !== '-' ? `https://wa.me/${telCliente.replace(/[^0-9]/g, '')}` : null;
+
+let servicio = bdGlobal.servicios ? bdGlobal.servicios.find(s => s.ID_Servicio === t.ID_Servicio || (s.Nombre_Servicio||s.Nombre) === (t.Servicio||t.ID_Servicio)) : null;
+let nombreSvc = servicio ? (servicio.Nombre_Servicio || servicio.Nombre) : (t.Servicio || t.ID_Servicio);
+let durSvc = servicio ? (servicio.Duracion_Min + ' min') : '60 min';
+let costoRaw = servicio ? (servicio.Costo || servicio.Precio || '') : '';
+let costoStr = costoRaw ? (costoRaw.toString().startsWith('$') ? costoRaw : `$${costoRaw}`) : "No especificado";
+
+let staff = bdGlobal.staff ? bdGlobal.staff.find(st => st.ID_Staff === t.ID_Staff) : null;
+let nombreStaff = staff ? (staff.Nombre || staff.Nombre_Completo) : (t.ID_Staff || 'Valeria Gomez');
+
+const estadoRaw = (t.Estado || t.estado || "Agendado").trim();
+const estadoLower = estadoRaw.toLowerCase();
+let estadoBadge = "";
+
+if (estadoLower.includes('24h') || estadoLower.includes('24')) {
+estadoBadge = `<span class="px-2.5 py-1 rounded-full bg-emerald-500 text-white font-bold shadow-xs">✅ Confirmado (Asistencia 24hs)</span>`;
+} else if (estadoLower.includes('recordatorio') || estadoLower.includes('enviado')) {
+estadoBadge = `<span class="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold shadow-xs">📩 Recordatorio 24hs Enviado</span>`;
+} else if (estadoLower.includes('cancelado')) {
+estadoBadge = `<span class="px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 font-semibold shadow-xs">❌ Cancelado</span>`;
+} else {
+estadoBadge = `<span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-semibold shadow-xs">📅 Agendado (Pendiente confirmación 24hs)</span>`;
+}
+
+document.getElementById('tdtBody').innerHTML = `
+<div class="space-y-3 text-xs">
+<div class="bg-stone-50 border border-stone-200 p-3 rounded-xl space-y-1">
+<div class="font-bold text-stone-700 text-sm flex items-center justify-between">
+<span>👤 ${nombreCliente}</span>
+${waLink ? `<a href="${waLink}" target="_blank" class="text-emerald-600 font-semibold hover:underline flex items-center gap-1">💬 WhatsApp</a>` : ''}
+</div>
+<div class="text-stone-500">📧 ${emailCliente}</div>
+<div class="text-stone-500">📞 ${telCliente}</div>
+</div>
+
+<div class="bg-stone-50 border border-stone-200 p-3 rounded-xl space-y-1">
+<div class="font-bold text-stone-700 text-sm">💅 ${nombreSvc}</div>
+<div class="text-stone-500">💵 Costo del servicio: <strong class="text-theme font-bold">${costoStr}</strong></div>
+<div class="text-stone-500">⏱️ Duración estimada: ${durSvc}</div>
+</div>
+
+<div class="bg-stone-50 border border-stone-200 p-3 rounded-xl space-y-1">
+<div class="font-semibold text-stone-700">📅 Turno: ${normalizarFecha(t.Fecha)} (${t.Hora_Inicio} hs - ${t.Hora_Fin} hs)</div>
+<div class="text-stone-500">👤 Atendido por: ${nombreStaff}</div>
+<div class="text-stone-500 flex items-center gap-1 pt-1">
+<span>📌 Estado:</span> ${estadoBadge}
+</div>
+</div>
+
+<div class="mt-3 border-t border-stone-200 pt-3">
+<label class="block text-xs font-semibold text-stone-600 mb-1">💬 Motivo / Nota para el Cliente (Opcional):</label>
+<textarea id="cancelMotivoInput" placeholder="Ej. El profesional se encuentra con licencia médica. Por favor re-agenda tu cita desde la web..." class="input-pastel text-xs h-16 resize-none mb-3"></textarea>
+
+<button onclick="cancelarTurnoDesdeAdmin('${targetIdTurno}', true)" class="w-full bg-rose-600 text-white font-bold py-3 rounded-xl hover:bg-rose-700 transition text-xs flex items-center justify-center gap-1.5 shadow-xs active:scale-95">
+<span>📩</span> Cancelar Turno y Notificar al Cliente por Mail
+</button>
+</div>
+</div>
+
+closeModal('turnoDetailModal');
+renderCalendars();
+alert("🔓 Bloqueo de agenda eliminado con éxito.");
+setTimeout(fetchDemoData, 1000);
+}
+
+async function cancelarTurnoDesdeAdmin(idTurno, notificarEmail = true) {
+if (!idTurno) return;
+
+const motivoText = document.getElementById('cancelMotivoInput')?.value.trim() || "";
+
+const confirmMsg = notificarEmail 
+? "¿Estás seguro de que deseas cancelar este turno? Se enviará automáticamente el mail de cancelación al cliente."
+: "¿Estás seguro de que deseas eliminar este turno de la agenda?";
+
+if (!confirm(confirmMsg)) return;
+
+const t = bdGlobal && bdGlobal.turnos ? bdGlobal.turnos.find(x => (x.ID_Turno || x.idTurno) === idTurno) : null;
+
+let cliente = (bdGlobal && bdGlobal.clientes) ? bdGlobal.clientes.find(c => c.ID_Cliente === (t?.ID_Cliente) || (c.Nombre_Completo || c.Nombre) === (t?.Cliente)) : null;
+let emailCliente = cliente ? (cliente.Correo || cliente.Email || cliente.email) : (t ? (t.Correo || t.email || '') : '');
+let nombreCliente = cliente ? (cliente.Nombre_Completo || cliente.Nombre) : (t ? (t.Cliente || 'Cliente') : 'Cliente');
+
+const cfg = await getBrandingConfigAsync();
+const tColors = themesMap[cfg.theme] || themesMap.purple;
+
+if (bdGlobal && bdGlobal.turnos) {
+bdGlobal.turnos = bdGlobal.turnos.filter(x => (x.ID_Turno || x.idTurno) !== idTurno);
+try {
+localStorage.setItem('lumina_bd_cache', JSON.stringify(bdGlobal));
+} catch(e) {}
+}
+
+closeModal('turnoDetailModal');
+renderCalendars();
+
+if (notificarEmail) {
+const payload = {
+async function cancelarTurnoDesdeAdmin(idTurno, notificarEmail = true) {
+if (!idTurno) return;
+
+const motivoText = document.getElementById('cancelMotivoInput')?.value.trim() || "";
+
+const confirmMsg = notificarEmail 
+? "¿Estás seguro de que deseas cancelar este turno? Se enviará automáticamente el mail de cancelación al cliente."
+: "¿Estás seguro de que deseas eliminar este turno de la agenda?";
+
+if (!confirm(confirmMsg)) return;
+
+const t = bdGlobal && bdGlobal.turnos ? bdGlobal.turnos.find(x => (x.ID_Turno || x.idTurno) === idTurno) : null;
+
+let cliente = (bdGlobal && bdGlobal.clientes) ? bdGlobal.clientes.find(c => c.ID_Cliente === (t?.ID_Cliente) || (c.Nombre_Completo || c.Nombre) === (t?.Cliente)) : null;
+let emailCliente = cliente ? (cliente.Correo || cliente.Email || cliente.email) : (t ? (t.Correo || t.email || '') : '');
+let nombreCliente = cliente ? (cliente.Nombre_Completo || cliente.Nombre) : (t ? (t.Cliente || 'Cliente') : 'Cliente');
+
+let cfg = { name: "Lumina Estética", theme: "purple" };
+try {
+cfg = await getBrandingConfigAsync();
+} catch(e) {}
+const tColors = themesMap[cfg.theme] || themesMap.purple;
+
+registrarTurnoCanceladoLocal(idTurno);
+
+if (bdGlobal && bdGlobal.turnos) {
+bdGlobal.turnos = bdGlobal.turnos.filter(x => (x.ID_Turno || x.idTurno) !== idTurno);
+try {
+localStorage.setItem('lumina_bd_cache', JSON.stringify(bdGlobal));
+} catch(e) {}
+}
+
+const modalEl = document.getElementById('turnoDetailModal');
+if (modalEl) modalEl.classList.add('hide');
+
+renderCalendars();
+
+if (notificarEmail) {
+const payload = {
+action: "cancelar",
+idTurno: idTurno,
+motivoCancelacion: motivoText,
+clienteInfo: { nombre: nombreCliente, email: emailCliente },
+idServicio: t ? (t.ID_Servicio || t.Servicio || '') : '',
+fecha: t ? normalizarFecha(t.Fecha || t.fecha) : '',
+horaInicio: t ? (t.Hora_Inicio || t.horaInicio || '') : '',
+branding: { name: cfg.name || "Lumina Estética", theme: cfg.theme || "purple", colors: tColors }
+};
+
+fetch(POST_WEBHOOK_URL, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(payload)
+}).then(res => {
+console.log("Respuesta webhook cancelación:", res.status);
+}).catch(e => {
+console.error("Error enviando cancelación a n8n:", e);
+});
+}
+
+setTimeout(() => {
+alert(notificarEmail ? "✉️ Turno cancelado y notificación enviada al cliente por mail." : "🗑️ Turno eliminado de la agenda.");
+}, 100);
+}
+
+async function applyAgendaBlock() {
+const type = document.getElementById('blockType').value;
+const targetStaff = document.getElementById('blockStaffSelect')?.value || 'ALL';
+const motivoInput = document.getElementById('blockMotivo')?.value.trim() || 'Agenda Bloqueada';
+
+let fechasABloquear = [];
+let horaIni = "09:00";
+let horaFin = "20:00";
+
+if (type === 'dia') {
+const singleDate = document.getElementById('blockSingleDate').value;
+if (!singleDate) { alert("Selecciona la fecha a bloquear."); return; }
+fechasABloquear.push(normalizarFecha(singleDate));
+} else if (type === 'franja') {
+const singleDate = document.getElementById('blockSingleDate').value;
+if (!singleDate) { alert("Selecciona la fecha a bloquear."); return; }
+fechasABloquear.push(normalizarFecha(singleDate));
+horaIni = document.getElementById('blockTimeFrom').value;
+horaFin = document.getElementById('blockTimeTo').value;
+} else if (type === 'periodo') {
+const rangeStr = document.getElementById('blockRangeDates').value;
+if (!rangeStr) { alert("Selecciona el rango de fechas."); return; }
+const parts = rangeStr.split(' a ');
+if (parts.length === 2) {
+let dStart = new Date(parts[0]);
+let dEnd = new Date(parts[1]);
+for (let d = new Date(dStart); d <= dEnd; d.setDate(d.getDate() + 1)) {
+fechasABloquear.push(getLocalDateIso(d));
+}
+} else {
+fechasABloquear.push(normalizarFecha(parts[0]));
+}
+}
+
+if (fechasABloquear.length === 0) {
+alert("No se seleccionó una fecha válida."); return;
+}
+if (!data.clientes || !Array.isArray(data.clientes) || data.clientes.length === 0) {
+data.clientes = fallbackData.clientes;
+}
+
+bdGlobal = data;
+
+if (bdGlobal.clientes) {
+const datalist = document.getElementById('clientesList');
+
+bdGlobal = data;
+
+if (bdGlobal.clientes) {
+const datalist = document.getElementById('clientesList');
+if (datalist) {
+datalist.innerHTML = '';
+bdGlobal.clientes.forEach(c => {
+const nombre = c.Nombre_Completo || c.Nombre || c.Name;
+if (nombre) datalist.innerHTML += `<option value="${nombre}">`;
+if (!file) return;
+const reader = new FileReader();
+reader.onload = function(e) {
+const img = new Image();
+img.onload = function() {
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+const maxDim = 800;
+let w = img.width;
+let h = img.height;
+if (w > maxDim || h > maxDim) {
+if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+else { w = Math.round((w * maxDim) / h); h = maxDim; }
+}
+canvas.width = w;
+canvas.height = h;
+ctx.drawImage(img, 0, 0, w, h);
+tempBgDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+document.getElementById('bmBgUrl').value = "";
+};
+img.src = e.target.result;
+};
+reader.readAsDataURL(file);
+}
+
+function handleBgUrlInput() {
+const url = document.getElementById('bmBgUrl').value.trim();
+tempBgDataUrl = url;
+}
+
+function updatePreviewCircle(imgSrc) {
+const previewEl = document.getElementById('bmPreviewCircle');
+if (!previewEl) return;
+if (imgSrc) {
+previewEl.innerHTML = `<img src="${imgSrc}" class="w-full h-full object-cover rounded-full">`;
+} else {
+const name = document.getElementById('bmName')?.value || 'L';
+previewEl.innerHTML = name.charAt(0).toUpperCase();
+}
+}
+
+async function initBrandModalForm() {
+const cfg = await getBrandingConfigAsync();
+document.getElementById('bmName').value = cfg.name || '';
+document.getElementById('bmDesc').value = cfg.description || defaultBranding.description;
+document.getElementById('bmLogoUrl').value = cfg.logoUrl || '';
+document.getElementById('bmBgUrl').value = cfg.bgUrl || '';
+document.getElementById('bmAddress').value = cfg.address || defaultBranding.address;
+document.getElementById('bmMapUrl').value = cfg.mapUrl || '';
+document.getElementById('bmWhatsapp').value = cfg.whatsapp || defaultBranding.whatsapp;
+document.getElementById('bmTheme').value = cfg.theme || 'purple';
+
+let titulo = "";
+if (isoStr === hoyIsoStr) titulo = "Hoy";
+else {
+let unDiaDespues = new Date(); unDiaDespues.setDate(unDiaDespues.getDate() + 1);
+if (isoStr === getLocalDateIso(unDiaDespues)) titulo = "Mañana";
+else titulo = `${diasSemana[dObj.getDay()]} ${dObj.getDate()}/${dObj.getMonth()+1}`;
+}
+
+let claseExtra = d>=3 ? "cal-extra" : "";
+let hidden = (d>=3 && !isShowingFullWeek) ? "cal-col-hidden" : "";
+html += `<div class="cal-header ${claseExtra} ${hidden}">${titulo}</div>`;
+}
+
+let turnosEncontradosHoy = 0;
+
+for (let h=9; h<=20; h++) {
+let horaStr = (h<10?'0':'') + h + ':00';
+let prefixHora = horaStr.split(':')[0] + ":";
+html += `<div class="cal-time">${horaStr}</div>`;
+
+for (let d=0; d<numDias; d++) {
+let dObj = new Date(baseDate);
+dObj.setDate(baseDate.getDate() + d);
+let fechaIso = getLocalDateIso(dObj);
+let claseExtra = d>=3 ? "cal-extra" : "";
+let hidden = (d>=3 && !isShowingFullWeek) ? "cal-col-hidden" : "";
+
+// Buscar si hay un bloqueo que cubra esta celda u hora
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(cfg)
+});
+} catch(err) {
+console.warn("Error guardando branding en el servidor:", err);
+} finally {
+if (btnSave) { btnSave.innerText = "Guardar Cambios de Marca"; btnSave.disabled = false; }
+}
+
+applyBranding(cfg);
+closeModal('brandModal');
+alert('¡Configuración de Marca guardada y sincronizada para todos los clientes!');
+}
+
+async function applyBranding(config) {
+const cfg = config || await getBrandingConfigAsync();
+
+document.querySelectorAll(".brand-name").forEach(el => el.innerText = cfg.name);
+
+document.querySelectorAll(".brand-logo").forEach(el => {
+if (cfg.logoUrl) {
+el.innerHTML = `<img src="${cfg.logoUrl}" class="w-full h-full object-cover rounded-full">`;
+} else {
+const initial = (cfg.name || 'L').charAt(0).toUpperCase();
+el.innerHTML = initial;
+}
+});
+
+const themes = {
+rose: {
+primary: '#fecdd3', hover: '#fda4af', text: '#881337', accent: '#ffe4e6', border: '#fecdd3',
+cardBg: '#ffe4e6', cardBorder: '#fb7185', cardText: '#881337',
+cardBg2: '#fff1f2', cardBorder2: '#f43f5e', cardText2: '#9f1239'
+},
+emerald: {
+primary: '#a7f3d0', hover: '#6ee7b7', text: '#065f46', accent: '#ecfdf5', border: '#a7f3d0',
+cardBg: '#ecfdf5', cardBorder: '#34d399', cardText: '#065f46',
+cardBg2: '#d1fae5', cardBorder2: '#10b981', cardText2: '#047857'
+},
+sky: {
+primary: '#bae6fd', hover: '#7dd3fc', text: '#075985', accent: '#e0f2fe', border: '#bae6fd',
+cardBg: '#e0f2fe', cardBorder: '#38bdf8', cardText: '#0369a1',
+cardBg2: '#dbeafe', cardBorder2: '#60a5fa', cardText2: '#1e3a8a'
+},
+purple: {
+primary: '#e9d5ff', hover: '#d8b4fe', text: '#6b21a8', accent: '#f3e8ff', border: '#e9d5ff',
+cardBg: '#f3e8ff', cardBorder: '#c084fc', cardText: '#581c87',
+cardBg2: '#fae8ff', cardBorder2: '#e879f9', cardText2: '#701a75'
+},
+amber: {
+primary: '#fef3c7', hover: '#fde68a', text: '#92400e', accent: '#fffbeb', border: '#fef3c7',
+cardBg: '#fffbeb', cardBorder: '#fbbf24', cardText: '#78350f',
+cardBg2: '#fef3c7', cardBorder2: '#f59e0b', cardText2: '#92400e'
+}
+};
+
+const t = themes[cfg.theme] || themes.purple;
+
+document.documentElement.style.setProperty('--primary', t.primary);
+document.documentElement.style.setProperty('--primary-hover', t.hover);
+document.documentElement.style.setProperty('--primary-text', t.text);
+document.documentElement.style.setProperty('--accent', t.accent);
+document.documentElement.style.setProperty('--border', t.border);
+
+document.documentElement.style.setProperty('--card-bg', t.cardBg);
+document.documentElement.style.setProperty('--card-border', t.cardBorder);
+document.documentElement.style.setProperty('--card-text', t.cardText);
+
+document.documentElement.style.setProperty('--card-bg2', t.cardBg2);
+document.documentElement.style.setProperty('--card-border2', t.cardBorder2);
+document.documentElement.style.setProperty('--card-text2', t.cardText2);
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+await applyBranding();
+fetchDemoData();
+// Refresco automático constante contra Google Sheets cada 15 segundos
+setInterval(fetchDemoData, 15000);
+});
+
+function handleClienteSelectChange(val) {
+const manualDiv = document.getElementById('divManualClientInput');
+if (!manualDiv) return;
+if (val === 'MANUAL_NAME') {
+manualDiv.classList.remove('hide');
+document.getElementById('clienteManualInput').focus();
+} else {
+manualDiv.classList.add('hide');
+}
+}
+
+function formatPrecio(val) {
+if (val === null || val === undefined) return '';
+let str = val.toString().trim();
+if (!str) return '';
+let numOnly = str.replace(/[^0-9]/g, '');
+if (!numOnly) return str;
+let formatted = parseInt(numOnly, 10).toLocaleString('de-DE');
+return `$${formatted}`;
+}
+
+}).catch(e => console.warn(e));
+} catch(e) {}
+
+const select = document.getElementById('clienteSelect');
+if (select) {
+select.innerHTML += `<option value="${nombre}" selected>${nombre} (${email})</option>`;
+select.value = nombre;
+handleClienteSelectChange(nombre);
+}
+alert('¡Cliente registrado con éxito!');
+closeModal('newClientModal');
+}
+
+function saveNewStaff() {
+const nombre = document.getElementById('nsNombre').value.trim();
+const especialidad = document.getElementById('nsEspecialidad').value.trim();
+const horaIni = document.getElementById('nsHoraInicio').value || "08:00";
+const horaFin = document.getElementById('nsHoraFin').value || "20:00";
+
+if (!nombre) { alert("Por favor ingresa el nombre del profesional."); return; }
+}).catch(e => console.warn(e));
+} catch(e) {}
+
+renderCalendars();
+closeModal('newStaffModal');
+alert(`✨ ¡${nombre} ha sido agregado/a con éxito al equipo de la Estética!`);
+
+document.getElementById('nsNombre').value = '';
+document.getElementById('nsEspecialidad').value = '';
+}
+
+function saveNewService() {
+const nombre = document.getElementById('nsvcNombre').value.trim();
+const costoRaw = document.getElementById('nsvcCosto').value.trim();
+const duracion = parseInt(document.getElementById('nsvcDuracion').value) || 30;
+const especialidad = document.getElementById('nsvcEspecialidad').value.trim() || "Estética";
+const descripcion = document.getElementById('nsvcDescripcion').value.trim() || "";
+
+if (!nombre) { alert("Por favor ingresa el nombre del servicio."); return; }
+if (!costoRaw) { alert("Por favor ingresa el valor o costo del servicio."); return; }
+
+const costoFormatted = costoRaw.startsWith('$') ? costoRaw : `$${costoRaw}`;
+const idServicio = 'SRV' + String((bdGlobal && bdGlobal.servicios ? bdGlobal.servicios.length : 0) + 1).padStart(2, '0');
+
+const nuevoServicio = {
+ID_Servicio: idServicio,
+Nombre_Servicio: nombre,
+Nombre: nombre,
+Costo: costoFormatted,
+Precio: costoFormatted,
+Duracion_Min: duracion,
+Especialidad: especialidad,
+Descripción: descripcion
+};
+
+if (!bdGlobal) bdGlobal = {};
+if (!bdGlobal.servicios) bdGlobal.servicios = [];
+bdGlobal.servicios.push(nuevoServicio);
+
+// Guardar en caché local
+try {
+localStorage.setItem('lumina_bd_cache', JSON.stringify(bdGlobal));
+} catch(e) {}
+
+// Notificar a n8n si aplica
+try {
+fetch(POST_WEBHOOK_URL, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+const costoFormatted = costoRaw.startsWith('$') ? costoRaw : `$${costoRaw}`;
+const idServicio = 'SRV' + String((bdGlobal && bdGlobal.servicios ? bdGlobal.servicios.length : 0) + 1).padStart(2, '0');
+
+const nuevoServicio = {
+ID_Servicio: idServicio,
+const descripcion = document.getElementById('nsvcDescripcion').value.trim() || "";
+
+if (!nombre) { alert("Por favor ingresa el nombre del servicio."); return; }
+if (!costoRaw) { alert("Por favor ingresa el valor o costo del servicio."); return; }
+
+const costoFormatted = costoRaw.startsWith('$') ? costoRaw : `$${costoRaw}`;
+const idServicio = 'SRV' + String((bdGlobal && bdGlobal.servicios ? bdGlobal.servicios.length : 0) + 1).padStart(2, '0');
+
+const nuevoServicio = {
+ID_Servicio: idServicio,
+Nombre_Servicio: nombre,
+Nombre: nombre,
+Costo: costoFormatted,
+Precio: costoFormatted,
+Duracion_Min: duracion,
+Especialidad: especialidad,
+Descripción: descripcion
+};
+
+if (!bdGlobal) bdGlobal = {};
+if (!bdGlobal.servicios) bdGlobal.servicios = [];
+bdGlobal.servicios.push(nuevoServicio);
+
+try {
+localStorage.setItem('lumina_bd_cache', JSON.stringify(bdGlobal));
+const tel = document.getElementById('ncTel').value.trim();
+const email = document.getElementById('ncEmail').value.trim();
+
+if(!nombre || !email) { alert("Nombre y correo son requeridos."); return; }
+
+const idCliente = 'C' + Math.floor(Date.now() / 1000);
+nuevoClienteGlobal = {
+idCliente: idCliente,
+nombre: nombre, tel: tel, email: email
+};
+
+const nuevoClienteObj = {
+ID_Cliente: idCliente,
+Nombre_Completo: nombre,
+Correo: email,
+Telefono: tel
+};
+
+if (!bdGlobal) bdGlobal = {};
+if (!bdGlobal.clientes) bdGlobal.clientes = [];
+bdGlobal.clientes.push(nuevoClienteObj);
+
+try {
+localStorage.setItem('lumina_bd_cache', JSON.stringify(bdGlobal));
+} catch(e) {}
+
+try {
+fetch(POST_WEBHOOK_URL, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({
+action: "alta_cliente",
+clienteInfo: { idCliente: idCliente, nombre: nombre, email: email, tel: tel }
+})
+}).catch(e => console.warn(e));
+} catch(e) {}
+
+const select = document.getElementById('clienteSelect');
+if (select) {
+select.innerHTML += `<option value="${nombre}" selected>${nombre} (${email})</option>`;
+select.value = nombre;
+handleClienteSelectChange(nombre);
+}
+alert('¡Cliente registrado con éxito!');
+closeModal('newClientModal');
+}
+
+function saveNewStaff() {
+const nombre = document.getElementById('nsNombre').value.trim();
+const especialidad = document.getElementById('nsEspecialidad').value.trim();
+const horaIni = document.getElementById('nsHoraInicio').value || "08:00";
+const horaFin = document.getElementById('nsHoraFin').value || "20:00";
+
+if (!nombre) { alert("Por favor ingresa el nombre del profesional."); return; }
+if (!especialidad) { alert("Por favor ingresa la especialidad."); return; }
+
+const idStaff = 'S' + String((bdGlobal && bdGlobal.staff ? bdGlobal.staff.length : 0) + 1).padStart(2, '0');
+const nuevoStaff = {
+ID_Staff: idStaff,
+Nombre: nombre,
+Nombre_Completo: nombre,
+Especialidad: especialidad,
+Hora_Inicio: horaIni,
+Hora_Fin: horaFin
+};
+
+if (!bdGlobal) bdGlobal = {};
+if (!bdGlobal.staff) bdGlobal.staff = [];
+bdGlobal.staff.push(nuevoStaff);
+
+try {
+localStorage.setItem('lumina_bd_cache', JSON.stringify(bdGlobal));
+} catch(e) {}
+
+try {
+fetch(POST_WEBHOOK_URL, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({
+action: "alta_staff",
+staffInfo: { idStaff: idStaff, nombre: nombre, especialidad: especialidad, horaInicio: horaIni, horaFin: horaFin }
+})
+}).catch(e => console.warn(e));
+} catch(e) {}
+
+renderCalendars();
+closeModal('newStaffModal');
+alert(`✨ ¡${nombre} ha sido agregado/a con éxito al equipo de la Estética!`);
+
+document.getElementById('nsNombre').value = '';
+document.getElementById('nsEspecialidad').value = '';
+}
+
+function saveNewService() {
+const nombre = document.getElementById('nsvcNombre').value.trim();
+const costoRaw = document.getElementById('nsvcCosto').value.trim();
+const duracion = parseInt(document.getElementById('nsvcDuracion').value) || 30;
+const especialidad = document.getElementById('nsvcEspecialidad').value.trim() || "Estética";
+const descripcion = document.getElementById('nsvcDescripcion').value.trim() || "";
+
+if (!nombre) { alert("Por favor ingresa el nombre del servicio."); return; }
+const themesMap = {
+rose:    { primary: '#fecdd3', hover: '#fda4af', text: '#881337', accent: '#ffe4e6', border: '#fecdd3' },
+emerald: { primary: '#a7f3d0', hover: '#6ee7b7', text: '#065f46', accent: '#ecfdf5', border: '#a7f3d0' },
+sky:     { primary: '#bae6fd', hover: '#7dd3fc', text: '#075985', accent: '#e0f2fe', border: '#bae6fd' },
+purple:  { primary: '#e9d5ff', hover: '#d8b4fe', text: '#6b21a8', accent: '#f3e8ff', border: '#e9d5ff' },
+amber:   { primary: '#fef3c7', hover: '#fde68a', text: '#92400e', accent: '#fffbeb', border: '#fef3c7' }
+};
+const tColors = themesMap[cfg.theme] || themesMap.purple;
+
+const payload = {
+action: "nuevo_turno",
+esNuevoCliente: esNuevo,
+clienteInfo: clienteObj,
+fecha: nuevoTurno.Fecha,
+horaInicio: hora,
+horaFin: horaFin,
+idStaff: nuevoTurno.ID_Staff,
+idServicio: servicioName,
+idTurno: nuevoTurno.ID_Turno,
+estado: "Agendado",
+branding: {
+name: cfg.name || "Lumina Estética",
+theme: cfg.theme || "purple",
+colors: tColors
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Recuperar caché local si n8n devuelve error o objeto con mensaje
+let localCache = null;
+try {
+const cStr = localStorage.getItem('lumina_bd_cache');
+if (cStr) localCache = JSON.parse(cStr);
+} catch(e) {}
+
+const esValido = data && typeof data === 'object' && !data.message && (data.clientes || data.servicios || data.staff || data.turnos);
+
+if (!esValido) {
+data = localCache || fallbackData;
+}
+
+if (!data.staff || !Array.isArray(data.staff) || data.staff.length === 0) {
+data.staff = (localCache && localCache.staff) ? localCache.staff : fallbackData.staff;
+}
+if (!data.servicios || !Array.isArray(data.servicios) || data.servicios.length === 0) {
+data.servicios = (localCache && localCache.servicios) ? localCache.servicios : fallbackData.servicios;
+}
+if (!data.clientes || !Array.isArray(data.clientes) || data.clientes.length === 0) {
+if (localCache && Array.isArray(localCache.clientes) && localCache.clientes.length > 0) {
+data.clientes = localCache.clientes;
+} else if (bdGlobal && Array.isArray(bdGlobal.clientes) && bdGlobal.clientes.length > 0) {
+data.clientes = bdGlobal.clientes;
+} else {
+data.clientes = fallbackData.clientes;
+}
+}
+if (!data.turnos || !Array.isArray(data.turnos)) {
+data.turnos = (localCache && Array.isArray(localCache.turnos)) ? localCache.turnos : [];
+}
+
+if (Array.isArray(data.clientes) && data.clientes.length > 0) {
+try {
+localStorage.setItem('lumina_bd_cache', JSON.stringify(data));
+} catch(e) {}
+}
+
+bdGlobal = data;
+actualizarDesplegableClientes();
+
+if (bdGlobal.clientes && Array.isArray(bdGlobal.clientes)) {
+const select = document.getElementById('clienteSelect');
+if (select) {
+const valActual = select.value;
+select.innerHTML = '<option value="">Selecciona un cliente de la lista...</option>';
+bdGlobal.clientes.forEach(c => {
+const nombre = c.Nombre_Completo || c.Nombre || c.Name;
+const email = c.Correo || c.Email || c.email;
+const infoExtra = email ? ` (${email})` : '';
+if (nombre) select.innerHTML += `<option value="${nombre}">👤 ${nombre}${infoExtra}</option>`;
+});
+select.innerHTML += '<option value="MANUAL_NAME">✍️ Escribir otro nombre (Cliente manual)</option>';
+if (valActual) select.value = valActual;
+}
+}
+
+if (bdGlobal.servicios) {
+const select = document.getElementById('serviceSelect');
+if (select) {
+const valActual = select.value;
+select.innerHTML = '<option value="">Selecciona un servicio</option>';
+bdGlobal.servicios.forEach(s => {
+const nombreSvc = s.Nombre_Servicio || s.Nombre || s.Servicio;
+const duracion = s.Duracion_Min ? `${s.Duracion_Min} min` : '';
+const especialidad = s.Especialidad ? `(${s.Especialidad})` : '';
+let costoRaw = (s.Costo || s.Precio || s.costo || s.precio || "").toString().trim();
+let costoStr = costoRaw ? (costoRaw.startsWith('$') ? costoRaw : `$${costoRaw}`) : "";
+
+let label = nombreSvc;
+if (costoStr) label += ` [${costoStr}]`;
+if (especialidad) label += ` ${especialidad}`;
+if (duracion) label += ` - ${duracion}`;
+
+const duracion = s.Duracion_Min ? `${s.Duracion_Min} min` : '';
+const especialidad = s.Especialidad ? `(${s.Especialidad})` : '';
+let costoRaw = (s.Costo || s.Precio || s.costo || s.precio || "").toString().trim();
+let costoStr = costoRaw ? (costoRaw.startsWith('$') ? costoRaw : `$${costoRaw}`) : "";
+
+let label = nombreSvc;
+if (costoStr) label += ` [${costoStr}]`;
+if (especialidad) label += ` ${especialidad}`;
+if (duracion) label += ` - ${duracion}`;
+
+if (nombreSvc) {
+select.innerHTML += `<option value="${nombreSvc}">${label}</option>`;
+}
+});
+if (valActual) select.value = valActual;
+select.onchange = calcularDisponibilidad;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let hFinStr = t.Hora_Fin ? t.Hora_Fin.toString() : "";
+let tIniMin = parseTime(hIniStr);
+let tFinMin = parseTime(hFinStr);
+
+let durSvc = 60;
+if (bdGlobal && bdGlobal.servicios) {
+let sObj = bdGlobal.servicios.find(s => (s.ID_Servicio === t.ID_Servicio) || (s.Nombre_Servicio || s.Nombre || s.Servicio) === t.ID_Servicio);
+if (sObj && sObj.Duracion_Min) durSvc = parseInt(sObj.Duracion_Min) || 60;
+}
+if (!tFinMin || tFinMin <= tIniMin) {
+tFinMin = tIniMin + durSvc;
+}
+
+let dur = tFinMin - tIniMin;
+let altoStyle = dur > 45 ? `style="height: ${Math.round((dur / 30) * 45) - 6}px;"` : "";
+let altoClass = dur <= 45 ? "bottom-1" : "";
+let cColor = getColorClase(t.ID_Servicio || '');
+
+let nombreC = t.Cliente || t.ID_Cliente || "Turno";
+if (bdGlobal && bdGlobal.clientes) {
+let cliente = bdGlobal.clientes.find(c => c.ID_Cliente === t.ID_Cliente);
+if (cliente) nombreC = cliente.Nombre_Completo || cliente.Nombre || nombreC;
+}
+
+let nombreServicio = t.Servicio || t.Nombre_Servicio || '';
+if (!nombreServicio && bdGlobal && bdGlobal.servicios) {
+let sObj = bdGlobal.servicios.find(s => {
+if (!s) return false;
+let sId = (s.ID_Servicio || s.idServicio || s.ID || s.id || "").toString().trim().toLowerCase();
+let sName = (s.Nombre_Servicio || s.Nombre || s.Servicio || "").toString().trim().toLowerCase();
+let target = (t.ID_Servicio || t.Servicio || "").toString().trim().toLowerCase();
+return (sId && sId === target) || (sName && sName === target);
+});
+if (sObj) {
+nombreServicio = sObj.Nombre_Servicio || sObj.Nombre || sObj.Servicio || '';
+}
+}
+if (!nombreServicio) nombreServicio = t.ID_Servicio || 'Turno';
+
+if(esStaff) { turnoCountParaStaff++; }
+
+const idTTurno = t.ID_Turno || t.idTurno || '';
+const estadoLower = (t.Estado || t.estado || "").toLowerCase();
+const isConfirmed24h = estadoLower.includes('24h') || estadoLower.includes('24');
+const isReminderSent = estadoLower.includes('recordatorio') || estadoLower.includes('enviado');
+
+let badgeHtml = '';
+if (isConfirmed24h) {
+badgeHtml = `<span class="text-[9px] bg-emerald-600 text-white px-1 rounded font-bold shrink-0">✓ 24h</span>`;
+} else if (isReminderSent) {
+badgeHtml = `<span class="text-[9px] bg-blue-600 text-white px-1 rounded font-bold shrink-0">📩 24h</span>`;
+} else {
+badgeHtml = `<span class="text-[9px] bg-amber-200 text-amber-900 px-1 rounded font-semibold shrink-0">Agendado</span>`;
+}
+
+html += `<div class="cal-cell">
+<div class="turno ${cColor} top-1 ${altoClass} z-10 cursor-pointer hover:opacity-90 transition transform active:scale-95 shadow-sm" ${altoStyle} onclick="openTurnoDetailModal('${idTTurno}')" title="Haz clic para ver detalle del cliente y servicio">
+<div class="font-bold truncate flex items-center justify-between gap-1">
+<span class="truncate">${nombreC}</span>
+${badgeHtml}
+</div>
+<div class="truncate opacity-80">${nombreServicio}</div>
+</div>
+</div>`;
+} else {
+html += `<div class="cal-cell"></div>`;
+}
+}
+}
+
+const adminCountEl = document.getElementById('adminTurnosCount');
+if (adminCountEl && !esStaff) adminCountEl.innerText = turnosEncontradosHoy;
+
+return html;
+}
+
+let turnoCountParaStaff = 0;
+
+if(ownerCal) {
+ownerCal.innerHTML = armarHTML(false);
+}
+if(staffCal) {
+turnoCountParaStaff = 0;
+staffCal.innerHTML = armarHTML(true);
+let countEl = document.getElementById('staffTurnosCount');
+if (countEl) countEl.innerText = turnoCountParaStaff;
+}
+} catch (globalErr) {
+console.error("Error en renderCalendars:", globalErr);
+}
+}
+</script>
+</body>
+</html>
