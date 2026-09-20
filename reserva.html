@@ -1653,6 +1653,76 @@
             }
         }
 
+        function parseDiasLaborales(str) {
+            if (!str || typeof str !== 'string' || !str.trim()) {
+                return [1, 2, 3, 4, 5, 6]; // Por defecto lunes a sábado
+            }
+            const s = str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+            if (s.includes('todos') || s.includes('toda la semana')) return [1, 2, 3, 4, 5, 6];
+
+            const dayMap = {
+                'dom': 0, 'domingo': 0,
+                'lun': 1, 'lunes': 1,
+                'mar': 2, 'martes': 2,
+                'mie': 3, 'miercoles': 3,
+                'jue': 4, 'jueves': 4,
+                'vie': 5, 'viernes': 5,
+                'sab': 6, 'sabado': 6
+            };
+
+            const rangeMatch = s.match(/(lun(?:es)?|mar(?:tes)?|mie(?:rcoles)?|jue(?:ves)?|vie(?:rnes)?|sab(?:ado)?|dom(?:ingo)?)\s*(?:a|-|al|hasta)\s*(lun(?:es)?|mar(?:tes)?|mie(?:rcoles)?|jue(?:ves)?|vie(?:rnes)?|sab(?:ado)?|dom(?:ingo)?)/);
+            if (rangeMatch) {
+                const start = dayMap[rangeMatch[1]];
+                const end = dayMap[rangeMatch[2]];
+                if (start !== undefined && end !== undefined) {
+                    const days = [];
+                    if (start <= end) {
+                        for (let i = start; i <= end; i++) days.push(i);
+                    } else {
+                        for (let i = start; i <= 6; i++) days.push(i);
+                        for (let i = 0; i <= end; i++) days.push(i);
+                    }
+                    return days;
+                }
+            }
+
+            const found = new Set();
+            const tokens = s.split(/[\s,;\/\+\&y-]+/);
+            for (let t of tokens) {
+                if (!t) continue;
+                for (let prefix in dayMap) {
+                    if (t === prefix || t.startsWith(prefix)) {
+                        found.add(dayMap[prefix]);
+                        break;
+                    }
+                }
+            }
+            if (found.size > 0) return Array.from(found).sort((a,b)=>a-b);
+            return [1, 2, 3, 4, 5, 6];
+        }
+
+        function getDiasRaw(st) {
+            if (!st) return '';
+            return (st.Dias_Laborales || st.Dias || st.dias_laborales || st.dias || st.Dias_Trabajo || st.diasLaborales || '').toString().trim();
+        }
+
+        function staffTrabajaEnDia(st, diaSemanaIdx) {
+            const raw = getDiasRaw(st);
+            const dias = parseDiasLaborales(raw);
+            return dias.includes(diaSemanaIdx);
+        }
+
+        function formatDiasTexto(st) {
+            const raw = getDiasRaw(st);
+            if (!raw) return "Lun a Sáb";
+            const dias = parseDiasLaborales(raw);
+            if (dias.length === 6 && !dias.includes(0)) return "Lun a Sáb";
+            if (dias.length === 5 && !dias.includes(0) && !dias.includes(6)) return "Lun a Vie";
+            if (dias.length === 4 && dias[0] === 1 && dias[3] === 4) return "Lun a Jue";
+            const nombres = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+            return dias.map(d => nombres[d]).join(', ');
+        }
+
         function actualizarListaStaffPorServicio() {
             const servicioInput = document.getElementById('serviceSelect').value;
             const staffSelect = document.getElementById('staffSelect');
@@ -1680,7 +1750,8 @@
                 const nombreSt = st.Nombre || st.Nombre_Completo || st.ID_Staff;
                 const idSt = st.ID_Staff || st.idStaff;
                 const espSt = st.Especialidad ? ` (${st.Especialidad})` : '';
-                staffSelect.innerHTML += `<option value="${idSt}">${nombreSt}${espSt}</option>`;
+                const diasSt = formatDiasTexto(st);
+                staffSelect.innerHTML += `<option value="${idSt}">${nombreSt}${espSt} · ${diasSt}</option>`;
             });
         }
 
@@ -1728,10 +1799,50 @@
 
             const fechaNorm = normalizarFecha(selectedFechaGlobal);
             const turnosList = bdGlobal.turnos || [];
+
+            // Obtener el día de la semana de la fecha seleccionada (0=Dom, 1=Lun, ..., 6=Sáb)
+            const partsF = fechaNorm.split('-');
+            let diaSemanaIdx = 1;
+            if (partsF.length === 3) {
+                const dObj = new Date(parseInt(partsF[0]), parseInt(partsF[1]) - 1, parseInt(partsF[2]));
+                diaSemanaIdx = dObj.getDay();
+            }
+            const diasNombresCompletos = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+            const nombreDia = diasNombresCompletos[diaSemanaIdx];
+
+            // Si el cliente seleccionó un profesional en particular, validar si trabaja ese día
+            if (staffSelectedId && staffSelectedId !== 'ANY') {
+                const targetStaff = staffList.find(st => (st.ID_Staff || st.idStaff) === staffSelectedId);
+                if (targetStaff && !staffTrabajaEnDia(targetStaff, diaSemanaIdx)) {
+                    const diasAtencion = formatDiasTexto(targetStaff);
+                    timeContainer.innerHTML = `
+                        <div class="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-xl text-center text-xs space-y-1.5 shadow-2xs">
+                            <div class="font-bold text-sm">📅 ${targetStaff.Nombre || 'El profesional'} no atiende los ${nombreDia}</div>
+                            <div class="text-stone-600">Días de atención habituales: <strong>${diasAtencion}</strong>.</div>
+                            <div class="text-[11px] text-stone-500 pt-1">Podés seleccionar otro día en las pestañas o cambiar el selector a <em>"Cualquier profesional disponible"</em>.</div>
+                        </div>
+                    `;
+                    return;
+                }
+            }
+
+            // Filtrar candidatos para esta fecha según los días laborales configurados
+            const staffDisponiblesHoy = candidatosStaff.filter(st => staffTrabajaEnDia(st, diaSemanaIdx));
+
+            if (staffDisponiblesHoy.length === 0) {
+                timeContainer.innerHTML = `
+                    <div class="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-xl text-center text-xs space-y-1.5 shadow-2xs">
+                        <div class="font-bold text-sm">⚠️ Sin profesionales disponibles los ${nombreDia}</div>
+                        <div class="text-stone-600">Ningún profesional que realice <strong>${servicioInput}</strong> atiende los días ${nombreDia}.</div>
+                        <div class="text-[11px] text-stone-500 pt-1">Por favor seleccioná otra fecha en el calendario.</div>
+                    </div>
+                `;
+                return;
+            }
             
             let minInicioGeneral = 24 * 60;
             let minFinGeneral = 0;
-            candidatosStaff.forEach(st => {
+            staffDisponiblesHoy.forEach(st => {
                 const stIni = parseTime(st.Hora_Inicio || "08:00");
                 const stFin = parseTime(st.Hora_Fin || "20:00");
                 if (stIni < minInicioGeneral) minInicioGeneral = stIni;
@@ -1746,7 +1857,7 @@
                 const minFinServicio = minActual + duracion;
                 let libreEnAlMenosUnStaff = false;
 
-                for (let staffCandidate of candidatosStaff) {
+                for (let staffCandidate of staffDisponiblesHoy) {
                     const stIni = parseTime(staffCandidate.Hora_Inicio || "08:00");
                     const stFin = parseTime(staffCandidate.Hora_Fin || "20:00");
                     

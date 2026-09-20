@@ -709,6 +709,35 @@
                             <input type="time" id="nsHoraFin" value="20:00" class="input-pastel text-xs">
                         </div>
                     </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-500 mb-1">Días que atiende *</label>
+                        <div class="flex flex-wrap gap-1.5 mb-1.5" id="nsDiasPillsContainer">
+                            <label class="cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
+                                <input type="checkbox" name="nsDia" value="1" class="hidden" checked> Lun
+                            </label>
+                            <label class="cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
+                                <input type="checkbox" name="nsDia" value="2" class="hidden" checked> Mar
+                            </label>
+                            <label class="cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
+                                <input type="checkbox" name="nsDia" value="3" class="hidden" checked> Mié
+                            </label>
+                            <label class="cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
+                                <input type="checkbox" name="nsDia" value="4" class="hidden" checked> Jue
+                            </label>
+                            <label class="cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
+                                <input type="checkbox" name="nsDia" value="5" class="hidden" checked> Vie
+                            </label>
+                            <label class="cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
+                                <input type="checkbox" name="nsDia" value="6" class="hidden" checked> Sáb
+                            </label>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-[10px] flex-wrap">
+                            <button type="button" onclick="setStaffDiasPreset('lun-vie')" class="px-2 py-0.5 rounded bg-stone-100 hover:bg-stone-200 text-stone-600 font-semibold cursor-pointer">Lun a Vie</button>
+                            <button type="button" onclick="setStaffDiasPreset('lun-sab')" class="px-2 py-0.5 rounded bg-stone-100 hover:bg-stone-200 text-stone-600 font-semibold cursor-pointer">Lun a Sáb</button>
+                            <button type="button" onclick="setStaffDiasPreset('jueves')" class="px-2 py-0.5 rounded bg-stone-100 hover:bg-stone-200 text-stone-600 font-semibold cursor-pointer">Solo Jueves</button>
+                            <button type="button" onclick="setStaffDiasPreset('jue-sab')" class="px-2 py-0.5 rounded bg-stone-100 hover:bg-stone-200 text-stone-600 font-semibold cursor-pointer">Jue a Sáb</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-6">
@@ -2345,6 +2374,88 @@
             closeModal('newClientModal');
         }
 
+        function setStaffDiasPreset(preset) {
+            const boxes = document.querySelectorAll('input[name="nsDia"]');
+            boxes.forEach(b => {
+                const val = parseInt(b.value);
+                if (preset === 'lun-vie') b.checked = (val >= 1 && val <= 5);
+                else if (preset === 'lun-sab') b.checked = (val >= 1 && val <= 6);
+                else if (preset === 'jueves') b.checked = (val === 4);
+                else if (preset === 'jue-sab') b.checked = (val >= 4 && val <= 6);
+                else if (preset === 'todos') b.checked = true;
+            });
+        }
+
+        function parseDiasLaborales(str) {
+            if (!str || typeof str !== 'string' || !str.trim()) {
+                return [1, 2, 3, 4, 5, 6];
+            }
+            const s = str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+            if (s.includes('todos') || s.includes('toda la semana')) return [1, 2, 3, 4, 5, 6];
+
+            const dayMap = {
+                'dom': 0, 'domingo': 0,
+                'lun': 1, 'lunes': 1,
+                'mar': 2, 'martes': 2,
+                'mie': 3, 'miercoles': 3,
+                'jue': 4, 'jueves': 4,
+                'vie': 5, 'viernes': 5,
+                'sab': 6, 'sabado': 6
+            };
+
+            const rangeMatch = s.match(/(lun(?:es)?|mar(?:tes)?|mie(?:rcoles)?|jue(?:ves)?|vie(?:rnes)?|sab(?:ado)?|dom(?:ingo)?)\s*(?:a|-|al|hasta)\s*(lun(?:es)?|mar(?:tes)?|mie(?:rcoles)?|jue(?:ves)?|vie(?:rnes)?|sab(?:ado)?|dom(?:ingo)?)/);
+            if (rangeMatch) {
+                const start = dayMap[rangeMatch[1]];
+                const end = dayMap[rangeMatch[2]];
+                if (start !== undefined && end !== undefined) {
+                    const days = [];
+                    if (start <= end) {
+                        for (let i = start; i <= end; i++) days.push(i);
+                    } else {
+                        for (let i = start; i <= 6; i++) days.push(i);
+                        for (let i = 0; i <= end; i++) days.push(i);
+                    }
+                    return days;
+                }
+            }
+
+            const found = new Set();
+            const tokens = s.split(/[\s,;\/\+\&y-]+/);
+            for (let t of tokens) {
+                if (!t) continue;
+                for (let prefix in dayMap) {
+                    if (t === prefix || t.startsWith(prefix)) {
+                        found.add(dayMap[prefix]);
+                        break;
+                    }
+                }
+            }
+            if (found.size > 0) return Array.from(found).sort((a,b)=>a-b);
+            return [1, 2, 3, 4, 5, 6];
+        }
+
+        function getDiasRaw(st) {
+            if (!st) return '';
+            return (st.Dias_Laborales || st.Dias || st.dias_laborales || st.dias || st.Dias_Trabajo || st.diasLaborales || '').toString().trim();
+        }
+
+        function staffTrabajaEnDia(st, diaSemanaIdx) {
+            const raw = getDiasRaw(st);
+            const dias = parseDiasLaborales(raw);
+            return dias.includes(diaSemanaIdx);
+        }
+
+        function formatDiasTexto(st) {
+            const raw = getDiasRaw(st);
+            if (!raw) return "Lun a Sáb";
+            const dias = parseDiasLaborales(raw);
+            if (dias.length === 6 && !dias.includes(0)) return "Lun a Sáb";
+            if (dias.length === 5 && !dias.includes(0) && !dias.includes(6)) return "Lun a Vie";
+            if (dias.length === 4 && dias[0] === 1 && dias[3] === 4) return "Lun a Jue";
+            const nombres = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+            return dias.map(d => nombres[d]).join(', ');
+        }
+
         function saveNewStaff() {
             const nombre = document.getElementById('nsNombre').value.trim();
             const especialidad = document.getElementById('nsEspecialidad').value.trim();
@@ -2354,6 +2465,25 @@
             if (!nombre) { alert("Por favor ingresa el nombre del profesional."); return; }
             if (!especialidad) { alert("Por favor ingresa la especialidad."); return; }
 
+            const checkedBoxes = Array.from(document.querySelectorAll('input[name="nsDia"]:checked')).map(b => parseInt(b.value)).sort((a,b)=>a-b);
+            const nombresDias = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+            let diasTextoConfig = "Lunes a Sábado";
+            if (checkedBoxes.length === 0) {
+                alert("Por favor selecciona al menos un día de atención para el profesional.");
+                return;
+            } else if (checkedBoxes.length === 6 && !checkedBoxes.includes(0)) {
+                diasTextoConfig = "Lunes a Sábado";
+            } else if (checkedBoxes.length === 5 && !checkedBoxes.includes(0) && !checkedBoxes.includes(6)) {
+                diasTextoConfig = "Lunes a Viernes";
+            } else if (checkedBoxes.length === 4 && checkedBoxes[0] === 1 && checkedBoxes[3] === 4) {
+                diasTextoConfig = "Lunes a Jueves";
+            } else if (checkedBoxes.length === 1) {
+                const nombresCompletos = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+                diasTextoConfig = nombresCompletos[checkedBoxes[0]];
+            } else {
+                diasTextoConfig = checkedBoxes.map(d => nombresDias[d]).join(', ');
+            }
+
             const idStaff = 'S' + String((bdGlobal && bdGlobal.staff ? bdGlobal.staff.length : 0) + 1).padStart(2, '0');
             const nuevoStaff = {
                 ID_Staff: idStaff,
@@ -2361,7 +2491,8 @@
                 Nombre_Completo: nombre,
                 Especialidad: especialidad,
                 Hora_Inicio: horaIni,
-                Hora_Fin: horaFin
+                Hora_Fin: horaFin,
+                Dias_Laborales: diasTextoConfig
             };
 
             if (!bdGlobal) bdGlobal = {};
@@ -2378,7 +2509,14 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         action: "alta_staff",
-                        staffInfo: { idStaff: idStaff, nombre: nombre, especialidad: especialidad, horaInicio: horaIni, horaFin: horaFin }
+                        staffInfo: { 
+                            idStaff: idStaff, 
+                            nombre: nombre, 
+                            especialidad: especialidad, 
+                            horaInicio: horaIni, 
+                            horaFin: horaFin,
+                            diasLaborales: diasTextoConfig
+                        }
                     })
                 }).catch(e => console.warn(e));
             } catch(e) {}
@@ -2386,7 +2524,7 @@
             renderStaffFilterButtons();
             renderCalendars();
             closeModal('newStaffModal');
-            alert(`✨ ¡${nombre} ha sido agregado/a con éxito al equipo de la Estética!`);
+            alert(`✨ ¡${nombre} ha sido agregado/a con éxito al equipo (${diasTextoConfig}, ${horaIni} a ${horaFin} hs)!`);
 
             document.getElementById('nsNombre').value = '';
             document.getElementById('nsEspecialidad').value = '';
@@ -2763,10 +2901,22 @@
             const staffList = bdGlobal.staff || fallbackData.staff;
             const staff = staffList.find(st => st.Especialidad === servicio.Especialidad) || staffList[0];
 
+            const fechaNorm = normalizarFecha(fechaInput);
+            const partsF = fechaNorm.split('-');
+            let diaSemanaIdx = 1;
+            if (partsF.length === 3) {
+                const dObj = new Date(parseInt(partsF[0]), parseInt(partsF[1]) - 1, parseInt(partsF[2]));
+                diaSemanaIdx = dObj.getDay();
+            }
+
+            if (!staffTrabajaEnDia(staff, diaSemanaIdx)) {
+                timeSelect.innerHTML = `<option value="">⚠️ ${staff.Nombre || 'Profesional'} no atiende este día (${formatDiasTexto(staff)})</option>`;
+                return;
+            }
+
             const staffInicio = parseTime(staff.Hora_Inicio || "08:00");
             const staffFin = parseTime(staff.Hora_Fin || "20:00");
 
-            const fechaNorm = normalizarFecha(fechaInput);
             const turnosList = bdGlobal.turnos || [];
             
             const turnosOcupados = turnosList.filter(t => {
@@ -3622,6 +3772,7 @@
                                     <h4 class="font-bold text-stone-800 text-sm truncate">${nombre}</h4>
                                     <span class="bg-sky-100 text-sky-800 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 uppercase tracking-wide">${especialidad}</span>
                                 </div>
+                                <p class="text-xs text-stone-600 mt-0.5 font-medium">📅 Días: <strong class="text-stone-800">${formatDiasTexto(st)}</strong></p>
                                 <p class="text-xs text-stone-500 mt-0.5">🕐 ${horaIni} a ${horaFin} hs</p>
                             </div>
                         </div>
