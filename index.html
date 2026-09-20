@@ -711,31 +711,25 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-stone-500 mb-1">Días que atiende *</label>
-                        <div class="flex flex-wrap gap-1.5 mb-1.5" id="nsDiasPillsContainer">
-                            <label class="cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
+                        <div class="flex flex-wrap gap-1.5" id="nsDiasPillsContainer">
+                            <label class="cursor-pointer text-xs font-bold px-3 py-1.5 rounded-xl border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
                                 <input type="checkbox" name="nsDia" value="1" class="hidden" checked> Lun
                             </label>
-                            <label class="cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
+                            <label class="cursor-pointer text-xs font-bold px-3 py-1.5 rounded-xl border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
                                 <input type="checkbox" name="nsDia" value="2" class="hidden" checked> Mar
                             </label>
-                            <label class="cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
+                            <label class="cursor-pointer text-xs font-bold px-3 py-1.5 rounded-xl border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
                                 <input type="checkbox" name="nsDia" value="3" class="hidden" checked> Mié
                             </label>
-                            <label class="cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
+                            <label class="cursor-pointer text-xs font-bold px-3 py-1.5 rounded-xl border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
                                 <input type="checkbox" name="nsDia" value="4" class="hidden" checked> Jue
                             </label>
-                            <label class="cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
+                            <label class="cursor-pointer text-xs font-bold px-3 py-1.5 rounded-xl border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
                                 <input type="checkbox" name="nsDia" value="5" class="hidden" checked> Vie
                             </label>
-                            <label class="cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
+                            <label class="cursor-pointer text-xs font-bold px-3 py-1.5 rounded-xl border border-stone-200 bg-stone-50 has-[:checked]:bg-stone-800 has-[:checked]:text-white transition select-none">
                                 <input type="checkbox" name="nsDia" value="6" class="hidden" checked> Sáb
                             </label>
-                        </div>
-                        <div class="flex items-center gap-1.5 text-[10px] flex-wrap">
-                            <button type="button" onclick="setStaffDiasPreset('lun-vie')" class="px-2 py-0.5 rounded bg-stone-100 hover:bg-stone-200 text-stone-600 font-semibold cursor-pointer">Lun a Vie</button>
-                            <button type="button" onclick="setStaffDiasPreset('lun-sab')" class="px-2 py-0.5 rounded bg-stone-100 hover:bg-stone-200 text-stone-600 font-semibold cursor-pointer">Lun a Sáb</button>
-                            <button type="button" onclick="setStaffDiasPreset('jueves')" class="px-2 py-0.5 rounded bg-stone-100 hover:bg-stone-200 text-stone-600 font-semibold cursor-pointer">Solo Jueves</button>
-                            <button type="button" onclick="setStaffDiasPreset('jue-sab')" class="px-2 py-0.5 rounded bg-stone-100 hover:bg-stone-200 text-stone-600 font-semibold cursor-pointer">Jue a Sáb</button>
                         </div>
                     </div>
                 </div>
@@ -2372,18 +2366,6 @@
             }
             alert('¡Cliente registrado con éxito!');
             closeModal('newClientModal');
-        }
-
-        function setStaffDiasPreset(preset) {
-            const boxes = document.querySelectorAll('input[name="nsDia"]');
-            boxes.forEach(b => {
-                const val = parseInt(b.value);
-                if (preset === 'lun-vie') b.checked = (val >= 1 && val <= 5);
-                else if (preset === 'lun-sab') b.checked = (val >= 1 && val <= 6);
-                else if (preset === 'jueves') b.checked = (val === 4);
-                else if (preset === 'jue-sab') b.checked = (val >= 4 && val <= 6);
-                else if (preset === 'todos') b.checked = true;
-            });
         }
 
         function parseDiasLaborales(str) {
