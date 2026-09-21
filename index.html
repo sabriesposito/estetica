@@ -393,9 +393,12 @@
                         </div>
                     </div>
 
-                    <div>
-                        <button onclick="openModal('blockModal')" class="btn-outline text-xs py-2.5 rounded-xl w-full font-semibold shadow-xs flex items-center justify-center gap-2">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="openModal('blockModal')" class="btn-outline text-xs py-2.5 rounded-xl w-full font-semibold shadow-xs flex items-center justify-center gap-1.5">
                             <span>🔒</span> Bloquear Agenda
+                        </button>
+                        <button onclick="openReassignVacationsModal()" class="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs py-2.5 rounded-xl w-full font-semibold shadow-xs flex items-center justify-center gap-1.5 transition active:scale-95">
+                            <span>🌴</span> Vacaciones / Reasignar
                         </button>
                     </div>
                 </div>
@@ -433,10 +436,15 @@
                                 </button>
                             </div>
 
-                            <!-- Bloquear Agenda -->
-                            <button onclick="openModal('blockModal')" class="w-full bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-700 text-xs py-2 px-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition active:scale-95">
-                                <span>🔒</span> Bloquear Agenda
-                            </button>
+                            <!-- Bloquear Agenda y Vacaciones -->
+                            <div class="grid grid-cols-2 gap-1.5">
+                                <button onclick="openModal('blockModal')" class="w-full bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-700 text-xs py-2 px-2 rounded-xl font-semibold flex items-center justify-center gap-1 transition active:scale-95">
+                                    <span>🔒</span> Bloquear
+                                </button>
+                                <button onclick="openReassignVacationsModal()" class="w-full bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs py-2 px-2 rounded-xl font-semibold flex items-center justify-center gap-1 transition active:scale-95">
+                                    <span>🌴</span> Vacaciones
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Métricas Rápidas en PC -->
@@ -740,6 +748,70 @@
             </div>
         </div>
 
+        <!-- Modal Vacaciones & Reasignación Masiva de Turnos -->
+        <div id="reassignVacationsModal" class="fixed inset-0 bg-stone-900/50 flex items-end sm:items-center justify-center z-[80] hide transition-opacity backdrop-blur-sm">
+            <div class="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-[440px] sm:max-w-md shadow-2xl relative max-h-[92vh] overflow-y-auto">
+                <button onclick="closeModal('reassignVacationsModal')" class="absolute top-5 right-5 text-stone-400 hover:text-stone-600 bg-stone-100 rounded-full w-8 h-8 flex justify-center items-center">✕</button>
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xl">🌴</span>
+                    <h3 class="text-xl font-bold text-stone-800">Vacaciones & Reasignar Turnos</h3>
+                </div>
+                <p class="text-xs text-stone-500 mb-4">Reasigna fácilmente la agenda y citas de un profesional que toma vacaciones o licencia hacia otro integrante del equipo.</p>
+                
+                <div class="space-y-3.5">
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">1. ¿Quién se va de vacaciones / licencia? *</label>
+                        <select id="rvStaffOrigen" onchange="previewTurnosAReasignar()" class="input-pastel text-xs bg-white">
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">2. Período de ausencia *</label>
+                        <select id="rvTipoRango" onchange="toggleRvTipoRango()" class="input-pastel text-xs bg-white mb-2">
+                            <option value="rango">Seleccionar Rango de Fechas</option>
+                            <option value="todos">Todos los turnos futuros pendientes</option>
+                        </select>
+                        <div id="rvRangoFechasContainer">
+                            <input type="text" id="rvFechasInput" placeholder="Seleccionar Fecha Inicio a Fecha Fin" class="input-pastel text-xs cursor-pointer bg-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-stone-700 mb-1">3. ¿A qué profesional reasignar los turnos? *</label>
+                        <select id="rvStaffDestino" class="input-pastel text-xs bg-white">
+                        </select>
+                    </div>
+
+                    <!-- Vista previa de citas afectadas -->
+                    <div class="bg-stone-50 border border-stone-200 rounded-2xl p-3.5 space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold text-stone-700 flex items-center gap-1">
+                                <span>📋</span> Citas encontradas en el período:
+                            </span>
+                            <span id="rvCountBadge" class="bg-amber-100 text-amber-900 font-extrabold px-2 py-0.5 rounded-full text-[11px]">0 citas</span>
+                        </div>
+                        <div id="rvTurnosPreviewList" class="max-h-36 overflow-y-auto space-y-1.5 pr-1 text-[11px] text-stone-600">
+                            <div class="text-stone-400 italic py-2 text-center">Selecciona profesional y fechas para ver las citas a reasignar</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-2 bg-purple-50/70 border border-purple-200/80 p-3 rounded-xl text-[11px] text-purple-900">
+                        <span class="text-base leading-none">ℹ️</span>
+                        <span>Las citas se transferirán inmediatamente al nuevo profesional en el calendario y se sincronizarán con Google Sheets.</span>
+                    </div>
+                </div>
+
+                <div class="mt-5 space-y-2">
+                    <button id="btnEjecutarReasignacion" onclick="ejecutarReasignacionMasiva()" class="w-full btn-pastel py-3 rounded-xl transition font-bold shadow-sm text-xs flex items-center justify-center gap-2">
+                        <span>🔄</span> Reasignar Citas Seleccionadas
+                    </button>
+                    <button type="button" onclick="closeModal('reassignVacationsModal')" class="w-full bg-stone-100 text-stone-600 hover:bg-stone-200 py-2.5 rounded-xl transition font-semibold text-xs">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Modal Crear Nuevo Servicio -->
         <div id="newServiceModal" class="fixed inset-0 bg-stone-900/50 flex items-end sm:items-center justify-center z-[80] hide transition-opacity backdrop-blur-sm">
             <div class="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-[430px] sm:max-w-sm shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -924,6 +996,16 @@
                     <div>
                         <label class="block text-xs font-semibold text-stone-500 mb-1">Motivo (Opcional)</label>
                         <input type="text" id="blockMotivo" placeholder="Ej. Vacaciones, Feriado, Mantenimiento" class="input-pastel text-xs">
+                    </div>
+
+                    <div class="bg-amber-50/80 border border-amber-200/80 p-3 rounded-xl flex items-center justify-between gap-2">
+                        <div class="text-[11px] text-amber-900 leading-tight">
+                            <strong>¿Alguien se va de vacaciones?</strong><br>
+                            <span>Puedes reasignar sus citas pendientes a otro staff.</span>
+                        </div>
+                        <button type="button" onclick="closeModal('blockModal'); openReassignVacationsModal();" class="text-xs bg-amber-200/70 hover:bg-amber-200 text-amber-950 font-bold px-2.5 py-1.5 rounded-lg whitespace-nowrap active:scale-95 transition">
+                            Reasignar ➔
+                        </button>
                     </div>
                 </div>
 
@@ -1823,12 +1905,33 @@
                             <div class="text-stone-500">⏱️ Duración estimada: ${durSvc}</div>
                         </div>
 
-                        <div class="bg-stone-50 border border-stone-200 p-3 rounded-xl space-y-1">
+                        <div class="bg-stone-50 border border-stone-200 p-3 rounded-xl space-y-2">
                             <div class="font-semibold text-stone-700">📅 Turno: ${normalizarFecha(t.Fecha)} (${t.Hora_Inicio} hs - ${t.Hora_Fin} hs)</div>
-                            <div class="text-stone-500">👤 Atendido por: ${nombreStaff}</div>
-                            <div class="text-stone-500 flex items-center gap-1 pt-1">
+                            <div class="text-stone-500 flex items-center justify-between">
+                                <span>👤 Atendido por: <strong class="text-stone-700">${nombreStaff}</strong></span>
+                            </div>
+                            <div class="text-stone-500 flex items-center gap-1">
                                 <span>📌 Estado:</span> ${estadoBadge}
                             </div>
+                            ${(!estadoLower.includes('cancel') && !cancelledTurnosSet.has(targetIdTurno)) ? `
+                            <div class="pt-2 border-t border-stone-200/70 mt-1">
+                                <label class="block text-[11px] font-bold text-stone-600 mb-1">🔄 Reasignar Profesional / Vacaciones:</label>
+                                <div class="flex gap-1.5 items-center">
+                                    <select id="reassignSelect_${targetIdTurno}" class="input-pastel text-xs py-1.5 px-2 bg-white flex-1">
+                                        ${(bdGlobal.staff || fallbackData.staff).map(st => {
+                                            const idSt = st.ID_Staff || st.idStaff;
+                                            const nomSt = st.Nombre || st.Nombre_Completo || idSt;
+                                            const espSt = st.Especialidad ? ` (${st.Especialidad})` : '';
+                                            const isSelected = (idSt === (t.ID_Staff || 'S01')) ? 'selected' : '';
+                                            return `<option value="${idSt}" ${isSelected}>${nomSt}${espSt}</option>`;
+                                        }).join('')}
+                                    </select>
+                                    <button onclick="reasignarTurnoIndividual('${targetIdTurno}')" class="btn-pastel text-xs py-1.5 px-3 rounded-xl font-bold whitespace-nowrap shadow-2xs active:scale-95">
+                                        Reasignar
+                                    </button>
+                                </div>
+                            </div>
+                            ` : ''}
                         </div>
 
                         ${(estadoLower.includes('cancel') || cancelledTurnosSet.has(targetIdTurno)) ? `
@@ -1853,6 +1956,289 @@
             }
 
             modal.classList.remove('hide');
+        }
+
+        async function reasignarTurnoIndividual(idTurno) {
+            if (!idTurno) return;
+            const selectEl = document.getElementById(`reassignSelect_${idTurno}`);
+            if (!selectEl) return;
+            const nuevoIdStaff = selectEl.value;
+            if (!nuevoIdStaff) return;
+
+            const t = bdGlobal && bdGlobal.turnos ? bdGlobal.turnos.find(x => (x.ID_Turno || x.idTurno) === idTurno) : null;
+            if (!t) return;
+
+            const staffList = bdGlobal.staff || fallbackData.staff;
+            const nuevoStaffObj = staffList.find(st => (st.ID_Staff || st.idStaff) === nuevoIdStaff);
+            const nombreNuevoStaff = nuevoStaffObj ? (nuevoStaffObj.Nombre || nuevoStaffObj.Nombre_Completo || nuevoIdStaff) : nuevoIdStaff;
+
+            if (!confirm(`¿Deseas reasignar este turno a ${nombreNuevoStaff}?`)) return;
+
+            // Actualizar en el modelo local
+            t.ID_Staff = nuevoIdStaff;
+            t.Staff = nombreNuevoStaff;
+            t.staffNombre = nombreNuevoStaff;
+
+            try {
+                localStorage.setItem('lumina_bd_cache', JSON.stringify(bdGlobal));
+            } catch(e) {}
+
+            // Notificar a n8n
+            try {
+                fetch(POST_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: "reasignar_turno",
+                        idTurno: idTurno,
+                        nuevoIdStaff: nuevoIdStaff,
+                        staffNombre: nombreNuevoStaff
+                    })
+                }).catch(e => console.warn(e));
+            } catch(e) {}
+
+            closeModal('turnoDetailModal');
+            if (typeof renderCalendars === 'function') renderCalendars();
+            alert(`✨ Turno reasignado con éxito a ${nombreNuevoStaff}.`);
+        }
+
+        let rvFlatpickrInstance = null;
+
+        function openReassignVacationsModal() {
+            const staffList = bdGlobal.staff || fallbackData.staff;
+            const selOrigen = document.getElementById('rvStaffOrigen');
+            const selDestino = document.getElementById('rvStaffDestino');
+            
+            if (selOrigen) {
+                selOrigen.innerHTML = staffList.map(st => {
+                    const id = st.ID_Staff || st.idStaff;
+                    const nom = st.Nombre || st.Nombre_Completo || id;
+                    const esp = st.Especialidad ? ` (${st.Especialidad})` : '';
+                    return `<option value="${id}">${nom}${esp}</option>`;
+                }).join('');
+            }
+
+            actualizarRvStaffDestino();
+            if (selOrigen) {
+                selOrigen.onchange = () => {
+                    actualizarRvStaffDestino();
+                    previewTurnosAReasignar();
+                };
+            }
+
+            // Inicializar Flatpickr de rango si no existe
+            const fechasInput = document.getElementById('rvFechasInput');
+            if (fechasInput && !rvFlatpickrInstance && typeof flatpickr !== 'undefined') {
+                const today = new Date();
+                const nextWeek = new Date(today);
+                nextWeek.setDate(today.getDate() + 7);
+
+                rvFlatpickrInstance = flatpickr(fechasInput, {
+                    mode: "range",
+                    dateFormat: "Y-m-d",
+                    defaultDate: [today, nextWeek],
+                    minDate: "today",
+                    locale: {
+                        firstDayOfWeek: 1,
+                        weekdays: { shorthand: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'], longhand: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'] },
+                        months: { shorthand: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'], longhand: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'] }
+                    },
+                    onChange: () => {
+                        previewTurnosAReasignar();
+                    }
+                });
+            }
+
+            toggleRvTipoRango();
+            previewTurnosAReasignar();
+            openModal('reassignVacationsModal');
+        }
+
+        function actualizarRvStaffDestino() {
+            const staffList = bdGlobal.staff || fallbackData.staff;
+            const selOrigen = document.getElementById('rvStaffOrigen');
+            const selDestino = document.getElementById('rvStaffDestino');
+            const origenVal = selOrigen ? selOrigen.value : '';
+
+            if (selDestino) {
+                const disponibles = staffList.filter(st => (st.ID_Staff || st.idStaff) !== origenVal);
+                selDestino.innerHTML = disponibles.map(st => {
+                    const id = st.ID_Staff || st.idStaff;
+                    const nom = st.Nombre || st.Nombre_Completo || id;
+                    const esp = st.Especialidad ? ` (${st.Especialidad})` : '';
+                    return `<option value="${id}">${nom}${esp}</option>`;
+                }).join('');
+            }
+        }
+
+        function toggleRvTipoRango() {
+            const tipo = document.getElementById('rvTipoRango')?.value;
+            const cont = document.getElementById('rvRangoFechasContainer');
+            if (cont) {
+                cont.style.display = (tipo === 'todos') ? 'none' : 'block';
+            }
+            previewTurnosAReasignar();
+        }
+
+        function obtenerFechasRangoVacaciones() {
+            const tipo = document.getElementById('rvTipoRango')?.value;
+            if (tipo === 'todos') return null; // Indica todos los turnos futuros
+
+            const rangeStr = document.getElementById('rvFechasInput')?.value || '';
+            if (!rangeStr) return [];
+
+            const parts = rangeStr.split(' a ');
+            const fechas = [];
+            if (parts.length === 2) {
+                let dStart = new Date(parts[0] + 'T00:00:00');
+                let dEnd = new Date(parts[1] + 'T00:00:00');
+                for (let d = new Date(dStart); d <= dEnd; d.setDate(d.getDate() + 1)) {
+                    fechas.push(getLocalDateIso(d));
+                }
+            } else if (parts.length === 1 && parts[0]) {
+                fechas.push(normalizarFecha(parts[0]));
+            }
+            return fechas;
+        }
+
+        function previewTurnosAReasignar() {
+            const origenId = document.getElementById('rvStaffOrigen')?.value;
+            const listEl = document.getElementById('rvTurnosPreviewList');
+            const badgeEl = document.getElementById('rvCountBadge');
+            if (!listEl) return;
+
+            const turnosList = (bdGlobal && Array.isArray(bdGlobal.turnos)) ? bdGlobal.turnos : [];
+            const fechasPermitidas = obtenerFechasRangoVacaciones();
+            const hoyIso = getLocalDateIso(new Date());
+
+            const turnosFiltrados = turnosList.filter(t => {
+                if (!t) return false;
+                const stId = t.ID_Staff || t.idStaff;
+                if (stId !== origenId) return false;
+                const est = (t.Estado || t.estado || '').toLowerCase();
+                if (est === 'cancelado' || cancelledTurnosSet.has(t.ID_Turno || t.idTurno)) return false;
+
+                const fechaT = normalizarFecha(t.Fecha);
+                if (fechasPermitidas === null) {
+                    // Todos futuros
+                    return fechaT >= hoyIso;
+                } else {
+                    return fechasPermitidas.includes(fechaT);
+                }
+            });
+
+            if (badgeEl) badgeEl.innerText = `${turnosFiltrados.length} citas`;
+
+            if (turnosFiltrados.length === 0) {
+                listEl.innerHTML = `<div class="text-stone-400 italic py-3 text-center">No hay citas pendientes agendadas para este profesional en ese período.</div>`;
+                return;
+            }
+
+            listEl.innerHTML = turnosFiltrados.map(t => {
+                const idT = t.ID_Turno || t.idTurno;
+                const cli = t.Cliente || t.ID_Cliente || 'Cliente';
+                const svc = t.Servicio || t.ID_Servicio || 'Servicio';
+                return `
+                    <div class="bg-white border border-stone-200 p-2 rounded-xl flex items-center justify-between shadow-2xs">
+                        <div class="truncate pr-2">
+                            <div class="font-bold text-stone-700 truncate">👤 ${cli}</div>
+                            <div class="text-[10.5px] text-stone-500">📅 ${normalizarFecha(t.Fecha)} (${t.Hora_Inicio} hs) • ${svc}</div>
+                        </div>
+                        <span class="text-[10px] bg-sky-50 text-sky-800 border border-sky-200 px-2 py-0.5 rounded-full shrink-0 font-bold">Por transferir</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function ejecutarReasignacionMasiva() {
+            const origenId = document.getElementById('rvStaffOrigen')?.value;
+            const destinoId = document.getElementById('rvStaffDestino')?.value;
+            const staffList = bdGlobal.staff || fallbackData.staff;
+
+            const stOrigen = staffList.find(s => (s.ID_Staff || s.idStaff) === origenId);
+            const stDestino = staffList.find(s => (s.ID_Staff || s.idStaff) === destinoId);
+
+            const nomOrigen = stOrigen ? (stOrigen.Nombre || stOrigen.Nombre_Completo) : origenId;
+            const nomDestino = stDestino ? (stDestino.Nombre || stDestino.Nombre_Completo) : destinoId;
+
+            if (!origenId || !destinoId) {
+                alert("Por favor selecciona los profesionales de origen y destino.");
+                return;
+            }
+
+            const turnosList = (bdGlobal && Array.isArray(bdGlobal.turnos)) ? bdGlobal.turnos : [];
+            const fechasPermitidas = obtenerFechasRangoVacaciones();
+            const hoyIso = getLocalDateIso(new Date());
+
+            const turnosParaReasignar = turnosList.filter(t => {
+                if (!t) return false;
+                const stId = t.ID_Staff || t.idStaff;
+                if (stId !== origenId) return false;
+                const est = (t.Estado || t.estado || '').toLowerCase();
+                if (est === 'cancelado' || cancelledTurnosSet.has(t.ID_Turno || t.idTurno)) return false;
+
+                const fechaT = normalizarFecha(t.Fecha);
+                if (fechasPermitidas === null) {
+                    return fechaT >= hoyIso;
+                } else {
+                    return fechasPermitidas.includes(fechaT);
+                }
+            });
+
+            if (turnosParaReasignar.length === 0) {
+                alert("No hay turnos para reasignar en el período seleccionado.");
+                return;
+            }
+
+            if (!confirm(`¿Confirmas la reasignación de ${turnosParaReasignar.length} citas de ${nomOrigen} hacia ${nomDestino}?`)) {
+                return;
+            }
+
+            const btn = document.getElementById('btnEjecutarReasignacion');
+            if (btn) {
+                btn.innerText = "Reasignando citas...";
+                btn.disabled = true;
+            }
+
+            // Actualizar localmente todos los turnos
+            turnosParaReasignar.forEach(t => {
+                t.ID_Staff = destinoId;
+                t.Staff = nomDestino;
+                t.staffNombre = nomDestino;
+            });
+
+            try {
+                localStorage.setItem('lumina_bd_cache', JSON.stringify(bdGlobal));
+            } catch(e) {}
+
+            // Enviar cada reasignación a n8n
+            for (const t of turnosParaReasignar) {
+                const idT = t.ID_Turno || t.idTurno;
+                try {
+                    fetch(POST_WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: "reasignar_turno",
+                            idTurno: idT,
+                            nuevoIdStaff: destinoId,
+                            staffNombre: nomDestino
+                        })
+                    }).catch(e => console.warn(e));
+                } catch(e) {}
+            }
+
+            if (btn) {
+                btn.innerText = "🔄 Reasignar Citas Seleccionadas";
+                btn.disabled = false;
+            }
+
+            closeModal('reassignVacationsModal');
+            if (typeof renderCalendars === 'function') renderCalendars();
+            alert(`🌴 ¡Éxito! Se han reasignado ${turnosParaReasignar.length} citas de ${nomOrigen} a ${nomDestino}.`);
+            setTimeout(() => {
+                if (typeof fetchDemoData === 'function') fetchDemoData();
+            }, 1200);
         }
 
         async function eliminarBloqueoAgendaAction(idTurno) {
@@ -2823,6 +3209,20 @@
                             roleSel.innerHTML += `<option value="${idSt}">Modo: Staff - ${nombre}${esp}</option>`;
                         });
                         if (valRole) roleSel.value = valRole;
+                    }
+
+                    const blkStaffSel = document.getElementById('blockStaffSelect');
+                    if (blkStaffSel) {
+                        const valBlock = blkStaffSel.value;
+                        blkStaffSel.innerHTML = '<option value="ALL">🏢 Toda la Estética (Todo el Staff)</option>';
+                        const staffList = bdGlobal.staff || fallbackData.staff;
+                        staffList.forEach(st => {
+                            let nombre = st.Nombre || st.Nombre_Completo || st.ID_Staff;
+                            let esp = st.Especialidad ? ` (${st.Especialidad})` : '';
+                            let idSt = st.ID_Staff;
+                            blkStaffSel.innerHTML += `<option value="${idSt}">👤 ${nombre}${esp}</option>`;
+                        });
+                        if (valBlock) blkStaffSel.value = valBlock;
                     }
                 }
             } catch(e) {

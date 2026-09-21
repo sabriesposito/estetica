@@ -549,6 +549,29 @@
                 ],
                 "combinator": "and"
               }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "rule-reasignar-turno-id",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "reasignar_turno",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
             }
           ]
         },
@@ -1139,6 +1162,72 @@
           "name": "Gmail account"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
+          "mode": "list",
+          "cachedResultName": "BaseDatos_Estetica_Demo",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 931049778,
+          "mode": "list",
+          "cachedResultName": "Turnos",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit#gid=931049778"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID_Turno": "={{ $json.body.idTurno }}",
+            "ID_Staff": "={{ $json.body.nuevoIdStaff }}"
+          },
+          "matchingColumns": [
+            "ID_Turno"
+          ],
+          "schema": [
+            {
+              "id": "ID_Turno",
+              "displayName": "ID_Turno",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ID_Staff",
+              "displayName": "ID_Staff",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        750
+      ],
+      "id": "c8f49a12-8812-4eb5-a555-reasignarturno",
+      "name": "Reasignar Turno",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g855PstCDRAtYH2C",
+          "name": "Google Sheets account"
+        }
+      }
     }
   ],
   "connections": {
@@ -1226,6 +1315,13 @@
         [
           {
             "node": "Añadir Turno1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reasignar Turno",
             "type": "main",
             "index": 0
           }
