@@ -2754,6 +2754,37 @@
             closeModal('newClientModal');
         }
 
+        function matchEspecialidad(esp1, esp2) {
+            if (!esp1 || !esp2) return true;
+            const clean = s => s.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+            const a = clean(esp1);
+            const b = clean(esp2);
+            if (a === b || a.includes(b) || b.includes(a)) return true;
+
+            const isPelo = s => s.includes('pelo') || s.includes('peluquer') || s.includes('cabello') || s.includes('peinado') || s.includes('corte') || s.includes('barba');
+            if (isPelo(a) && isPelo(b)) return true;
+
+            const isUnas = s => s.includes('una') || s.includes('manicur') || s.includes('pedicur') || s.includes('kapping') || s.includes('esculp') || s.includes('semi');
+            if (isUnas(a) && isUnas(b)) return true;
+
+            const isCejas = s => s.includes('ceja') || s.includes('pestan') || s.includes('mirada') || s.includes('perfilad') || s.includes('laminad');
+            if (isCejas(a) && isCejas(b)) return true;
+
+            const isFacial = s => s.includes('facial') || s.includes('corporal') || s.includes('masaje') || s.includes('limpieza') || s.includes('estetica') || s.includes('dermo');
+            if (isFacial(a) && isFacial(b)) return true;
+
+            return false;
+        }
+
+        function normalizeHoraStr(str) {
+            if (!str) return "08:00";
+            const parts = str.toString().trim().split(':');
+            if (parts.length >= 2) {
+                return parts[0].padStart(2, '0') + ':' + parts[1].padStart(2, '0');
+            }
+            return str.toString().trim();
+        }
+
         function parseDiasLaborales(str) {
             if (!str || typeof str !== 'string' || !str.trim()) {
                 return [1, 2, 3, 4, 5, 6];
@@ -2762,16 +2793,16 @@
             if (s.includes('todos') || s.includes('toda la semana')) return [1, 2, 3, 4, 5, 6];
 
             const dayMap = {
-                'dom': 0, 'domingo': 0,
+                'dom': 0, 'domingo': 0, 'domingos': 0,
                 'lun': 1, 'lunes': 1,
                 'mar': 2, 'martes': 2,
                 'mie': 3, 'miercoles': 3,
                 'jue': 4, 'jueves': 4,
                 'vie': 5, 'viernes': 5,
-                'sab': 6, 'sabado': 6
+                'sab': 6, 'sabado': 6, 'sabados': 6
             };
 
-            const rangeMatch = s.match(/(lun(?:es)?|mar(?:tes)?|mie(?:rcoles)?|jue(?:ves)?|vie(?:rnes)?|sab(?:ado)?|dom(?:ingo)?)\s*(?:a|-|al|hasta)\s*(lun(?:es)?|mar(?:tes)?|mie(?:rcoles)?|jue(?:ves)?|vie(?:rnes)?|sab(?:ado)?|dom(?:ingo)?)/);
+            const rangeMatch = s.match(/(lun(?:es)?|mar(?:tes)?|mie(?:rcoles)?|jue(?:ves)?|vie(?:rnes)?|sab(?:ado|ados)?|dom(?:ingo|ingos)?)\s*(?:a|-|al|hasta)\s*(lun(?:es)?|mar(?:tes)?|mie(?:rcoles)?|jue(?:ves)?|vie(?:rnes)?|sab(?:ado|ados)?|dom(?:ingo|ingos)?)/);
             if (rangeMatch) {
                 const start = dayMap[rangeMatch[1]];
                 const end = dayMap[rangeMatch[2]];
@@ -2979,7 +3010,7 @@
             const serviciosList = bdGlobal.servicios || fallbackData.servicios;
             const servicio = serviciosList.find(s => (s.Nombre_Servicio || s.Nombre || s.Servicio) === servicioName);
             const staffList = bdGlobal.staff || fallbackData.staff;
-            const staff = staffList.find(st => st.Especialidad === servicio.Especialidad) || staffList[0];
+            const staff = staffList.find(st => matchEspecialidad(st.Especialidad, servicio.Especialidad)) || staffList[0];
             const duracionMin = parseInt(servicio.Duracion_Min) || 30;
             const horaFin = formatTime(parseTime(hora) + duracionMin);
 
@@ -3281,7 +3312,7 @@
             const duracion = parseInt(servicio.Duracion_Min) || 30;
 
             const staffList = bdGlobal.staff || fallbackData.staff;
-            const staff = staffList.find(st => st.Especialidad === servicio.Especialidad) || staffList[0];
+            const staff = staffList.find(st => matchEspecialidad(st.Especialidad, servicio.Especialidad)) || staffList[0];
 
             const fechaNorm = normalizarFecha(fechaInput);
             const partsF = fechaNorm.split('-');
@@ -4139,8 +4170,8 @@
                 const nombre = st.Nombre || st.Nombre_Completo || 'Profesional';
                 const especialidad = st.Especialidad || 'General';
                 const idStaff = st.ID_Staff || '';
-                const horaIni = st.Hora_Inicio || '08:00';
-                const horaFin = st.Hora_Fin || '20:00';
+                const horaIni = normalizeHoraStr(st.Hora_Inicio || '08:00');
+                const horaFin = normalizeHoraStr(st.Hora_Fin || '20:00');
                 const inicial = nombre.charAt(0).toUpperCase();
 
                 html += `

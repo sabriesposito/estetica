@@ -390,16 +390,21 @@
                                         <select id="serviceSelect" class="input-pastel appearance-none bg-white font-semibold text-stone-700 text-sm" onchange="onServiceChange()">
                                             <option value="">Selecciona un servicio...</option>
                                         </select>
-                                        <!-- Tarjeta Informativa de Precio y Duración -->
-                                        <div id="serviceInfoPill" class="hide mt-3 bg-accent border border-theme/40 p-3.5 rounded-xl flex items-center justify-between text-xs shadow-2xs">
-                                            <span id="serviceInfoDuracion" class="font-semibold text-stone-700">⏱️ Duración: 60 min</span>
-                                            <span id="serviceInfoCosto" class="font-extrabold text-theme text-sm">💵 Valor: $20.000</span>
+                                        <!-- Tarjeta Informativa de Precio, Duración y Staff -->
+                                        <div id="serviceInfoPill" class="hide mt-3 bg-accent border border-theme/40 p-3.5 rounded-xl text-xs shadow-2xs space-y-2">
+                                            <div class="flex items-center justify-between">
+                                                <span id="serviceInfoDuracion" class="font-semibold text-stone-700">⏱️ Duración: 60 min</span>
+                                                <span id="serviceInfoCosto" class="font-extrabold text-theme text-sm">💵 Valor: $20.000</span>
+                                            </div>
+                                            <div id="serviceInfoStaff" class="pt-2 border-t border-theme/30 text-stone-600 font-medium flex items-center gap-1.5 flex-wrap">
+                                                <!-- Se llena por JS con datos de staff y días de atención -->
+                                            </div>
                                         </div>
                                     </div>
 
                                     <div>
                                         <label class="block text-xs font-bold text-stone-600 mb-1.5">Profesional de Atención</label>
-                                        <select id="staffSelect" class="input-pastel appearance-none bg-white font-semibold text-stone-700 text-sm" onchange="calcularDisponibilidad()">
+                                        <select id="staffSelect" class="input-pastel appearance-none bg-white font-semibold text-stone-700 text-sm" onchange="onStaffChange()">
                                             <option value="ANY">✨ Cualquier profesional disponible</option>
                                         </select>
                                     </div>
@@ -1252,6 +1257,9 @@
             if (!container) return;
             container.innerHTML = '';
 
+            const servicioInput = document.getElementById('serviceSelect') ? document.getElementById('serviceSelect').value : '';
+            const candidatos = servicioInput ? getCandidatosActuales() : null;
+
             const hoy = new Date();
             let count = 0;
             let standardIsos = [];
@@ -1270,10 +1278,15 @@
                 else if (i <= 1 && d.getDate() === hoy.getDate() + 1) label = `Mañana (${diasNombres[d.getDay()]} ${d.getDate()})`;
                 else label = `${diasNombres[d.getDay()]} ${d.getDate()} ${mesesNombres[d.getMonth()]}`;
 
+                const atiende = candidatos ? candidatos.some(st => staffTrabajaEnDia(st, d.getDay())) : true;
                 const isActive = (iso === selectedFechaGlobal);
+                const extraStyle = atiende ? '' : 'opacity-40 hover:opacity-75';
+                const dotBadge = (!atiende && servicioInput) ? '<span class="text-[9px] block text-stone-400 font-normal">Sin atención</span>' : '';
+
                 container.innerHTML += `
-                    <button type="button" onclick="selectDayTab('${iso}')" class="day-tab ${isActive ? 'active' : ''}">
-                        ${label}
+                    <button type="button" onclick="selectDayTab('${iso}')" class="day-tab ${isActive ? 'active' : ''} ${extraStyle}" title="${atiende ? '' : 'No hay atención este día'}">
+                        <span>${label}</span>
+                        ${dotBadge}
                     </button>
                 `;
                 count++;
@@ -1582,7 +1595,97 @@
         function onServiceChange() {
             actualizarListaStaffPorServicio();
             actualizarInfoServicioSeleccionado();
+            ajustarFechaSiStaffNoTrabaja();
+            renderDayTabs();
             calcularDisponibilidad();
+        }
+
+        function onStaffChange() {
+            ajustarFechaSiStaffNoTrabaja();
+            renderDayTabs();
+            calcularDisponibilidad();
+        }
+
+        function matchEspecialidad(esp1, esp2) {
+            if (!esp1 || !esp2) return true;
+            const clean = s => s.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+            const a = clean(esp1);
+            const b = clean(esp2);
+            if (a === b || a.includes(b) || b.includes(a)) return true;
+
+            const isPelo = s => s.includes('pelo') || s.includes('peluquer') || s.includes('cabello') || s.includes('peinado') || s.includes('corte') || s.includes('barba');
+            if (isPelo(a) && isPelo(b)) return true;
+
+            const isUnas = s => s.includes('una') || s.includes('manicur') || s.includes('pedicur') || s.includes('kapping') || s.includes('esculp') || s.includes('semi');
+            if (isUnas(a) && isUnas(b)) return true;
+
+            const isCejas = s => s.includes('ceja') || s.includes('pestan') || s.includes('mirada') || s.includes('perfilad') || s.includes('laminad');
+            if (isCejas(a) && isCejas(b)) return true;
+
+            const isFacial = s => s.includes('facial') || s.includes('corporal') || s.includes('masaje') || s.includes('limpieza') || s.includes('estetica') || s.includes('dermo');
+            if (isFacial(a) && isFacial(b)) return true;
+
+            return false;
+        }
+
+        function normalizeHoraStr(str) {
+            if (!str) return "08:00";
+            const parts = str.toString().trim().split(':');
+            if (parts.length >= 2) {
+                return parts[0].padStart(2, '0') + ':' + parts[1].padStart(2, '0');
+            }
+            return str.toString().trim();
+        }
+
+        function getCandidatosActuales() {
+            const servicioInput = document.getElementById('serviceSelect') ? document.getElementById('serviceSelect').value : '';
+            const staffSelectedId = document.getElementById('staffSelect') ? document.getElementById('staffSelect').value : 'ANY';
+            if (!bdGlobal) return [];
+            const staffList = bdGlobal.staff || fallbackData.staff;
+            if (!servicioInput) return staffList;
+
+            const serviciosList = bdGlobal.servicios || fallbackData.servicios;
+            const servicio = serviciosList.find(s => (s.Nombre_Servicio || s.Nombre || s.Servicio) === servicioInput);
+            
+            let candidatos = staffList;
+            if (staffSelectedId && staffSelectedId !== 'ANY') {
+                candidatos = staffList.filter(st => (st.ID_Staff || st.idStaff) === staffSelectedId);
+            } else if (servicio && servicio.Especialidad) {
+                const filtrados = staffList.filter(st => matchEspecialidad(st.Especialidad, servicio.Especialidad));
+                if (filtrados.length > 0) candidatos = filtrados;
+            }
+            return candidatos;
+        }
+
+        function ajustarFechaSiStaffNoTrabaja() {
+            const servicioInput = document.getElementById('serviceSelect') ? document.getElementById('serviceSelect').value : '';
+            if (!servicioInput || !bdGlobal) return;
+
+            const candidatos = getCandidatosActuales();
+            if (!candidatos || candidatos.length === 0) return;
+
+            // Validar si algún candidato atiende el día seleccionado actualmente
+            const partsF = selectedFechaGlobal.split('-');
+            if (partsF.length === 3) {
+                const currentD = new Date(parseInt(partsF[0]), parseInt(partsF[1]) - 1, parseInt(partsF[2]));
+                const currentDayIdx = currentD.getDay();
+                if (candidatos.some(st => staffTrabajaEnDia(st, currentDayIdx))) {
+                    return; // Ya atiende en este día, no cambiar
+                }
+            }
+
+            // Buscar la fecha hábil más cercana para los candidatos (próximos 14 días)
+            const hoy = new Date();
+            for (let i = 0; i < 14; i++) {
+                let d = new Date(hoy);
+                d.setDate(hoy.getDate() + i);
+                if (d.getDay() === 0) continue; // Domingo cerrado
+                const dayIdx = d.getDay();
+                if (candidatos.some(st => staffTrabajaEnDia(st, dayIdx))) {
+                    selectedFechaGlobal = getLocalDateIso(d);
+                    break;
+                }
+            }
         }
 
         function actualizarInfoServicioSeleccionado() {
@@ -1607,7 +1710,7 @@
 
             turnoActivoDeMismaEspecialidad = (turnosActivosCliente || []).find(t => {
                 const espT = obtenerEspecialidadDeTurno(t);
-                return espT && espSeleccionada && (espT === espSeleccionada);
+                return espT && espSeleccionada && matchEspecialidad(espT, espSeleccionada);
             }) || null;
 
             const noticeBox = document.getElementById('noticeServicioPreseleccionado');
@@ -1649,6 +1752,25 @@
                     costoEl.classList.add('hide');
                 }
 
+                const staffInfoEl = document.getElementById('serviceInfoStaff');
+                if (staffInfoEl) {
+                    const staffList = bdGlobal.staff || fallbackData.staff;
+                    const staffFiltrado = staffList.filter(st => matchEspecialidad(st.Especialidad, s.Especialidad));
+                    if (staffFiltrado.length > 0) {
+                        const infoText = staffFiltrado.map(st => {
+                            const nom = st.Nombre || st.Nombre_Completo || 'Profesional';
+                            const dias = formatDiasTexto(st);
+                            const hIni = normalizeHoraStr(st.Hora_Inicio);
+                            const hFin = normalizeHoraStr(st.Hora_Fin);
+                            return `<span>👤 <strong>${nom}</strong>: ${dias} (${hIni} a ${hFin} hs)</span>`;
+                        }).join('<span class="text-stone-300"> • </span>');
+                        staffInfoEl.innerHTML = `📅 Días de atención: ${infoText}`;
+                        staffInfoEl.classList.remove('hide');
+                    } else {
+                        staffInfoEl.classList.add('hide');
+                    }
+                }
+
                 infoPill.classList.remove('hide');
             }
         }
@@ -1661,16 +1783,16 @@
             if (s.includes('todos') || s.includes('toda la semana')) return [1, 2, 3, 4, 5, 6];
 
             const dayMap = {
-                'dom': 0, 'domingo': 0,
+                'dom': 0, 'domingo': 0, 'domingos': 0,
                 'lun': 1, 'lunes': 1,
                 'mar': 2, 'martes': 2,
                 'mie': 3, 'miercoles': 3,
                 'jue': 4, 'jueves': 4,
                 'vie': 5, 'viernes': 5,
-                'sab': 6, 'sabado': 6
+                'sab': 6, 'sabado': 6, 'sabados': 6
             };
 
-            const rangeMatch = s.match(/(lun(?:es)?|mar(?:tes)?|mie(?:rcoles)?|jue(?:ves)?|vie(?:rnes)?|sab(?:ado)?|dom(?:ingo)?)\s*(?:a|-|al|hasta)\s*(lun(?:es)?|mar(?:tes)?|mie(?:rcoles)?|jue(?:ves)?|vie(?:rnes)?|sab(?:ado)?|dom(?:ingo)?)/);
+            const rangeMatch = s.match(/(lun(?:es)?|mar(?:tes)?|mie(?:rcoles)?|jue(?:ves)?|vie(?:rnes)?|sab(?:ado|ados)?|dom(?:ingo|ingos)?)\s*(?:a|-|al|hasta)\s*(lun(?:es)?|mar(?:tes)?|mie(?:rcoles)?|jue(?:ves)?|vie(?:rnes)?|sab(?:ado|ados)?|dom(?:ingo|ingos)?)/);
             if (rangeMatch) {
                 const start = dayMap[rangeMatch[1]];
                 const end = dayMap[rangeMatch[2]];
@@ -1734,14 +1856,13 @@
 
             const serviciosList = bdGlobal.servicios || fallbackData.servicios;
             const servicioObj = serviciosList.find(s => (s.Nombre_Servicio || s.Nombre || s.Servicio) === servicioInput);
-            const espServicio = servicioObj ? (servicioObj.Especialidad || "").toLowerCase().trim() : "";
+            const espServicio = servicioObj ? (servicioObj.Especialidad || "") : "";
 
             const staffList = bdGlobal.staff || fallbackData.staff;
             
             const staffFiltrado = staffList.filter(st => {
                 if (!espServicio) return true;
-                const espStaff = (st.Especialidad || "").toLowerCase().trim();
-                return espStaff.includes(espServicio) || espServicio.includes(espStaff);
+                return matchEspecialidad(st.Especialidad, espServicio);
             });
 
             const listaAMostrar = staffFiltrado.length > 0 ? staffFiltrado : staffList;
@@ -1751,7 +1872,9 @@
                 const idSt = st.ID_Staff || st.idStaff;
                 const espSt = st.Especialidad ? ` (${st.Especialidad})` : '';
                 const diasSt = formatDiasTexto(st);
-                staffSelect.innerHTML += `<option value="${idSt}">${nombreSt}${espSt} · ${diasSt}</option>`;
+                const hIni = normalizeHoraStr(st.Hora_Inicio);
+                const hFin = normalizeHoraStr(st.Hora_Fin);
+                staffSelect.innerHTML += `<option value="${idSt}">${nombreSt}${espSt} · ${diasSt} (${hIni}-${hFin}hs)</option>`;
             });
         }
 
@@ -1792,7 +1915,7 @@
             if (staffSelectedId && staffSelectedId !== 'ANY') {
                 candidatosStaff = staffList.filter(st => (st.ID_Staff || st.idStaff) === staffSelectedId);
             } else if (espServicio) {
-                const filtrados = staffList.filter(st => (st.Especialidad || "").toLowerCase().trim().includes(espServicio));
+                const filtrados = staffList.filter(st => matchEspecialidad(st.Especialidad, espServicio));
                 if (filtrados.length > 0) candidatosStaff = filtrados;
             }
             if (candidatosStaff.length === 0) candidatosStaff = staffList;
@@ -2038,14 +2161,14 @@
             const duracionMin = parseInt(servicio.Duracion_Min) || 30;
             const horaFin = formatTime(parseTime(hora) + duracionMin);
 
-            const espServicio = (servicio ? servicio.Especialidad || "" : "").toLowerCase().trim();
+            const espServicio = (servicio ? servicio.Especialidad || "" : "");
             const staffList = bdGlobal.staff || fallbackData.staff;
             
             let candidatosStaff = staffList;
             if (staffSelectedId && staffSelectedId !== 'ANY') {
                 candidatosStaff = staffList.filter(st => (st.ID_Staff || st.idStaff) === staffSelectedId);
             } else if (espServicio) {
-                const filtrados = staffList.filter(st => (st.Especialidad || "").toLowerCase().trim().includes(espServicio));
+                const filtrados = staffList.filter(st => matchEspecialidad(st.Especialidad, espServicio));
                 if (filtrados.length > 0) candidatosStaff = filtrados;
             }
             if (candidatosStaff.length === 0) candidatosStaff = staffList;
