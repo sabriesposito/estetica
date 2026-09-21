@@ -1,0 +1,251 @@
+{
+  "name": "Lumina - Resumen Semanal para Dueño",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 21 * * 0"
+            }
+          ]
+        }
+      },
+      "name": "Cron Semanal Domingos 21:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        100,
+        200
+      ],
+      "id": "cron-semanal-domingos"
+    },
+    {
+      "parameters": {
+        "url": "https://estetica.neco-dev.cloud/branding.json",
+        "options": {}
+      },
+      "name": "Obtener Branding",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        200
+      ],
+      "id": "http-get-branding-weekly"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 931049778,
+          "mode": "list",
+          "cachedResultName": "Turnos"
+        },
+        "options": {}
+      },
+      "name": "Obtener Turnos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        500,
+        100
+      ],
+      "id": "gs-turnos-weekly",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g855PstCDRAtYH2C",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1785770632,
+          "mode": "list",
+          "cachedResultName": "Servicios"
+        },
+        "options": {}
+      },
+      "name": "Obtener Servicios",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        500,
+        300
+      ],
+      "id": "gs-servicios-weekly",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g855PstCDRAtYH2C",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 891260524,
+          "mode": "list",
+          "cachedResultName": "Staff"
+        },
+        "options": {}
+      },
+      "name": "Obtener Staff",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        500,
+        500
+      ],
+      "id": "gs-staff-weekly",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g855PstCDRAtYH2C",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst brandingData = $('Obtener Branding').first().json || {};\nconst turnosItems = $('Obtener Turnos').all();\nconst serviciosItems = $('Obtener Servicios').all();\nconst staffItems = $('Obtener Staff').all();\n\n// Rango de los últimos 7 días\nconst ahora = new Date();\nconst ahoraArg = new Date(ahora.getTime() - 3 * 3600 * 1000);\nconst hace7Dias = new Date(ahoraArg);\nhace7Dias.setDate(ahoraArg.getDate() - 6);\n\nconst desdeIso = hace7Dias.toISOString().split('T')[0];\nconst hastaIso = ahoraArg.toISOString().split('T')[0];\n\n// Precios y Staff\nconst preciosMap = {};\nserviciosItems.forEach(s => {\n  const item = s.json;\n  const rawCost = item.Costo !== undefined ? item.Costo : 0;\n  const num = parseInt(rawCost.toString().replace(/[^0-9]/g, ''), 10) || 0;\n  if (item.ID_Servicio) preciosMap[item.ID_Servicio.toString().trim().toLowerCase()] = num;\n  if (item.Nombre_Servicio) preciosMap[item.Nombre_Servicio.toString().trim().toLowerCase()] = num;\n});\n\nconst staffMap = {};\nstaffItems.forEach(st => {\n  const item = st.json;\n  if (item.ID_Staff) staffMap[item.ID_Staff.toString().trim()] = item.Nombre;\n});\n\n// Filtrar turnos dentro del rango de 7 días\nconst turnosSemana = turnosItems.filter(t => {\n  const f = (t.json.Fecha || t.json.fecha || '').toString().trim();\n  return f >= desdeIso && f <= hastaIso;\n});\n\nlet totalTurnos = turnosSemana.length;\nlet facturacionTotal = 0;\nlet confirmados = 0;\nlet agendados = 0;\nlet cancelados = 0;\n\nconst staffBreakdown = {};\nconst serviciosCount = {};\nconst diasBreakdown = {}; // Facturación por día\n\nturnosSemana.forEach(t => {\n  const fecha = (t.json.Fecha || '').toString().trim();\n  const estado = (t.json.Estado || t.json.estado || 'Agendado').toString().trim();\n  const rawSvc = (t.json.ID_Servicio || t.json.Servicio || '').toString().trim();\n  const rawStaffId = (t.json.ID_Staff || '').toString().trim();\n  const staffName = staffMap[rawStaffId] || t.json.Staff || rawStaffId || 'Sin asignar';\n\n  const costo = preciosMap[rawSvc.toLowerCase()] || 0;\n\n  if (estado.toLowerCase() === 'cancelado') {\n    cancelados++;\n  } else {\n    facturacionTotal += costo;\n    if (estado.toLowerCase().includes('confirmado')) confirmados++;\n    else agendados++;\n\n    if (!staffBreakdown[staffName]) staffBreakdown[staffName] = { turnos: 0, total: 0 };\n    staffBreakdown[staffName].turnos++;\n    staffBreakdown[staffName].total += costo;\n\n    serviciosCount[rawSvc] = (serviciosCount[rawSvc] || 0) + 1;\n\n    if (!diasBreakdown[fecha]) diasBreakdown[fecha] = { turnos: 0, total: 0 };\n    diasBreakdown[fecha].turnos++;\n    diasBreakdown[fecha].total += costo;\n  }\n});\n\nlet topServicio = \"Ninguno\";\nlet maxSvcCount = 0;\nfor (const [sName, sCount] of Object.entries(serviciosCount)) {\n  if (sCount > maxSvcCount) {\n    maxSvcCount = sCount;\n    topServicio = sName + ' (' + sCount + ' turnos)';\n  }\n}\n\nconst ownerEmail = (brandingData.ownerEmail && brandingData.ownerEmail.trim().length > 3)\n  ? brandingData.ownerEmail.trim()\n  : 'espositosabrina29@gmail.com';\n\nconst brandName = brandingData.name || 'Lumina Estética';\nconst facturacionFmt = '$' + facturacionTotal.toLocaleString('de-DE');\nconst promedioDiarioFmt = '$' + Math.round(facturacionTotal / 7).toLocaleString('de-DE');\n\nreturn [{\n  json: {\n    desdeIso,\n    hastaIso,\n    totalTurnos,\n    facturacionTotal,\n    facturacionFmt,\n    promedioDiarioFmt,\n    confirmados,\n    agendados,\n    cancelados,\n    turnosEfectivos: confirmados + agendados,\n    topServicio,\n    staffBreakdown,\n    diasBreakdown,\n    ownerEmail,\n    brandName,\n    brandingData\n  }\n}];\n"
+      },
+      "name": "Calcular Métricas Semanales",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        200
+      ],
+      "id": "code-calc-metrics-weekly"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.ownerEmail }}",
+        "subject": "=📈 Resumen Semanal ({{ $json.desdeIso }} al {{ $json.hastaIso }}) — {{ $json.brandName }}: {{ $json.facturacionFmt }}",
+        "message": "=<!DOCTYPE html>\n<html>\n<head><meta charset=\"utf-8\"></head>\n<body style=\"font-family: 'Segoe UI', Arial, sans-serif; background-color: #faf7f2; margin: 0; padding: 20px; color: #44403c;\">\n  <div style=\"max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 18px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #f1f0ee;\">\n    \n    <!-- ENCABEZADO -->\n    <div style=\"background: linear-gradient(135deg, #6366f1, #4f46e5); padding: 28px 24px; text-align: center; color: #ffffff;\">\n      <span style=\"font-size: 32px; display: block; margin-bottom: 6px;\">🚀📈</span>\n      <h1 style=\"margin: 0 0 4px 0; font-size: 22px; font-weight: 800; letter-spacing: -0.3px; color: #ffffff;\">{{ $json.brandName }}</h1>\n      <p style=\"margin: 0; font-size: 14px; opacity: 0.95; font-weight: 600;\">Balance y Cierre Semanal Integral</p>\n      <div style=\"display: inline-block; background-color: rgba(255,255,255,0.22); padding: 4px 14px; border-radius: 20px; font-size: 12px; margin-top: 10px; font-weight: 700;\">\n        🗓️ Semana: {{ $json.desdeIso }} al {{ $json.hastaIso }}\n      </div>\n    </div>\n\n    <!-- CUERPO PRINCIPAL -->\n    <div style=\"padding: 24px 24px 28px 24px;\">\n      \n      <!-- TARJETAS DE MÉTRICAS DESTACADAS -->\n      <div style=\"display: flex; gap: 12px; margin-bottom: 20px;\">\n        <div style=\"flex: 1; background-color: #eef2ff; border: 1px solid #c7d2fe; border-radius: 14px; padding: 16px; text-align: center;\">\n          <div style=\"font-size: 11px; font-weight: 700; color: #4338ca; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;\">Facturación Semanal</div>\n          <div style=\"font-size: 24px; font-weight: 900; color: #3730a3;\">{{ $json.facturacionFmt }}</div>\n          <div style=\"font-size: 11px; color: #6366f1; font-weight: 600; margin-top: 2px;\">Promedio: {{ $json.promedioDiarioFmt }}/día</div>\n        </div>\n        <div style=\"flex: 1; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 14px; padding: 16px; text-align: center;\">\n          <div style=\"font-size: 11px; font-weight: 700; color: #15803d; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;\">Turnos Totales</div>\n          <div style=\"font-size: 24px; font-weight: 900; color: #166534;\">{{ $json.totalTurnos }}</div>\n          <div style=\"font-size: 11px; color: #22c55e; font-weight: 600; margin-top: 2px;\">{{ $json.turnosEfectivos }} completados / agendados</div>\n        </div>\n      </div>\n\n      <!-- DESGLOSE DE ASISTENCIA -->\n      <div style=\"background-color: #fafaf9; border: 1px solid #e7e5e4; border-radius: 14px; padding: 16px 20px; margin-bottom: 22px;\">\n        <div style=\"font-size: 13px; font-weight: 800; color: #1c1917; margin-bottom: 12px;\">\n          📊 Estadísticas de la Semana\n        </div>\n        <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"font-size: 13.5px;\">\n          <tr>\n            <td style=\"padding: 6px 0; color: #78716c;\">✅ Turnos Asistidos / Confirmados:</td>\n            <td style=\"padding: 6px 0; color: #047857; font-weight: 700; text-align: right;\">{{ $json.confirmados }}</td>\n          </tr>\n          <tr>\n            <td style=\"padding: 6px 0; color: #78716c;\">⏳ Turnos Agendados:</td>\n            <td style=\"padding: 6px 0; color: #4338ca; font-weight: 700; text-align: right;\">{{ $json.agendados }}</td>\n          </tr>\n          <tr>\n            <td style=\"padding: 6px 0; color: #78716c; border-bottom: 1px dashed #e7e5e4;\">❌ Turnos Cancelados:</td>\n            <td style=\"padding: 6px 0; color: #e11d48; font-weight: 700; text-align: right; border-bottom: 1px dashed #e7e5e4;\">{{ $json.cancelados }}</td>\n          </tr>\n          <tr>\n            <td style=\"padding: 8px 0 2px 0; color: #44403c; font-weight: 700;\">🏆 Servicio Estrella de la Semana:</td>\n            <td style=\"padding: 8px 0 2px 0; color: #4338ca; font-weight: 800; text-align: right;\">{{ $json.topServicio }}</td>\n          </tr>\n        </table>\n      </div>\n\n      <!-- RENDIMIENTO POR PROFESIONAL -->\n      <div style=\"background-color: #ffffff; border: 1px solid #e7e5e4; border-radius: 14px; padding: 16px 20px; margin-bottom: 22px;\">\n        <div style=\"font-size: 13px; font-weight: 800; color: #1c1917; margin-bottom: 12px;\">\n          👥 Facturación y Turnos por Staff\n        </div>\n        <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"font-size: 13px;\">\n          <thead>\n            <tr style=\"border-bottom: 1px solid #f1f0ee; color: #a8a29e; font-size: 11px; text-transform: uppercase;\">\n              <th align=\"left\" style=\"padding-bottom: 8px;\">Staff</th>\n              <th align=\"center\" style=\"padding-bottom: 8px;\">Turnos</th>\n              <th align=\"right\" style=\"padding-bottom: 8px;\">Facturación</th>\n            </tr>\n          </thead>\n          <tbody>\n            {{ Object.entries($json.staffBreakdown).map(([stName, stData]) => `\n              <tr>\n                <td style=\"padding: 7px 0; font-weight: 600; color: #292524; border-bottom: 1px dashed #f5f5f4;\">${stName}</td>\n                <td align=\"center\" style=\"padding: 7px 0; color: #78716c; border-bottom: 1px dashed #f5f5f4;\">${stData.turnos}</td>\n                <td align=\"right\" style=\"padding: 7px 0; font-weight: 700; color: #047857; border-bottom: 1px dashed #f5f5f4;\">$${stData.total.toLocaleString('de-DE')}</td>\n              </tr>\n            `).join('') || '<tr><td colspan=\"3\" style=\"padding: 10px 0; color: #a8a29e; text-align: center;\">Sin turnos activos esta semana</td></tr>' }}\n          </tbody>\n        </table>\n      </div>\n\n      <!-- BOTÓN DIRECTO AL PANEL ADMIN -->\n      <a href=\"https://estetica.neco-dev.cloud\" style=\"display: block; width: 100%; text-align: center; background-color: #4f46e5; color: #ffffff !important; font-weight: 800; text-decoration: none; padding: 14px 0; border-radius: 12px; font-size: 14.5px; box-sizing: border-box; box-shadow: 0 4px 12px rgba(79,70,229,0.25);\">\n        🖥️ Ver Estadísticas en Panel de Control\n      </a>\n    </div>\n\n    <!-- FOOTER -->\n    <div style=\"background-color: #faf7f2; padding: 16px 20px; text-align: center; font-size: 11.5px; color: #a8a29e; border-top: 1px solid #f1f0ee; line-height: 1.4;\">\n      Reporte automatizado emitido por <strong>{{ $json.brandName }}</strong>.<br>\n      Para cambiar el mail de recepción, edítalo en la sección de Marca del panel de administración.\n    </div>\n  </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "name": "Enviar Resumen Semanal por Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1100,
+        200
+      ],
+      "id": "gmail-send-weekly-summary",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "lGbWJrHHYY20r6XS",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron Semanal Domingos 21:00": {
+      "main": [
+        [
+          {
+            "node": "Obtener Branding",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Obtener Turnos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Obtener Servicios",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Obtener Staff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Branding": {
+      "main": [
+        [
+          {
+            "node": "Calcular Métricas Semanales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Turnos": {
+      "main": [
+        [
+          {
+            "node": "Calcular Métricas Semanales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Servicios": {
+      "main": [
+        [
+          {
+            "node": "Calcular Métricas Semanales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Staff": {
+      "main": [
+        [
+          {
+            "node": "Calcular Métricas Semanales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular Métricas Semanales": {
+      "main": [
+        [
+          {
+            "node": "Enviar Resumen Semanal por Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
