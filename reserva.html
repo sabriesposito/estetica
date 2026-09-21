@@ -414,11 +414,24 @@
                             <!-- BLOQUE 2: DÍA DE ATENCIÓN -->
                             <div class="relative bg-white border border-stone-200/90 rounded-3xl p-5 sm:p-6 shadow-xs space-y-4 pt-7 mt-5">
                                 <div class="step-card-badge">2</div>
-                                <div class="bg-accent border border-theme/40 rounded-2xl py-2.5 px-4 flex items-center justify-between shadow-2xs">
-                                    <span class="text-sm sm:text-base font-extrabold text-theme">📆 Selecciona el Día</span>
-                                    <button type="button" id="btnOtraFecha" class="text-xs text-theme font-extrabold hover:underline flex items-center gap-1 py-1 px-3 rounded-xl border border-theme/40 bg-white shadow-2xs active:scale-95">
-                                        <span>📅</span> Otra fecha
-                                    </button>
+                                <div class="bg-accent border border-theme/40 rounded-2xl py-2 px-3.5 flex items-center justify-between shadow-2xs gap-2 flex-wrap">
+                                    <span class="text-sm sm:text-base font-extrabold text-theme flex items-center gap-1.5">
+                                        <span>📆</span> Selecciona el Día
+                                    </span>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <button type="button" onclick="irAHoy()" id="btnIrAHoy" class="text-xs text-theme font-extrabold hover:bg-white flex items-center gap-1 py-1.5 px-2.5 rounded-xl border border-theme/40 bg-white/90 shadow-2xs active:scale-95 transition cursor-pointer" title="Ir a la fecha de hoy">
+                                            <span>⚡</span> Hoy
+                                        </button>
+                                        <button type="button" onclick="navegarSemana(-1)" id="btnSemanaAnterior" class="text-xs text-theme font-extrabold hover:bg-white px-2.5 py-1.5 rounded-xl border border-theme/40 bg-white/90 shadow-2xs active:scale-95 transition disabled:opacity-30 disabled:pointer-events-none cursor-pointer" title="Semana anterior">
+                                            ◀
+                                        </button>
+                                        <button type="button" onclick="navegarSemana(1)" id="btnSemanaSiguiente" class="text-xs text-theme font-extrabold hover:bg-white px-2.5 py-1.5 rounded-xl border border-theme/40 bg-white/90 shadow-2xs active:scale-95 transition cursor-pointer" title="Semana siguiente">
+                                            ▶
+                                        </button>
+                                        <button type="button" id="btnOtraFecha" class="text-xs text-theme font-extrabold hover:bg-white flex items-center gap-1 py-1.5 px-2.5 rounded-xl border border-theme/40 bg-white/90 shadow-2xs active:scale-95 transition cursor-pointer" title="Elegir fecha en calendario">
+                                            <span>📅</span> <span class="hidden sm:inline">Otra fecha</span>
+                                        </button>
+                                    </div>
                                 </div>
                                 
                                 <!-- Pestañas de Días en Formato Flex Wrap Limpio sin Scrollbars -->
@@ -1242,9 +1255,60 @@
             }
         }
 
+        let currentWeekOffset = 0;
+
+        function irAHoy() {
+            currentWeekOffset = 0;
+            selectedFechaGlobal = getLocalDateIso();
+            ajustarFechaSiStaffNoTrabaja();
+            renderDayTabs();
+            calcularDisponibilidad();
+        }
+
+        function navegarSemana(dir) {
+            currentWeekOffset = Math.max(0, currentWeekOffset + dir);
+            
+            const hoy = new Date();
+            let startD = new Date(hoy);
+            startD.setDate(hoy.getDate() + (currentWeekOffset * 7));
+            
+            const servicioInput = document.getElementById('serviceSelect') ? document.getElementById('serviceSelect').value : '';
+            const candidatos = servicioInput ? getCandidatosActuales() : null;
+
+            let primeraFechaValida = null;
+            for (let i = 0; i < 7; i++) {
+                let d = new Date(startD);
+                d.setDate(startD.getDate() + i);
+                if (d.getDay() === 0) continue;
+                const atiende = candidatos ? candidatos.some(st => staffTrabajaEnDia(st, d.getDay())) : true;
+                if (atiende && !primeraFechaValida) {
+                    primeraFechaValida = getLocalDateIso(d);
+                    break;
+                }
+                if (!primeraFechaValida) primeraFechaValida = getLocalDateIso(d);
+            }
+            if (primeraFechaValida) {
+                selectedFechaGlobal = primeraFechaValida;
+            }
+
+            renderDayTabs();
+            calcularDisponibilidad();
+        }
+
         function onCustomDatePicked(isoDate) {
             if (!isoDate) return;
             selectedFechaGlobal = isoDate;
+
+            const parts = isoDate.split('-');
+            if (parts.length === 3) {
+                const picked = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                const hoy = new Date();
+                hoy.setHours(0, 0, 0, 0);
+                picked.setHours(0, 0, 0, 0);
+                const diffDays = Math.round((picked.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+                currentWeekOffset = Math.max(0, Math.floor(diffDays / 7));
+            }
+
             renderDayTabs();
             calcularDisponibilidad();
         }
@@ -1257,16 +1321,25 @@
             if (!container) return;
             container.innerHTML = '';
 
+            const btnPrev = document.getElementById('btnSemanaAnterior');
+            if (btnPrev) {
+                btnPrev.disabled = (currentWeekOffset <= 0);
+            }
+
             const servicioInput = document.getElementById('serviceSelect') ? document.getElementById('serviceSelect').value : '';
             const candidatos = servicioInput ? getCandidatosActuales() : null;
 
             const hoy = new Date();
+            const hoyIso = getLocalDateIso(hoy);
             let count = 0;
             let standardIsos = [];
 
+            const startDay = new Date(hoy);
+            startDay.setDate(hoy.getDate() + (currentWeekOffset * 7));
+
             for (let i = 0; count < 5; i++) {
-                let d = new Date(hoy);
-                d.setDate(hoy.getDate() + i);
+                let d = new Date(startDay);
+                d.setDate(startDay.getDate() + i);
                 
                 if (d.getDay() === 0) continue; // Saltear domingos
                 
@@ -1274,9 +1347,16 @@
                 standardIsos.push(iso);
 
                 let label = "";
-                if (i === 0 && d.getDate() === hoy.getDate()) label = `Hoy (${diasNombres[d.getDay()]} ${d.getDate()})`;
-                else if (i <= 1 && d.getDate() === hoy.getDate() + 1) label = `Mañana (${diasNombres[d.getDay()]} ${d.getDate()})`;
-                else label = `${diasNombres[d.getDay()]} ${d.getDate()} ${mesesNombres[d.getMonth()]}`;
+                if (iso === hoyIso) label = `Hoy (${diasNombres[d.getDay()]} ${d.getDate()})`;
+                else {
+                    const mananaDate = new Date(hoy);
+                    mananaDate.setDate(hoy.getDate() + 1);
+                    if (iso === getLocalDateIso(mananaDate)) {
+                        label = `Mañana (${diasNombres[d.getDay()]} ${d.getDate()})`;
+                    } else {
+                        label = `${diasNombres[d.getDay()]} ${d.getDate()} ${mesesNombres[d.getMonth()]}`;
+                    }
+                }
 
                 const atiende = candidatos ? candidatos.some(st => staffTrabajaEnDia(st, d.getDay())) : true;
                 const isActive = (iso === selectedFechaGlobal);
@@ -1683,6 +1763,7 @@
                 const dayIdx = d.getDay();
                 if (candidatos.some(st => staffTrabajaEnDia(st, dayIdx))) {
                     selectedFechaGlobal = getLocalDateIso(d);
+                    currentWeekOffset = Math.max(0, Math.floor(i / 7));
                     break;
                 }
             }
