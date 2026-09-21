@@ -220,6 +220,24 @@
                         </a>
                     </section>
 
+                    <!-- TARJETA HORARIOS DE ATENCIÓN -->
+                    <section id="horariosSection" class="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs fade-in">
+                        <div class="bg-accent border border-theme/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2 mb-3">
+                            <span class="text-base">🕐</span>
+                            <h3 class="text-sm font-bold text-theme">Días y Horarios de Atención</h3>
+                        </div>
+                        <div class="bg-stone-50 border border-stone-200/80 rounded-xl p-3.5 space-y-2 text-xs">
+                            <div class="flex items-center gap-2 text-stone-700">
+                                <span class="font-bold text-stone-900">📅 Días:</span>
+                                <span id="brandDiasAtencionText" class="font-semibold text-theme">Lunes a Sábados</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-stone-700">
+                                <span class="font-bold text-stone-900">⏰ Horario:</span>
+                                <span id="brandHorasAtencionText" class="font-semibold text-theme">08:00 a 20:00 hs</span>
+                            </div>
+                        </div>
+                    </section>
+
                     <!-- TARJETA UBICACIÓN Y CÓMO LLEGAR -->
                     <section id="ubicacionSection" class="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs fade-in">
                         <div class="bg-accent border border-theme/30 rounded-xl px-3.5 py-2.5 flex items-center gap-2 mb-3">
@@ -544,7 +562,10 @@
             theme: "purple",
             address: "Avenida Maipú 3907 , Gran Buenos Aires, Tres de Febrero, Argentina",
             mapUrl: "https://www.google.com/maps/search/?api=1&query=Avenida%20Maip%C3%BA%203907%20%2C%20Gran%20Buenos%20Aires%2C%20Tres%20de%20Febrero%2C%20Argentina",
-            whatsapp: "https://api.whatsapp.com/send/?phone=%2B5491166266845&text&type=phone_number&app_absent=0"
+            whatsapp: "https://api.whatsapp.com/send/?phone=%2B5491166266845&text&type=phone_number&app_absent=0",
+            diasAtencion: "Lunes a Sábado",
+            horaApertura: "08:00",
+            horaCierre: "20:00"
         };
 
         const themesMap = {
@@ -635,6 +656,17 @@
             }
 
             renderUbicacionMapa(cfg);
+
+            const diasTxt = document.getElementById('brandDiasAtencionText');
+            if (diasTxt) {
+                diasTxt.innerText = cfg.diasAtencion || defaultBranding.diasAtencion || 'Lunes a Sábado';
+            }
+            const horasTxt = document.getElementById('brandHorasAtencionText');
+            if (horasTxt) {
+                const hApertura = cfg.horaApertura || defaultBranding.horaApertura || '08:00';
+                const hCierre = cfg.horaCierre || defaultBranding.horaCierre || '20:00';
+                horasTxt.innerText = `${hApertura} a ${hCierre} hs`;
+            }
 
             const t = themesMap[cfg.theme] || themesMap.purple;
 
@@ -1337,7 +1369,7 @@
             const startDay = new Date(hoy);
             startDay.setDate(hoy.getDate() + (currentWeekOffset * 7));
 
-            for (let i = 0; count < 5; i++) {
+            for (let i = 0; count < 6; i++) {
                 let d = new Date(startDay);
                 d.setDate(startDay.getDate() + i);
                 

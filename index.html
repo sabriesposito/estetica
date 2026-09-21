@@ -981,6 +981,28 @@
                         </select>
                     </div>
 
+                    <!-- Configuración de Días y Horarios de Atención -->
+                    <div class="bg-stone-50 border border-stone-200 rounded-2xl p-3.5 space-y-2.5 shadow-2xs">
+                        <label class="block text-xs font-bold text-stone-800 flex items-center gap-1.5">
+                            <span>🕐</span> Días y Horarios de Atención al Público
+                        </label>
+                        <p class="text-[11px] text-stone-500 leading-snug">Configura los días y horarios en los que la estética está abierta para que se muestren en la web del cliente.</p>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-stone-600 mb-1">Días de Atención (Ej. Lunes a Sábados)</label>
+                            <input type="text" id="bmDiasAtencion" placeholder="Ej. Lunes a Sábado" class="w-full bg-white border border-stone-200 rounded-xl p-2.5 text-stone-700 text-xs outline-none focus:border-purple-400 font-medium transition">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-stone-600 mb-1">Hora Apertura</label>
+                                <input type="time" id="bmHoraApertura" value="08:00" class="w-full bg-white border border-stone-200 rounded-xl p-2.5 text-stone-700 text-xs outline-none focus:border-purple-400 font-medium transition">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-stone-600 mb-1">Hora Cierre</label>
+                                <input type="time" id="bmHoraCierre" value="20:00" class="w-full bg-white border border-stone-200 rounded-xl p-2.5 text-stone-700 text-xs outline-none focus:border-purple-400 font-medium transition">
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Notificaciones de Nuevos Turnos para el Dueño -->
                     <div class="bg-stone-50 border border-stone-200 rounded-2xl p-3.5 space-y-1.5 shadow-2xs">
                         <label class="block text-xs font-bold text-stone-800 flex items-center gap-1.5">
@@ -2503,7 +2525,10 @@
             address: "Avenida Maipú 3907 , Gran Buenos Aires, Tres de Febrero, Argentina",
             mapUrl: "https://www.google.com/maps/search/?api=1&query=Avenida%20Maip%C3%BA%203907%20%2C%20Gran%20Buenos%20Aires%2C%20Tres%20de%20Febrero%2C%20Argentina",
             whatsapp: "https://api.whatsapp.com/send/?phone=%2B5491166266845&text&type=phone_number&app_absent=0",
-            ownerEmail: ""
+            ownerEmail: "",
+            diasAtencion: "Lunes a Sábado",
+            horaApertura: "08:00",
+            horaCierre: "20:00"
         };
 
         let tempLogoDataUrl = "";
@@ -2595,11 +2620,11 @@
             tempBgDataUrl = url;
         }
 
-        function updatePreviewCircle(imgSrc) {
-            const previewEl = document.getElementById('bmPreviewCircle');
-            if (!previewEl) return;
-            if (imgSrc) {
-                previewEl.innerHTML = `<img src="${imgSrc}" class="w-full h-full object-cover rounded-full">`;
+        function updatePreviewCircle(url) {
+            const previewEl = document.getElementById('brandLogoPreview');
+            if(!previewEl) return;
+            if (url) {
+                previewEl.innerHTML = `<img src="${url}" class="w-full h-full object-cover rounded-full">`;
             } else {
                 const name = document.getElementById('bmName')?.value || 'L';
                 previewEl.innerHTML = name.charAt(0).toUpperCase();
@@ -2616,6 +2641,15 @@
             document.getElementById('bmMapUrl').value = cfg.mapUrl || '';
             document.getElementById('bmWhatsapp').value = cfg.whatsapp || defaultBranding.whatsapp;
             document.getElementById('bmTheme').value = cfg.theme || 'purple';
+            if (document.getElementById('bmDiasAtencion')) {
+                document.getElementById('bmDiasAtencion').value = cfg.diasAtencion || defaultBranding.diasAtencion;
+            }
+            if (document.getElementById('bmHoraApertura')) {
+                document.getElementById('bmHoraApertura').value = cfg.horaApertura || defaultBranding.horaApertura;
+            }
+            if (document.getElementById('bmHoraCierre')) {
+                document.getElementById('bmHoraCierre').value = cfg.horaCierre || defaultBranding.horaCierre;
+            }
             if (document.getElementById('bmOwnerEmail')) {
                 document.getElementById('bmOwnerEmail').value = cfg.ownerEmail || '';
             }
@@ -2637,6 +2671,9 @@
                 address: document.getElementById('bmAddress').value.trim() || defaultBranding.address,
                 mapUrl: document.getElementById('bmMapUrl').value.trim() || '',
                 whatsapp: document.getElementById('bmWhatsapp').value.trim() || defaultBranding.whatsapp,
+                diasAtencion: (document.getElementById('bmDiasAtencion')?.value || '').trim() || defaultBranding.diasAtencion,
+                horaApertura: (document.getElementById('bmHoraApertura')?.value || '').trim() || defaultBranding.horaApertura,
+                horaCierre: (document.getElementById('bmHoraCierre')?.value || '').trim() || defaultBranding.horaCierre,
                 ownerEmail: ownerEmailToSave
             };
 

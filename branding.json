@@ -3,5 +3,8 @@
   "description": "Tu santuario de belleza, bienestar y cuidado personal integral. Especialistas en estética facial avanzada, manicuría Rusa & esculpidas, diseño de mirada y tratamientos corporales de vanguardia.",
   "logoUrl": "",
   "theme": "sky",
-  "ownerEmail": ""
+  "ownerEmail": "",
+  "diasAtencion": "Lunes a Sábado",
+  "horaApertura": "08:00",
+  "horaCierre": "20:00"
 }
