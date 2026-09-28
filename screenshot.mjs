@@ -17,10 +17,12 @@ const outputPath = join(outputDir, `screenshot-${idx}.png`);
 const size = process.argv[3] || '1440,900';
 const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const args = [
-  '--headless',
+  '--headless=new',
   '--disable-gpu',
   '--hide-scrollbars',
   '--force-device-scale-factor=1',
+  '--run-all-compositor-stages-before-draw',
+  '--virtual-time-budget=6000',
   `--window-size=${size}`,
   `--screenshot=${outputPath}`,
   url

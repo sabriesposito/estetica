@@ -572,6 +572,29 @@
                 ],
                 "combinator": "and"
               }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "rule-email-generico",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "enviar_email_generico",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
             }
           ]
         },
@@ -1228,6 +1251,28 @@
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.destinatario }}",
+        "subject": "={{ $json.body.asunto }}",
+        "message": "={{ $json.body.html }}",
+        "options": {}
+      },
+      "name": "Enviar Email Generico",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        448,
+        900
+      ],
+      "id": "gmail-generico-1790020223282",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "lGbWJrHHYY20r6XS",
+          "name": "Gmail account"
+        }
+      }
     }
   ],
   "connections": {
@@ -1322,6 +1367,13 @@
         [
           {
             "node": "Reasignar Turno",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar Email Generico",
             "type": "main",
             "index": 0
           }
