@@ -919,6 +919,45 @@
             </div>
         </div>
 
+        <!-- Modal Editar Servicio -->
+        <div id="editServiceModal" class="fixed inset-0 bg-stone-900/50 flex items-end sm:items-center justify-center z-[80] hide transition-opacity backdrop-blur-sm">
+            <div class="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-[430px] sm:max-w-sm shadow-2xl relative max-h-[90vh] overflow-y-auto">
+                <button onclick="closeModal('editServiceModal')" class="absolute top-5 right-5 text-stone-400 hover:text-stone-600 bg-stone-100 rounded-full w-8 h-8 flex justify-center items-center">✕</button>
+                <h3 class="text-xl font-bold text-stone-700 mb-1">Editar Servicio</h3>
+                <p class="text-xs text-stone-500 mb-4">Modificar datos del servicio en el catálogo.</p>
+                <input type="hidden" id="esvcId">
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-500 mb-1">Nombre del Servicio *</label>
+                        <input type="text" id="esvcNombre" placeholder="Ej. Perfilado de Cejas" class="input-pastel text-xs">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-stone-500 mb-1">Precio ($) *</label>
+                            <input type="text" id="esvcCosto" placeholder="Ej. 15000" class="input-pastel text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-stone-500 mb-1">Duración (min) *</label>
+                            <input type="number" id="esvcDuracion" value="45" step="15" min="15" class="input-pastel text-xs">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-500 mb-1">Especialidad *</label>
+                        <input type="text" id="esvcEspecialidad" placeholder="Ej. Pelo, Uñas, Cejas, Facial" class="input-pastel text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-500 mb-1">Descripción</label>
+                        <textarea id="esvcDescripcion" rows="2" placeholder="Descripción breve del tratamiento..." class="input-pastel text-xs resize-none"></textarea>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <button onclick="guardarEdicionServicio()" class="w-full btn-pastel py-3 rounded-xl transition font-semibold shadow-sm">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Modal Configuración de Marca (CON CABECERA FIJA Y BOTÓN X SIEMPRE VISIBLE) -->
         <div id="brandModal" class="fixed inset-0 bg-stone-900/40 flex items-end sm:items-center justify-center z-[70] hide transition-opacity backdrop-blur-sm">
             <div class="bg-white border border-stone-100 rounded-t-3xl sm:rounded-2xl w-full max-w-[430px] sm:max-w-sm shadow-2xl relative max-h-[90vh] flex flex-col overflow-hidden">
@@ -3192,6 +3231,78 @@
             document.getElementById('nsvcDescripcion').value = '';
         }
 
+        function abrirEditarServicio(idServicio) {
+            const servicios = (bdGlobal && bdGlobal.servicios && bdGlobal.servicios.length > 0) ? bdGlobal.servicios : (fallbackData.servicios || []);
+            const s = servicios.find(item => (item.ID_Servicio || item.idServicio) === idServicio);
+            if (!s) { alert("Servicio no encontrado."); return; }
+
+            document.getElementById('esvcId').value = idServicio;
+            document.getElementById('esvcNombre').value = s.Nombre_Servicio || s.Nombre || '';
+            const costo = s.Costo || s.Precio || '';
+            document.getElementById('esvcCosto').value = costo.toString().replace(/[^0-9]/g, '') || costo;
+            document.getElementById('esvcDuracion').value = parseInt(s.Duracion_Min) || 30;
+            document.getElementById('esvcEspecialidad').value = s.Especialidad || '';
+            document.getElementById('esvcDescripcion').value = s.Descripcion || s.Descripción || '';
+
+            openModal('editServiceModal');
+        }
+
+        async function guardarEdicionServicio() {
+            const idServicio = document.getElementById('esvcId').value;
+            const nombre = document.getElementById('esvcNombre').value.trim();
+            const costoRaw = document.getElementById('esvcCosto').value.trim();
+            const duracion = parseInt(document.getElementById('esvcDuracion').value) || 30;
+            const especialidad = document.getElementById('esvcEspecialidad').value.trim() || "Estética";
+            const descripcion = document.getElementById('esvcDescripcion').value.trim() || "";
+
+            if (!nombre) { alert("Por favor ingresa el nombre del servicio."); return; }
+            if (!costoRaw) { alert("Por favor ingresa el valor o costo del servicio."); return; }
+
+            const costoFormatted = formatPrecio(costoRaw);
+
+            if (bdGlobal && bdGlobal.servicios) {
+                const idx = bdGlobal.servicios.findIndex(s => (s.ID_Servicio || s.idServicio) === idServicio);
+                if (idx !== -1) {
+                    bdGlobal.servicios[idx].Nombre_Servicio = nombre;
+                    bdGlobal.servicios[idx].Nombre = nombre;
+                    bdGlobal.servicios[idx].Costo = costoFormatted;
+                    bdGlobal.servicios[idx].Precio = costoFormatted;
+                    bdGlobal.servicios[idx].Duracion_Min = duracion;
+                    bdGlobal.servicios[idx].Especialidad = especialidad;
+                    bdGlobal.servicios[idx].Descripcion = descripcion;
+                    bdGlobal.servicios[idx].Descripción = descripcion;
+                }
+            }
+
+            try {
+                localStorage.setItem('lumina_bd_cache', JSON.stringify(bdGlobal));
+            } catch(e) {}
+
+            try {
+                fetch(POST_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: "alta_servicio",
+                        servicioInfo: {
+                            idServicio: idServicio,
+                            nombre: nombre,
+                            costo: costoFormatted,
+                            duracionMin: duracion,
+                            especialidad: especialidad,
+                            descripcion: descripcion
+                        }
+                    })
+                }).catch(e => console.warn(e));
+            } catch(e) {}
+
+            renderServicesList();
+            actualizarDesplegableServicios();
+            calcularMetricas();
+            closeModal('editServiceModal');
+            alert(`💅 ¡El servicio "${nombre}" ha sido actualizado con éxito!`);
+        }
+
         async function confirmTurnoAction() {
             let clienteName = document.getElementById('clienteSelect').value;
             if (clienteName === 'MANUAL_NAME') {
@@ -4330,7 +4441,7 @@
                 const costoStr = costoRaw ? (costoRaw.toString().startsWith('$') ? costoRaw : ('$' + costoRaw)) : 'Consultar';
                 const duracion = s.Duracion_Min ? (s.Duracion_Min + ' min') : '45 min';
                 const especialidad = s.Especialidad || 'General';
-                const desc = s.Descripcion || '';
+                const desc = s.Descripcion || s.Descripción || '';
 
                 html += `
                     <div class="bg-stone-50/80 hover:bg-stone-100/90 border border-stone-200 rounded-xl p-3 flex items-center justify-between gap-2.5 transition">
@@ -4345,9 +4456,14 @@
                             </div>
                             ${desc ? `<p class="text-[11px] text-stone-400 truncate mt-0.5">${desc}</p>` : ''}
                         </div>
-                        <button onclick="eliminarServicio('${idSvc}', '${nombre.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs flex items-center gap-1 transition active:scale-95 shadow-2xs shrink-0 cursor-pointer" title="Eliminar servicio del catálogo">
-                            <span>🗑️</span> <span class="hidden sm:inline">Eliminar</span>
-                        </button>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <button onclick="abrirEditarServicio('${idSvc}')" class="px-2.5 py-1.5 rounded-lg border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-300 font-bold text-xs flex items-center gap-1 transition active:scale-95 shadow-2xs cursor-pointer" title="Editar servicio">
+                                <span>✏️</span> <span class="hidden sm:inline">Editar</span>
+                            </button>
+                            <button onclick="eliminarServicio('${idSvc}', '${nombre.replace(/'/g, "\\'")}')" class="px-2.5 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:border-rose-300 font-bold text-xs flex items-center gap-1 transition active:scale-95 shadow-2xs shrink-0 cursor-pointer" title="Eliminar servicio del catálogo">
+                                <span>🗑️</span> <span class="hidden sm:inline">Eliminar</span>
+                            </button>
+                        </div>
                     </div>
                 `;
             });
