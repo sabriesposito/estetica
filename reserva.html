@@ -587,6 +587,7 @@
         const fallbackData = {
             clientes: [
                 { ID_Cliente: "C1787797749", Nombre_Completo: "Sabri", Correo: "espositosabrina29@gmail.com", Telefono: "+5491166266845" },
+                { ID_Cliente: "C1788482937", Nombre_Completo: "Neskate", Correo: "siempresina23@gmail.com", Telefono: "+5491166266845" },
                 { ID_Cliente: "C1787799907", Nombre_Completo: "Sabri2", Correo: "siempresina23@gmail.com", Telefono: "+5491166266845" }
             ],
             servicios: [
@@ -1012,8 +1013,8 @@
                 action: "cancelar",
                 idTurno: target.ID_Turno || target.idTurno,
                 clienteInfo: {
-                    nombre: target.Cliente || target.Nombre || 'Cliente',
-                    email: target.Correo || target.Email || ''
+                    nombre: target.Cliente || target.Nombre || (clienteEncontrado ? (clienteEncontrado.Nombre_Completo || clienteEncontrado.Nombre) : 'Cliente'),
+                    email: target.Correo || target.Email || (clienteEncontrado ? (clienteEncontrado.Correo || clienteEncontrado.Email) : '') || (document.getElementById('cEmail') ? document.getElementById('cEmail').value.trim() : '')
                 },
                 idServicio: nombreServicio,
                 fecha: normalizarFecha(target.Fecha || target.fecha),
@@ -1093,8 +1094,18 @@
                     } else if (bdGlobal && Array.isArray(bdGlobal.clientes) && bdGlobal.clientes.length > 0) {
                         data.clientes = bdGlobal.clientes;
                     } else {
-                        data.clientes = [];
+                        data.clientes = (fallbackData && Array.isArray(fallbackData.clientes)) ? [...fallbackData.clientes] : [];
                     }
+                }
+                if (fallbackData && Array.isArray(fallbackData.clientes)) {
+                    if (!data.clientes || !Array.isArray(data.clientes)) data.clientes = [];
+                    fallbackData.clientes.forEach(fc => {
+                        const yaExiste = data.clientes.some(c => 
+                            (c.Correo && fc.Correo && c.Correo.toLowerCase().trim() === fc.Correo.toLowerCase().trim()) ||
+                            (c.ID_Cliente && fc.ID_Cliente && c.ID_Cliente === fc.ID_Cliente)
+                        );
+                        if (!yaExiste) data.clientes.push(fc);
+                    });
                 }
                 if (!data.turnos || !Array.isArray(data.turnos)) {
                     data.turnos = (localCache && Array.isArray(localCache.turnos)) ? localCache.turnos : [];
@@ -1496,6 +1507,28 @@
                 const fallbackEmail = (c.Correo || c.Email || c.email || c.correo || c.Mail || c.mail || "").toString().trim().toLowerCase();
                 return fallbackEmail === emailInput && emailInput !== "";
             }) : null;
+
+            if (!clienteEncontrado && typeof fallbackData !== 'undefined' && fallbackData.clientes) {
+                clienteEncontrado = fallbackData.clientes.find(c => {
+                    const cMail = (c.Correo || c.Email || c.email || c.correo || "").toString().trim().toLowerCase();
+                    return cMail === emailInput && emailInput !== "";
+                });
+            }
+
+            if (!clienteEncontrado && bdGlobal && bdGlobal.turnos) {
+                const turnoConEmail = bdGlobal.turnos.find(t => {
+                    const tEmail = (t.Correo || t.Email || t.email || "").toString().trim().toLowerCase();
+                    return tEmail === emailInput && emailInput !== "";
+                });
+                if (turnoConEmail) {
+                    clienteEncontrado = {
+                        ID_Cliente: turnoConEmail.ID_Cliente || turnoConEmail.idCliente || "C_" + Math.random().toString().slice(2, 8),
+                        Nombre_Completo: turnoConEmail.Cliente || turnoConEmail.Nombre || "Cliente",
+                        Correo: emailInput,
+                        Telefono: turnoConEmail.Telefono || turnoConEmail.Tel || ""
+                    };
+                }
+            }
 
             const hoyIso = getLocalDateIso();
             turnosActivosCliente = (bdGlobal && bdGlobal.turnos) ? bdGlobal.turnos.filter(t => {

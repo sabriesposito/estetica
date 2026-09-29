@@ -1911,6 +1911,84 @@
             }
         }
 
+        // --- RESOLVER EMAIL Y NOMBRE REAL DEL CLIENTE DEL TURNO ---
+        function resolverEmailTurno(t) {
+            if (!t) return '';
+            // 1. Campos directos del turno
+            const directEmail = t.Correo || t.correo || t.Email || t.email || t.Mail || t.mail || t.clienteEmail;
+            if (directEmail && typeof directEmail === 'string' && directEmail.includes('@')) return directEmail.trim();
+
+            // 2. ID_Cliente si contiene un email
+            if (t.ID_Cliente && typeof t.ID_Cliente === 'string' && t.ID_Cliente.includes('@')) {
+                return t.ID_Cliente.replace(/^c_?/i, '').trim();
+            }
+
+            // 3. Buscar en bdGlobal.clientes
+            const clientesList = (bdGlobal && Array.isArray(bdGlobal.clientes) && bdGlobal.clientes.length > 0)
+                ? bdGlobal.clientes
+                : (fallbackData.clientes || []);
+
+            const idCli = (t.ID_Cliente || t.idCliente || '').trim().toLowerCase();
+            const nomCli = (t.Cliente || t.Nombre || t.Nombre_Completo || '').trim().toLowerCase();
+
+            let cFound = clientesList.find(c => {
+                const cId = (c.ID_Cliente || c.idCliente || '').trim().toLowerCase();
+                const cNom = (c.Nombre_Completo || c.Nombre || '').trim().toLowerCase();
+                return (idCli && cId === idCli) || (nomCli && cNom === nomCli);
+            });
+
+            if (cFound) {
+                const cMail = cFound.Correo || cFound.correo || cFound.Email || cFound.email || cFound.Mail || cFound.mail;
+                if (cMail && typeof cMail === 'string' && cMail.includes('@')) return cMail.trim();
+            }
+
+            // 4. Buscar en fallbackData.clientes
+            if (fallbackData && Array.isArray(fallbackData.clientes)) {
+                let fbFound = fallbackData.clientes.find(c => {
+                    const cId = (c.ID_Cliente || '').trim().toLowerCase();
+                    const cNom = (c.Nombre_Completo || '').trim().toLowerCase();
+                    return (idCli && cId === idCli) || (nomCli && cNom === nomCli);
+                });
+                if (fbFound) {
+                    const fbMail = fbFound.Correo || fbFound.Email || '';
+                    if (fbMail && fbMail.includes('@')) return fbMail.trim();
+                }
+            }
+
+            // 5. Buscar en otros turnos del mismo cliente
+            if (bdGlobal && Array.isArray(bdGlobal.turnos)) {
+                const otro = bdGlobal.turnos.find(ot => {
+                    const otId = (ot.ID_Cliente || ot.idCliente || '').trim().toLowerCase();
+                    const otNom = (ot.Cliente || ot.Nombre || '').trim().toLowerCase();
+                    const otMail = ot.Correo || ot.correo || ot.Email || ot.email || ot.clienteEmail;
+                    return ((idCli && otId === idCli) || (nomCli && otNom === nomCli)) && otMail && otMail.includes('@');
+                });
+                if (otro) {
+                    const otMail = otro.Correo || otro.correo || otro.Email || otro.email || otro.clienteEmail;
+                    if (otMail && otMail.includes('@')) return otMail.trim();
+                }
+            }
+
+            return '';
+        }
+
+        function resolverNombreTurno(t) {
+            if (!t) return 'Cliente';
+            if (t.Cliente && t.Cliente.trim() && t.Cliente.toLowerCase() !== 'cliente') return t.Cliente.trim();
+            if (t.Nombre_Completo && t.Nombre_Completo.trim()) return t.Nombre_Completo.trim();
+            if (t.Nombre && t.Nombre.trim()) return t.Nombre.trim();
+
+            const clientesList = (bdGlobal && Array.isArray(bdGlobal.clientes) && bdGlobal.clientes.length > 0)
+                ? bdGlobal.clientes
+                : (fallbackData.clientes || []);
+
+            const idCli = (t.ID_Cliente || t.idCliente || '').trim().toLowerCase();
+            const cFound = clientesList.find(c => (c.ID_Cliente || c.idCliente || '').trim().toLowerCase() === idCli);
+            if (cFound) return cFound.Nombre_Completo || cFound.Nombre || 'Cliente';
+
+            return 'Cliente';
+        }
+
         // --- DETALLE DE TURNO AL HACER CLIC Y ESTADOS CLAROS ---
         function openTurnoModal(idTurno) {
             openTurnoDetailModal(idTurno);
@@ -1951,16 +2029,9 @@
             } else {
                 document.getElementById('tdtTitle').innerText = "📋 Detalle del Turno";
 
-                let cliente = bdGlobal.clientes ? bdGlobal.clientes.find(c => (t.ID_Cliente && c.ID_Cliente && c.ID_Cliente.trim() === t.ID_Cliente.trim()) || (c.Nombre_Completo||c.Nombre) === t.Cliente) : null;
-                if (!cliente && bdGlobal.clientes && t.ID_Cliente) {
-                    const idLower = t.ID_Cliente.toLowerCase();
-                    cliente = bdGlobal.clientes.find(c => {
-                        const nLower = (c.Nombre_Completo || c.Nombre || '').toLowerCase();
-                        return nLower && (idLower.includes(nLower) || nLower.includes(idLower.replace(/^c_?/, '')));
-                    });
-                }
-                let nombreCliente = cliente ? (cliente.Nombre_Completo || cliente.Nombre) : (t.Cliente || 'Cliente');
-                let emailCliente = cliente ? (cliente.Correo || cliente.Email || '-') : (t.Correo || '-');
+                let emailCliente = resolverEmailTurno(t) || '-';
+                let nombreCliente = resolverNombreTurno(t);
+                let cliente = (bdGlobal && bdGlobal.clientes) ? bdGlobal.clientes.find(c => (c.ID_Cliente && t.ID_Cliente && c.ID_Cliente === t.ID_Cliente) || (c.Nombre_Completo || c.Nombre) === nombreCliente) : null;
                 let telCliente = cliente ? (cliente.Telefono || cliente.Tel || '-') : (t.Telefono || t.Tel || '-');
                 let waLink = (telCliente && telCliente !== '-') ? `https://wa.me/${telCliente.replace(/[^0-9]/g, '')}` : null;
 
@@ -2072,9 +2143,15 @@
                             <div>${t.motivoCancelacion || t.Motivo || t.motivo || 'Este turno fue cancelado y no tiene impacto en la agenda activa.'}</div>
                         </div>
                         ` : `
-                        <div class="mt-3 border-t border-stone-200 pt-3">
-                            <label class="block text-xs font-semibold text-stone-600 mb-1">💬 Motivo / Nota para el Cliente (Opcional):</label>
-                            <textarea id="cancelMotivoInput" placeholder="Ej. El profesional se encuentra con licencia médica. Por favor re-agenda tu cita desde la web..." class="input-pastel text-xs h-16 resize-none mb-3"></textarea>
+                        <div class="mt-3 border-t border-stone-200 pt-3 space-y-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-stone-600 mb-1">📧 Email del Cliente para Notificación:</label>
+                                <input type="email" id="cancelEmailInput" value="${emailCliente && emailCliente !== '-' ? emailCliente : ''}" placeholder="cliente@correo.com" class="input-pastel text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-stone-600 mb-1">💬 Motivo / Nota para el Cliente (Opcional):</label>
+                                <textarea id="cancelMotivoInput" placeholder="Ej. El profesional se encuentra con licencia médica. Por favor re-agenda tu cita desde la web..." class="input-pastel text-xs h-16 resize-none mb-1"></textarea>
+                            </div>
                             
                             <button onclick="cancelarTurnoDesdeAdmin('${targetIdTurno}', true)" class="w-full bg-rose-600 text-white font-bold py-3 rounded-xl hover:bg-rose-700 transition text-xs flex items-center justify-center gap-1.5 shadow-xs active:scale-95">
                                 <span>📩</span> Cancelar Turno y Notificar al Cliente por Mail
@@ -2408,20 +2485,28 @@
             if (!idTurno) return;
 
             const motivoText = document.getElementById('cancelMotivoInput')?.value.trim() || "";
+            const t = bdGlobal && bdGlobal.turnos ? bdGlobal.turnos.find(x => (x.ID_Turno || x.idTurno) === idTurno) : null;
+            
+            // Resolver email y nombre usando todas las fuentes posibles
+            let emailCliente = document.getElementById('cancelEmailInput')?.value.trim() || resolverEmailTurno(t);
+            let nombreCliente = resolverNombreTurno(t);
+
+            if (notificarEmail && (!emailCliente || !emailCliente.includes('@'))) {
+                const manualMail = prompt("No se detectó el email del cliente para este turno. Por favor ingresa el correo para enviarle el comprobante de cancelación (o presiona Cancelar para cancelar el turno sin enviar mail):", "");
+                if (manualMail && manualMail.includes('@')) {
+                    emailCliente = manualMail.trim();
+                } else {
+                    notificarEmail = false;
+                }
+            }
 
             const confirmMsg = notificarEmail 
-                ? "¿Estás seguro de que deseas cancelar este turno? Se enviará automáticamente el mail de cancelación al cliente."
+                ? `¿Estás seguro de que deseas cancelar este turno? Se enviará la notificación por correo a ${emailCliente}.`
                 : "¿Estás seguro de que deseas eliminar este turno de la agenda?";
 
             if (!confirm(confirmMsg)) return;
 
             try {
-                const t = bdGlobal && bdGlobal.turnos ? bdGlobal.turnos.find(x => (x.ID_Turno || x.idTurno) === idTurno) : null;
-                
-                let cliente = (bdGlobal && bdGlobal.clientes) ? bdGlobal.clientes.find(c => c.ID_Cliente === (t?.ID_Cliente) || (c.Nombre_Completo || c.Nombre) === (t?.Cliente)) : null;
-                let emailCliente = cliente ? (cliente.Correo || cliente.Email || cliente.email) : (t ? (t.Correo || t.email || '') : '');
-                let nombreCliente = cliente ? (cliente.Nombre_Completo || cliente.Nombre) : (t ? (t.Cliente || 'Cliente') : 'Cliente');
-
                 let staff = (bdGlobal && bdGlobal.staff && t) ? bdGlobal.staff.find(st => st.ID_Staff === t.ID_Staff) : null;
                 let nombreStaff = staff ? (staff.Nombre || staff.Nombre_Completo) : (t ? (t.Staff || t.staffNombre || t.ID_Staff || 'Valeria Gomez') : 'Valeria Gomez');
                 let idStaff = t ? (t.ID_Staff || (staff ? staff.ID_Staff : 'S01')) : 'S01';
@@ -2436,38 +2521,43 @@
                     } catch(e) {}
                 }
 
-                if (notificarEmail) {
-                    await fetch(POST_WEBHOOK_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: "cancelar",
-                            idTurno: idTurno,
-                            motivoCancelacion: motivoText,
-                            motivo: motivoText,
-                            mensaje: motivoText,
-                            clienteInfo: { nombre: nombreCliente, email: emailCliente },
-                            idServicio: t ? (t.ID_Servicio || t.Servicio || '') : '',
-                            fecha: t ? normalizarFecha(t.Fecha || t.fecha) : '',
-                            horaInicio: t ? (t.Hora_Inicio || t.horaInicio || '') : '',
-                            staffNombre: nombreStaff,
-                            idStaff: idStaff,
-                            branding: {
-                                name: cfg.name || "Lumina Estética",
-                                theme: cfg.theme || "amber",
-                                colors: tColors,
-                                logoUrl: cfg.publicLogoUrl || "https://estetica.neco-dev.cloud/branding_logo.jpg",
-                                coverUrl: cfg.publicCoverUrl || "https://estetica.neco-dev.cloud/branding_cover.jpg"
-                            }
-                        })
-                    }).catch(err => console.error("Error en fetch de cancelación:", err));
-                }
+                // Asegurar que clienteInfo siempre incluya el email real del turno
+                const clienteInfoPayload = {
+                    idCliente: t ? (t.ID_Cliente || '') : '',
+                    nombre: nombreCliente,
+                    email: emailCliente
+                };
+
+                await fetch(POST_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: "cancelar",
+                        idTurno: idTurno,
+                        motivoCancelacion: motivoText,
+                        motivo: motivoText,
+                        mensaje: motivoText,
+                        clienteInfo: clienteInfoPayload,
+                        idServicio: t ? (t.ID_Servicio || t.Servicio || '') : '',
+                        fecha: t ? normalizarFecha(t.Fecha || t.fecha) : '',
+                        horaInicio: t ? (t.Hora_Inicio || t.horaInicio || '') : '',
+                        staffNombre: nombreStaff,
+                        idStaff: idStaff,
+                        branding: {
+                            name: cfg.name || "Lumina Estética",
+                            theme: cfg.theme || "amber",
+                            colors: tColors,
+                            logoUrl: cfg.publicLogoUrl || "https://estetica.neco-dev.cloud/branding_logo.jpg",
+                            coverUrl: cfg.publicCoverUrl || "https://estetica.neco-dev.cloud/branding_cover.jpg"
+                        }
+                    })
+                }).catch(err => console.error("Error en fetch de cancelación:", err));
             } catch (err) {
                 console.error("Error procesando cancelación:", err);
             } finally {
                 closeModal('turnoDetailModal');
                 if (typeof renderCalendars === 'function') renderCalendars();
-                alert(notificarEmail ? "✉️ Turno cancelado y notificación enviada al cliente por mail." : "🗑️ Turno eliminado de la agenda.");
+                alert(notificarEmail ? `✉️ Turno cancelado y notificación enviada a ${emailCliente}.` : "🗑️ Turno cancelado en la agenda.");
                 setTimeout(() => {
                     if (typeof fetchDemoData === 'function') fetchDemoData();
                 }, 1000);
@@ -3338,6 +3428,9 @@
                 Hora_Fin: horaFin,
                 ID_Cliente: clienteObj.idCliente,
                 Cliente: clienteObj.nombre,
+                Correo: clienteObj.email || '',
+                Email: clienteObj.email || '',
+                Telefono: clienteObj.tel || '',
                 ID_Staff: staff ? staff.ID_Staff : 'S01',
                 ID_Servicio: servicioName,
                 Servicio: servicioName,
