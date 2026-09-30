@@ -585,11 +585,7 @@
         };
 
         const fallbackData = {
-            clientes: [
-                { ID_Cliente: "C1787797749", Nombre_Completo: "Sabri", Correo: "espositosabrina29@gmail.com", Telefono: "+5491166266845" },
-                { ID_Cliente: "C1788482937", Nombre_Completo: "Neskate", Correo: "siempresina23@gmail.com", Telefono: "+5491166266845" },
-                { ID_Cliente: "C1787799907", Nombre_Completo: "Sabri2", Correo: "siempresina23@gmail.com", Telefono: "+5491166266845" }
-            ],
+            clientes: [],
             servicios: [
                 { ID_Servicio: "SRV01", Nombre_Servicio: "Corte Mujer", Duracion_Min: 60, Especialidad: "Pelo", Costo: "$20.000", Descripción: "Corte adaptado al estilo y forma del rostro, incluye lavado y peinado." },
                 { ID_Servicio: "SRV02", Nombre_Servicio: "Corte Hombre", Duracion_Min: 30, Especialidad: "Pelo", Costo: "$15.000", Descripción: "Corte clásico o moderno con tijera y máquina, terminado impecable." },
@@ -1088,24 +1084,14 @@
                 if (!data.servicios || !Array.isArray(data.servicios) || data.servicios.length === 0) {
                     data.servicios = (localCache && localCache.servicios) ? localCache.servicios : fallbackData.servicios;
                 }
-                if (!data.clientes || !Array.isArray(data.clientes) || data.clientes.length === 0) {
+                if (!data.clientes || !Array.isArray(data.clientes)) {
                     if (localCache && Array.isArray(localCache.clientes) && localCache.clientes.length > 0) {
                         data.clientes = localCache.clientes;
                     } else if (bdGlobal && Array.isArray(bdGlobal.clientes) && bdGlobal.clientes.length > 0) {
                         data.clientes = bdGlobal.clientes;
                     } else {
-                        data.clientes = (fallbackData && Array.isArray(fallbackData.clientes)) ? [...fallbackData.clientes] : [];
+                        data.clientes = [];
                     }
-                }
-                if (fallbackData && Array.isArray(fallbackData.clientes)) {
-                    if (!data.clientes || !Array.isArray(data.clientes)) data.clientes = [];
-                    fallbackData.clientes.forEach(fc => {
-                        const yaExiste = data.clientes.some(c => 
-                            (c.Correo && fc.Correo && c.Correo.toLowerCase().trim() === fc.Correo.toLowerCase().trim()) ||
-                            (c.ID_Cliente && fc.ID_Cliente && c.ID_Cliente === fc.ID_Cliente)
-                        );
-                        if (!yaExiste) data.clientes.push(fc);
-                    });
                 }
                 if (!data.turnos || !Array.isArray(data.turnos)) {
                     data.turnos = (localCache && Array.isArray(localCache.turnos)) ? localCache.turnos : [];
@@ -1494,52 +1480,28 @@
             const nombreInput = document.getElementById('cNombre').value.trim().toLowerCase();
             if(!emailInput || !bdGlobal) return;
 
-            clienteEncontrado = (bdGlobal && bdGlobal.clientes) ? bdGlobal.clientes.find(c => {
+            // Buscar si el cliente realmente existe en la base de datos oficial
+            clienteEncontrado = (bdGlobal && Array.isArray(bdGlobal.clientes)) ? bdGlobal.clientes.find(c => {
                 if (!c || typeof c !== 'object') return false;
-                for (let key in c) {
-                    const kLower = key.toLowerCase().trim();
-                    if (kLower.includes('correo') || kLower.includes('email') || kLower.includes('mail')) {
-                        if (c[key] && c[key].toString().trim().toLowerCase() === emailInput) {
-                            return true;
-                        }
-                    }
-                }
-                const fallbackEmail = (c.Correo || c.Email || c.email || c.correo || c.Mail || c.mail || "").toString().trim().toLowerCase();
-                return fallbackEmail === emailInput && emailInput !== "";
+                const cMail = (c.Correo || c.Email || c.email || c.correo || '').toString().trim().toLowerCase();
+                return cMail === emailInput && emailInput !== "";
             }) : null;
 
-            if (!clienteEncontrado && typeof fallbackData !== 'undefined' && fallbackData.clientes) {
-                clienteEncontrado = fallbackData.clientes.find(c => {
-                    const cMail = (c.Correo || c.Email || c.email || c.correo || "").toString().trim().toLowerCase();
-                    return cMail === emailInput && emailInput !== "";
-                });
-            }
-
-            if (!clienteEncontrado && bdGlobal && bdGlobal.turnos) {
-                const turnoConEmail = bdGlobal.turnos.find(t => {
-                    const tEmail = (t.Correo || t.Email || t.email || "").toString().trim().toLowerCase();
-                    return tEmail === emailInput && emailInput !== "";
-                });
-                if (turnoConEmail) {
-                    clienteEncontrado = {
-                        ID_Cliente: turnoConEmail.ID_Cliente || turnoConEmail.idCliente || "C_" + Math.random().toString().slice(2, 8),
-                        Nombre_Completo: turnoConEmail.Cliente || turnoConEmail.Nombre || "Cliente",
-                        Correo: emailInput,
-                        Telefono: turnoConEmail.Telefono || turnoConEmail.Tel || ""
-                    };
-                }
-            }
+            // Para ser cliente existente válido, DEBE tener nombre real y teléfono en la base de datos
+            const nombreValido = clienteEncontrado ? (clienteEncontrado.Nombre_Completo || clienteEncontrado.Nombre || '').trim() : '';
+            const telValido = clienteEncontrado ? (clienteEncontrado.Telefono || clienteEncontrado.Tel || '').trim() : '';
+            const esClienteValido = clienteEncontrado && nombreValido && nombreValido.toLowerCase() !== 'cliente' && telValido && telValido !== '-';
 
             const hoyIso = getLocalDateIso();
-            turnosActivosCliente = (bdGlobal && bdGlobal.turnos) ? bdGlobal.turnos.filter(t => {
+            turnosActivosCliente = (bdGlobal && Array.isArray(bdGlobal.turnos)) ? bdGlobal.turnos.filter(t => {
                 if(!t) return false;
                 const tIdCliente = (t.ID_Cliente || t.idCliente || "").toString().trim();
                 const tClienteName = (t.Cliente || t.Nombre || "").toString().trim().toLowerCase();
                 const tEmail = (t.Correo || t.Email || t.email || "").toString().trim().toLowerCase();
                 
-                const matchId = clienteEncontrado && tIdCliente && (tIdCliente === (clienteEncontrado.ID_Cliente || clienteEncontrado.idCliente));
+                const matchId = esClienteValido && tIdCliente && (tIdCliente === (clienteEncontrado.ID_Cliente || clienteEncontrado.idCliente));
                 const matchEmail = emailInput && tEmail && (tEmail === emailInput);
-                const matchName = clienteEncontrado && tClienteName && (tClienteName === (clienteEncontrado.Nombre_Completo || clienteEncontrado.Nombre || "").toLowerCase());
+                const matchName = esClienteValido && tClienteName && (tClienteName === nombreValido.toLowerCase());
                 const matchInputName = nombreInput && tClienteName && (tClienteName === nombreInput);
 
                 const esMismoCliente = matchId || matchEmail || matchName || matchInputName;
@@ -1552,15 +1514,10 @@
 
             turnoActivoEncontrado = turnosActivosCliente.length > 0 ? turnosActivosCliente[0] : null;
 
-            if (clienteEncontrado) {
+            if (esClienteValido) {
                 esClienteNuevo = false;
-                const nombreC = clienteEncontrado.Nombre_Completo || clienteEncontrado.Nombre || "";
-                if (!document.getElementById('cNombre').value) {
-                    document.getElementById('cNombre').value = nombreC;
-                }
-                if (!document.getElementById('cTel').value) {
-                    document.getElementById('cTel').value = clienteEncontrado.Telefono || clienteEncontrado.Tel || "";
-                }
+                document.getElementById('cNombre').value = nombreValido;
+                document.getElementById('cTel').value = telValido;
 
                 document.getElementById('divNuevoCliente').classList.add('hide');
 
@@ -1572,13 +1529,14 @@
                         const h = t.Hora_Inicio || t.horaInicio;
                         return `• ${sName} (${f} ${h}hs)`;
                     }).join(' ');
-                    document.getElementById('divClienteExistenteSinTurno').innerText = `¡Hola, ${nombreC}! Tenés ${turnosActivosCliente.length} turno(s) agendado(s): ${resumen}. Podés agendar o reprogramar por especialidad al presionar Continuar.`;
+                    document.getElementById('divClienteExistenteSinTurno').innerText = `¡Hola, ${nombreValido}! Tenés ${turnosActivosCliente.length} turno(s) agendado(s): ${resumen}. Podés agendar o reprogramar por especialidad al presionar Continuar.`;
                 } else {
                     document.getElementById('divClienteExistenteSinTurno').classList.remove('hide');
-                    document.getElementById('divClienteExistenteSinTurno').innerText = `¡Hola, ${nombreC}! Qué bueno verte de nuevo. Presiona Continuar para seleccionar tu horario.`;
+                    document.getElementById('divClienteExistenteSinTurno').innerText = `¡Hola, ${nombreValido}! Qué bueno verte de nuevo. Presiona Continuar para seleccionar tu horario.`;
                 }
 
             } else {
+                clienteEncontrado = null;
                 esClienteNuevo = true;
                 document.getElementById('divNuevoCliente').classList.remove('hide');
                 document.getElementById('divClienteExistenteSinTurno').classList.add('hide');
@@ -1661,7 +1619,7 @@
                 actualizarBotonVolverHeader();
 
             } else {
-                if (esClienteNuevo) {
+                if (esClienteNuevo || !clienteEncontrado) {
                     const nombre = document.getElementById('cNombre').value.trim();
                     const tel = document.getElementById('cTel').value.trim();
                     if (!nombre || !tel) {
@@ -2318,10 +2276,11 @@
                 } catch(e) {}
             }
 
+            const isNuevo = esClienteNuevo || !clienteEncontrado;
             let clienteObj = {
-                idCliente: clienteEncontrado ? clienteEncontrado.ID_Cliente : 'C' + Math.floor(Date.now() / 1000),
-                nombre: nombre,
-                tel: tel,
+                idCliente: (!isNuevo && clienteEncontrado && clienteEncontrado.ID_Cliente) ? clienteEncontrado.ID_Cliente : 'C' + Math.floor(Date.now() / 1000),
+                nombre: nombre || (clienteEncontrado ? (clienteEncontrado.Nombre_Completo || clienteEncontrado.Nombre) : 'Cliente'),
+                tel: tel || (clienteEncontrado ? (clienteEncontrado.Telefono || clienteEncontrado.Tel) : ''),
                 email: email
             };
 
@@ -2392,8 +2351,8 @@
             };
 
             const payload = {
-                action: esClienteNuevo ? "crear" : "nuevo_turno",
-                esNuevoCliente: esClienteNuevo,
+                action: isNuevo ? "crear" : "nuevo_turno",
+                esNuevoCliente: isNuevo,
                 clienteInfo: clienteObj,
                 fecha: nuevoTurno.Fecha,
                 horaInicio: hora,
