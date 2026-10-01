@@ -1057,7 +1057,7 @@
             try {
                 let data = null;
                 try {
-                    const res = await fetch(GET_WEBHOOK_URL, { cache: 'no-store' });
+                    const res = await fetch(GET_WEBHOOK_URL + '?v=' + Date.now(), { cache: 'no-store' });
                     if (res.ok) data = await res.json();
                 } catch(err) {}
 
@@ -1487,10 +1487,27 @@
                 return cMail === emailInput && emailInput !== "";
             }) : null;
 
-            // Para ser cliente existente válido, DEBE tener nombre real y teléfono en la base de datos
+            // Si no se encontró en clientes, buscar en los turnos previos por si ya agendó
+            if (!clienteEncontrado && bdGlobal && Array.isArray(bdGlobal.turnos)) {
+                const tPrev = bdGlobal.turnos.find(t => {
+                    if (!t) return false;
+                    const tMail = (t.Correo || t.Email || t.email || '').toString().trim().toLowerCase();
+                    return tMail === emailInput && emailInput !== "";
+                });
+                if (tPrev) {
+                    clienteEncontrado = {
+                        ID_Cliente: tPrev.ID_Cliente || ('C' + Math.floor(Date.now() / 1000)),
+                        Nombre_Completo: tPrev.Nombre_Completo || tPrev.Cliente || '',
+                        Telefono: tPrev.Telefono || tPrev.Tel || '',
+                        Correo: emailInput
+                    };
+                }
+            }
+
+            // Para ser cliente existente válido, DEBE tener nombre real
             const nombreValido = clienteEncontrado ? (clienteEncontrado.Nombre_Completo || clienteEncontrado.Nombre || '').trim() : '';
             const telValido = clienteEncontrado ? (clienteEncontrado.Telefono || clienteEncontrado.Tel || '').trim() : '';
-            const esClienteValido = clienteEncontrado && nombreValido && nombreValido.toLowerCase() !== 'cliente' && telValido && telValido !== '-';
+            const esClienteValido = clienteEncontrado && nombreValido && nombreValido.toLowerCase() !== 'cliente';
 
             const hoyIso = getLocalDateIso();
             turnosActivosCliente = (bdGlobal && Array.isArray(bdGlobal.turnos)) ? bdGlobal.turnos.filter(t => {
