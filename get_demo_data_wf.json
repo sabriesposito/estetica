@@ -1,0 +1,273 @@
+{
+  "updatedAt": "2026-08-28T19:15:44.367Z",
+  "createdAt": "2026-06-30T02:40:49.104Z",
+  "id": "8osQqjJWRDvSiu0x_Nfoj",
+  "name": "Lumina - Get Data (Sheets)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "get-demo-data",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        368,
+        -192
+      ],
+      "id": "f6c083ee-6771-4d22-8973-3b9934b41eeb",
+      "webhookId": "cdb3906d-4771-4097-8cb7-7ba38df76b62"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
+          "mode": "list",
+          "cachedResultName": "BaseDatos_Estetica_Demo",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 72646435,
+          "mode": "list",
+          "cachedResultName": "Clientes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit#gid=72646435"
+        },
+        "options": {}
+      },
+      "name": "Leer Clientes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        576,
+        -192
+      ],
+      "id": "6e7e75ca-7d1a-4d04-a536-0685dcc7449a",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g855PstCDRAtYH2C",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
+          "mode": "list",
+          "cachedResultName": "BaseDatos_Estetica_Demo",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1785770632,
+          "mode": "list",
+          "cachedResultName": "Servicios",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit#gid=1785770632"
+        },
+        "options": {}
+      },
+      "name": "Leer Servicios",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        768,
+        -192
+      ],
+      "id": "cecc712a-9da6-4746-ab50-8bd28993e2c0",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g855PstCDRAtYH2C",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
+          "mode": "list",
+          "cachedResultName": "BaseDatos_Estetica_Demo",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 891260524,
+          "mode": "list",
+          "cachedResultName": "Staff",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit#gid=891260524"
+        },
+        "options": {}
+      },
+      "name": "Leer Staff",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        960,
+        -192
+      ],
+      "id": "e464369f-ed3a-4ac7-9044-2368f1091c2c",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g855PstCDRAtYH2C",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const getItems = (nodeName) => {\n  try {\n    const items = $items(nodeName);\n    return Array.isArray(items) ? items.map(item => item.json).filter(x => Object.keys(x).length > 0) : [];\n  } catch (e) {\n    return [];\n  }\n};\n\nconst rawClientes = getItems('Leer Clientes');\nconst clientes = rawClientes.filter(c => {\n  const mail = (c.Correo || c.correo || c.Email || c.email || '').toLowerCase().trim();\n  const id = (c.ID_Cliente || c.idCliente || c.ID || '').trim();\n  return mail !== 'siempresina23@gmail.com' && id !== 'C1788482937';\n});\n\nreturn [{\n  json: {\n    clientes: clientes,\n    servicios: getItems('Leer Servicios'),\n    staff: getItems('Leer Staff'),\n    turnos: getItems('Leer Turnos')\n  }\n}];"
+      },
+      "name": "Unir Datos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        -192
+      ],
+      "id": "ab6b4336-81fc-409d-929f-064ad0b67c11"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
+          "mode": "list",
+          "cachedResultName": "BaseDatos_Estetica_Demo",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 931049778,
+          "mode": "list",
+          "cachedResultName": "Turnos",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit#gid=931049778"
+        },
+        "options": {}
+      },
+      "name": "Leer Turnos",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1152,
+        -192
+      ],
+      "id": "b31696fc-7b06-4f13-b832-25307c16f6a9",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g855PstCDRAtYH2C",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Leer Clientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Clientes": {
+      "main": [
+        [
+          {
+            "node": "Leer Servicios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Servicios": {
+      "main": [
+        [
+          {
+            "node": "Leer Staff",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Staff": {
+      "main": [
+        [
+          {
+            "node": "Leer Turnos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Turnos": {
+      "main": [
+        [
+          {
+            "node": "Unir Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "736d0c59-209e-43fb-a8c2-c32976ccfb73",
+  "activeVersionId": "736d0c59-209e-43fb-a8c2-c32976ccfb73",
+  "versionCounter": 81,
+  "triggerCount": 1,
+  "tags": [
+    {
+      "updatedAt": "2026-06-30T14:05:27.815Z",
+      "createdAt": "2026-06-30T14:05:27.815Z",
+      "id": "0oBs9l7AE2yhi8aI",
+      "name": "ESTETICA"
+    }
+  ],
+  "shared": [
+    {
+      "updatedAt": "2026-06-30T02:40:49.104Z",
+      "createdAt": "2026-06-30T02:40:49.104Z",
+      "role": "workflow:owner",
+      "workflowId": "8osQqjJWRDvSiu0x_Nfoj",
+      "projectId": "QCGhVxQ75ccCtMvT",
+      "project": {
+        "updatedAt": "2026-01-21T20:27:11.099Z",
+        "createdAt": "2026-01-21T15:20:30.254Z",
+        "id": "QCGhVxQ75ccCtMvT",
+        "name": "Sabrina Esposito <espositosabrina29@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "82e449e5-9235-4d50-b9bd-748917f51496"
+      }
+    }
+  ]
+}
