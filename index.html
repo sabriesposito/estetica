@@ -914,7 +914,9 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-stone-500 mb-1">Especialidad *</label>
-                        <input type="text" id="nsvcEspecialidad" placeholder="Ej. Pelo, Uñas, Cejas, Facial" class="input-pastel text-xs">
+                        <select id="nsvcEspecialidad" onchange="checkCustomEspecialidad('nsvc')" class="input-pastel text-xs bg-white">
+                        </select>
+                        <input type="text" id="nsvcEspecialidadCustom" placeholder="Escribir nueva especialidad..." class="input-pastel text-xs mt-1.5 hide">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-stone-500 mb-1">Descripción</label>
@@ -953,7 +955,9 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-stone-500 mb-1">Especialidad *</label>
-                        <input type="text" id="esvcEspecialidad" placeholder="Ej. Pelo, Uñas, Cejas, Facial" class="input-pastel text-xs">
+                        <select id="esvcEspecialidad" onchange="checkCustomEspecialidad('esvc')" class="input-pastel text-xs bg-white">
+                        </select>
+                        <input type="text" id="esvcEspecialidadCustom" placeholder="Escribir nueva especialidad..." class="input-pastel text-xs mt-1.5 hide">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-stone-500 mb-1">Descripción</label>
@@ -1938,6 +1942,11 @@
                 if(id === 'clientsListModal') renderClientsList();
                 if(id === 'staffListModal') renderStaffList();
                 if(id === 'servicesListModal') renderServicesList();
+                if(id === 'newServiceModal') {
+                    populateSpecialtiesSelect('nsvcEspecialidad');
+                    const customInput = document.getElementById('nsvcEspecialidadCustom');
+                    if (customInput) { customInput.value = ''; customInput.classList.add('hide'); }
+                }
             }
         }
         function closeModal(id) { document.getElementById(id).classList.add('hide'); }
@@ -3362,15 +3371,90 @@
             alert(`✅ ¡Datos de ${nombre} actualizados con éxito!\n📅 Días: ${diasTextoConfig}\n🕐 Horario: ${horaIni} a ${horaFin} hs\n✨ Especialidad: ${especialidad}`);
         }
 
+        function populateSpecialtiesSelect(selectId, selectedVal) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            const set = new Set();
+            const standardList = [
+                'Peluquería',
+                'Uñas',
+                'Cejas y Pestañas',
+                'Facial',
+                'Corporal',
+                'Masajes',
+                'Depilación',
+                'Estética',
+                'Maquillaje',
+                'Pies / Pedicuría'
+            ];
+            standardList.forEach(e => set.add(e.trim()));
+
+            const staffList = (bdGlobal && Array.isArray(bdGlobal.staff)) ? bdGlobal.staff : (fallbackData.staff || []);
+            staffList.forEach(st => {
+                const esp = st.Especialidad || '';
+                if (esp) {
+                    esp.split(/[,/]/).forEach(item => {
+                        const t = item.trim();
+                        if (t) set.add(t);
+                    });
+                }
+            });
+
+            const srvList = (bdGlobal && Array.isArray(bdGlobal.servicios)) ? bdGlobal.servicios : (fallbackData.servicios || []);
+            srvList.forEach(srv => {
+                const esp = srv.Especialidad || '';
+                if (esp) {
+                    esp.split(/[,/]/).forEach(item => {
+                        const t = item.trim();
+                        if (t) set.add(t);
+                    });
+                }
+            });
+
+            if (selectedVal && selectedVal.trim()) {
+                set.add(selectedVal.trim());
+            }
+
+            const sorted = Array.from(set).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+
+            let optionsHtml = '<option value="" disabled' + (!selectedVal ? ' selected' : '') + '>-- Seleccionar Especialidad --</option>';
+            sorted.forEach(esp => {
+                const isMatch = selectedVal && esp.toLowerCase() === selectedVal.trim().toLowerCase();
+                optionsHtml += `<option value="${esp}"${isMatch ? ' selected' : ''}>${esp}</option>`;
+            });
+
+            optionsHtml += `<option value="__custom__">➕ Otra / Nueva Especialidad...</option>`;
+            select.innerHTML = optionsHtml;
+        }
+
+        function checkCustomEspecialidad(prefix) {
+            const select = document.getElementById(prefix + 'Especialidad');
+            const customInput = document.getElementById(prefix + 'EspecialidadCustom');
+            if (!select || !customInput) return;
+            if (select.value === '__custom__') {
+                customInput.classList.remove('hide');
+                customInput.value = '';
+                customInput.focus();
+            } else {
+                customInput.classList.add('hide');
+                customInput.value = '';
+            }
+        }
+
         function saveNewService() {
             const nombre = document.getElementById('nsvcNombre').value.trim();
             const costoRaw = document.getElementById('nsvcCosto').value.trim();
             const duracion = parseInt(document.getElementById('nsvcDuracion').value) || 30;
-            const especialidad = document.getElementById('nsvcEspecialidad').value.trim() || "Estética";
+            let especialidad = document.getElementById('nsvcEspecialidad').value.trim();
+            if (especialidad === '__custom__') {
+                especialidad = document.getElementById('nsvcEspecialidadCustom').value.trim();
+            }
             const descripcion = document.getElementById('nsvcDescripcion').value.trim() || "";
 
             if (!nombre) { alert("Por favor ingresa el nombre del servicio."); return; }
             if (!costoRaw) { alert("Por favor ingresa el valor o costo del servicio."); return; }
+            if (!especialidad) { alert("Por favor selecciona o ingresa una especialidad para el servicio."); return; }
 
             const costoFormatted = formatPrecio(costoRaw);
             const existingServices = (bdGlobal && Array.isArray(bdGlobal.servicios)) ? bdGlobal.servicios : [];
@@ -3422,6 +3506,10 @@
             document.getElementById('nsvcNombre').value = '';
             document.getElementById('nsvcCosto').value = '';
             document.getElementById('nsvcDescripcion').value = '';
+            const nsvcCustom = document.getElementById('nsvcEspecialidadCustom');
+            if (nsvcCustom) { nsvcCustom.value = ''; nsvcCustom.classList.add('hide'); }
+            const nsvcSelect = document.getElementById('nsvcEspecialidad');
+            if (nsvcSelect) nsvcSelect.selectedIndex = 0;
         }
 
         function abrirEditarServicio(idServicio) {
@@ -3434,7 +3522,9 @@
             const costo = s.Costo || s.Precio || '';
             document.getElementById('esvcCosto').value = costo.toString().replace(/[^0-9]/g, '') || costo;
             document.getElementById('esvcDuracion').value = parseInt(s.Duracion_Min) || 30;
-            document.getElementById('esvcEspecialidad').value = s.Especialidad || '';
+            populateSpecialtiesSelect('esvcEspecialidad', s.Especialidad || '');
+            const esvcCustom = document.getElementById('esvcEspecialidadCustom');
+            if (esvcCustom) { esvcCustom.value = ''; esvcCustom.classList.add('hide'); }
             document.getElementById('esvcDescripcion').value = s.Descripcion || s.Descripción || '';
 
             openModal('editServiceModal');
@@ -3445,11 +3535,15 @@
             const nombre = document.getElementById('esvcNombre').value.trim();
             const costoRaw = document.getElementById('esvcCosto').value.trim();
             const duracion = parseInt(document.getElementById('esvcDuracion').value) || 30;
-            const especialidad = document.getElementById('esvcEspecialidad').value.trim() || "Estética";
+            let especialidad = document.getElementById('esvcEspecialidad').value.trim();
+            if (especialidad === '__custom__') {
+                especialidad = document.getElementById('esvcEspecialidadCustom').value.trim();
+            }
             const descripcion = document.getElementById('esvcDescripcion').value.trim() || "";
 
             if (!nombre) { alert("Por favor ingresa el nombre del servicio."); return; }
             if (!costoRaw) { alert("Por favor ingresa el valor o costo del servicio."); return; }
+            if (!especialidad) { alert("Por favor selecciona o ingresa una especialidad para el servicio."); return; }
 
             const costoFormatted = formatPrecio(costoRaw);
 
