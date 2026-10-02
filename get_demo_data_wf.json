@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-01T02:41:16.577Z",
+  "updatedAt": "2026-10-02T02:40:42.176Z",
   "createdAt": "2026-06-30T02:40:49.104Z",
   "id": "8osQqjJWRDvSiu0x_Nfoj",
   "name": "Lumina - Get Data (Sheets)",
@@ -127,7 +127,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const getItems = (nodeName) => {\n  try {\n    const items = $items(nodeName);\n    return Array.isArray(items) ? items.map(item => item.json).filter(x => Object.keys(x).length > 0) : [];\n  } catch (e) {\n    return [];\n  }\n};\n\nconst rawClientes = getItems('Leer Clientes');\nconst clientes = rawClientes.filter(c => {\n  const id = (c.ID_Cliente || c.idCliente || c.ID || '').trim();\n  return id !== 'C1788482937';\n});\n\nconst rawTurnos = getItems('Leer Turnos');\nconst turnos = rawTurnos.map(t => ({\n  ...t,\n  Cliente: t.Nombre_Completo || t.Cliente || ''\n}));\n\nconst rawStaff = getItems('Leer Staff');\nconst staff = rawStaff\n  .filter(s => {\n    const name = (s.Nombre || s.Nombre_Completo || '').trim().toLowerCase();\n    return name !== 'camila';\n  })\n  .map(s => {\n    const name = (s.Nombre || s.Nombre_Completo || '').trim().toLowerCase();\n    if (name === 'sandra' && (s.ID_Staff === 'S03' || !s.ID_Staff)) {\n      return { ...s, ID_Staff: 'S04' };\n    }\n    return s;\n  });\n\nreturn [{\n  json: {\n    clientes: clientes,\n    servicios: getItems('Leer Servicios'),\n    staff: staff,\n    turnos: turnos\n  }\n}];"
+        "jsCode": "const getItems = (nodeName) => {\n  try {\n    const items = $items(nodeName);\n    return Array.isArray(items) ? items.map(item => item.json).filter(x => Object.keys(x).length > 0) : [];\n  } catch (e) {\n    return [];\n  }\n};\n\nconst rawClientes = getItems('Leer Clientes');\nconst clientes = rawClientes.filter(c => {\n  const id = (c.ID_Cliente || c.idCliente || c.ID || '').trim();\n  return id !== 'C1788482937';\n});\n\nconst rawTurnos = getItems('Leer Turnos');\nconst turnos = rawTurnos.map(t => ({\n  ...t,\n  Cliente: t.Nombre_Completo || t.Cliente || ''\n}));\n\nconst rawStaff = getItems('Leer Staff');\nconst staff = rawStaff\n  .filter(s => {\n    const name = (s.Nombre || s.Nombre_Completo || '').trim().toLowerCase();\n    const id = (s.ID_Staff || s.idStaff || '').trim();\n    return name !== 'camila' && !name.startsWith('eliminado') && !id.startsWith('del_');\n  })\n  .map(s => {\n    const name = (s.Nombre || s.Nombre_Completo || '').trim().toLowerCase();\n    if (name === 'sandra' && (s.ID_Staff === 'S03' || !s.ID_Staff)) {\n      return { ...s, ID_Staff: 'S04' };\n    }\n    return s;\n  });\n\nconst rawServicios = getItems('Leer Servicios');\nconst seenServices = new Set();\nconst servicios = [];\n\nfor (const s of rawServicios) {\n  const name = (s.Nombre_Servicio || s.Nombre || '').trim();\n  const id = (s.ID_Servicio || s.idServicio || '').trim();\n  const lowerName = name.toLowerCase();\n\n  // Excluir servicios eliminados o Perfilado si fue dado de baja\n  if (!name || lowerName.includes('eliminado') || lowerName.includes('baja') || id.startsWith('del_') || lowerName === 'perfilado') {\n    continue;\n  }\n\n  // De-duplicar servicios por nombre\n  if (seenServices.has(lowerName)) {\n    continue;\n  }\n  seenServices.add(lowerName);\n  servicios.push(s);\n}\n\nreturn [{\n  json: {\n    clientes: clientes,\n    servicios: servicios,\n    staff: staff,\n    turnos: turnos\n  }\n}];"
       },
       "name": "Unir Datos",
       "type": "n8n-nodes-base.code",
@@ -239,9 +239,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "08365c25-db9d-4a89-a842-93aa52a7a3de",
-  "activeVersionId": "08365c25-db9d-4a89-a842-93aa52a7a3de",
-  "versionCounter": 84,
+  "versionId": "4b43a0b2-678a-4dc5-9d79-d75acc98637e",
+  "activeVersionId": "4b43a0b2-678a-4dc5-9d79-d75acc98637e",
+  "versionCounter": 86,
   "triggerCount": 1,
   "tags": [
     {

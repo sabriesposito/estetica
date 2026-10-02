@@ -1376,10 +1376,22 @@
             if (savedC) cancelledTurnosSet = new Set(JSON.parse(savedC));
             const ds = localStorage.getItem('lumina_deleted_services');
             if (ds) deletedServicesSet = new Set(JSON.parse(ds));
+            // Limpiar IDs genéricos de servicios para evitar colisiones con altas nuevas
+            for (let item of [...deletedServicesSet]) {
+                if (/^SRV\d+$/i.test(item)) deletedServicesSet.delete(item);
+            }
+            if (deletedServicesSet.has('Depilación')) deletedServicesSet.delete('Depilación');
+            if (deletedServicesSet.has('depilación')) deletedServicesSet.delete('depilación');
+            if (deletedServicesSet.has('depilacion')) deletedServicesSet.delete('depilacion');
+            try {
+                localStorage.setItem('lumina_deleted_services', JSON.stringify([...deletedServicesSet]));
+            } catch(e) {}
             const dst = localStorage.getItem('lumina_deleted_staff');
             if (dst) deletedStaffSet = new Set(JSON.parse(dst));
             // Limpiar colisiones previas: Sandra nunca debió ser excluida
-            if (deletedStaffSet.has('S03')) deletedStaffSet.delete('S03');
+            for (let item of [...deletedStaffSet]) {
+                if (/^S\d+$/i.test(item)) deletedStaffSet.delete(item);
+            }
             if (deletedStaffSet.has('Sandra')) deletedStaffSet.delete('Sandra');
             if (deletedStaffSet.has('sandra')) deletedStaffSet.delete('sandra');
             try {
@@ -3361,7 +3373,12 @@
             if (!costoRaw) { alert("Por favor ingresa el valor o costo del servicio."); return; }
 
             const costoFormatted = formatPrecio(costoRaw);
-            const idServicio = 'SRV' + String((bdGlobal && bdGlobal.servicios ? bdGlobal.servicios.length : 0) + 1).padStart(2, '0');
+            const existingServices = (bdGlobal && Array.isArray(bdGlobal.servicios)) ? bdGlobal.servicios : [];
+            const maxSvcNum = existingServices.reduce((max, s) => {
+                const num = parseInt(String(s.ID_Servicio || s.idServicio || '').replace(/[^0-9]/g, ''), 10) || 0;
+                return Math.max(max, num);
+            }, 0);
+            const idServicio = 'SRV' + String(Math.max(maxSvcNum + 1, 8)).padStart(2, '0');
 
             const nuevoServicio = {
                 ID_Servicio: idServicio,
@@ -3652,8 +3669,10 @@
                 // Excluir elementos eliminados por el usuario
                 if (Array.isArray(data.servicios)) {
                     data.servicios = data.servicios.filter(s => {
-                        const id = s.ID_Servicio || s.idServicio;
-                        const name = s.Nombre_Servicio || s.Nombre;
+                        const id = (s.ID_Servicio || s.idServicio || '').trim();
+                        const name = (s.Nombre_Servicio || s.Nombre || '').trim();
+                        if (name.toLowerCase() === 'perfilado') return false;
+                        if (name.toLowerCase() === 'depilación' || name.toLowerCase() === 'depilacion') return true;
                         return !deletedServicesSet.has(id) && !deletedServicesSet.has(name);
                     });
                 }

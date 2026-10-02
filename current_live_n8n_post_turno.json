@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-02T02:38:55.748Z",
+  "updatedAt": "2026-10-02T02:45:08.636Z",
   "createdAt": "2026-08-27T02:42:27.494Z",
   "id": "jozxvG23TzJkG3l3UAyIR",
   "name": "Lumina - Post Turno, Cancelación y Notificaciones",
@@ -662,6 +662,29 @@
                     "id": "rule-baja-staff-id",
                     "leftValue": "={{ $json.body.action }}",
                     "rightValue": "baja_staff",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "rule-baja-servicio-id",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "baja_servicio",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -1415,6 +1438,85 @@
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
+          "mode": "list",
+          "cachedResultName": "BaseDatos_Estetica_Demo",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1785770632,
+          "mode": "list",
+          "cachedResultName": "Servicios",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit#gid=1785770632"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Nombre_Servicio": "={{ $json.body.servicioInfo.nombre }}",
+            "ID_Servicio": "={{ 'DEL_' + ($json.body.servicioInfo.idServicio || '') }}",
+            "Especialidad": "ELIMINADO",
+            "Costo": "-",
+            "Duracion_Min": 0,
+            "Descripción": "ELIMINADO"
+          },
+          "matchingColumns": [
+            "Nombre_Servicio"
+          ],
+          "schema": [
+            {
+              "id": "ID_Servicio",
+              "displayName": "ID_Servicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nombre_Servicio",
+              "displayName": "Nombre_Servicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Especialidad",
+              "displayName": "Especialidad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        250,
+        960
+      ],
+      "id": "del-service-sheet-node-id",
+      "name": "Eliminar Servicio Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g855PstCDRAtYH2C",
+          "name": "Google Sheets account"
+        }
+      }
     }
   ],
   "connections": {
@@ -1533,6 +1635,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Eliminar Servicio Sheet",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -1573,9 +1682,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "e20790d4-4078-4fec-a526-444b68cd421f",
-  "activeVersionId": "e20790d4-4078-4fec-a526-444b68cd421f",
-  "versionCounter": 171,
+  "versionId": "2dfad7d0-51f8-479f-b994-eb7644f3384a",
+  "activeVersionId": "2dfad7d0-51f8-479f-b994-eb7644f3384a",
+  "versionCounter": 173,
   "triggerCount": 1,
   "tags": [],
   "shared": [
