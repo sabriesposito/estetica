@@ -1391,6 +1391,8 @@
             if (deletedServicesSet.has('Depilación')) deletedServicesSet.delete('Depilación');
             if (deletedServicesSet.has('depilación')) deletedServicesSet.delete('depilación');
             if (deletedServicesSet.has('depilacion')) deletedServicesSet.delete('depilacion');
+            if (deletedServicesSet.has('Perfilado')) deletedServicesSet.delete('Perfilado');
+            if (deletedServicesSet.has('perfilado')) deletedServicesSet.delete('perfilado');
             try {
                 localStorage.setItem('lumina_deleted_services', JSON.stringify([...deletedServicesSet]));
             } catch(e) {}
@@ -3396,41 +3398,30 @@
             if (!select) return;
 
             const set = new Set();
-            const standardList = [
-                'Peluquería',
-                'Uñas',
-                'Cejas y Pestañas',
-                'Facial',
-                'Corporal',
-                'Masajes',
-                'Depilación',
-                'Estética',
-                'Maquillaje',
-                'Pies / Pedicuría'
-            ];
-            standardList.forEach(e => set.add(e.trim()));
+            const isServiceSelect = (selectId === 'nsvcEspecialidad' || selectId === 'esvcEspecialidad');
 
-            const staffList = (bdGlobal && Array.isArray(bdGlobal.staff)) ? bdGlobal.staff : (fallbackData.staff || []);
-            staffList.forEach(st => {
-                const esp = st.Especialidad || '';
-                if (esp) {
-                    esp.split(/[,/]/).forEach(item => {
-                        const t = item.trim();
-                        if (t) set.add(t);
-                    });
-                }
-            });
+            // 1. Extraer especialidades directamente de la hoja de Servicios de Google Sheets
+            const srvList = (bdGlobal && Array.isArray(bdGlobal.servicios) && bdGlobal.servicios.length > 0)
+                ? bdGlobal.servicios
+                : (fallbackData.servicios || []);
 
-            const srvList = (bdGlobal && Array.isArray(bdGlobal.servicios)) ? bdGlobal.servicios : (fallbackData.servicios || []);
             srvList.forEach(srv => {
-                const esp = srv.Especialidad || '';
-                if (esp) {
-                    esp.split(/[,/]/).forEach(item => {
-                        const t = item.trim();
-                        if (t) set.add(t);
-                    });
+                const esp = (srv.Especialidad || '').trim();
+                if (esp && !esp.toLowerCase().includes('baja') && !esp.toLowerCase().includes('eliminad')) {
+                    set.add(esp);
                 }
             });
+
+            // 2. Si es para Staff, sumar también especialidades de la hoja de Staff si difieren
+            if (!isServiceSelect) {
+                const staffList = (bdGlobal && Array.isArray(bdGlobal.staff)) ? bdGlobal.staff : (fallbackData.staff || []);
+                staffList.forEach(st => {
+                    const esp = (st.Especialidad || '').trim();
+                    if (esp && !esp.toLowerCase().includes('baja') && !esp.toLowerCase().includes('eliminad')) {
+                        set.add(esp);
+                    }
+                });
+            }
 
             if (selectedVal && selectedVal.trim()) {
                 set.add(selectedVal.trim());
@@ -3785,8 +3776,8 @@
                     data.servicios = data.servicios.filter(s => {
                         const id = (s.ID_Servicio || s.idServicio || '').trim();
                         const name = (s.Nombre_Servicio || s.Nombre || '').trim();
-                        if (name.toLowerCase() === 'perfilado') return false;
                         if (name.toLowerCase() === 'depilación' || name.toLowerCase() === 'depilacion') return true;
+                        if (name.toLowerCase() === 'perfilado') return true;
                         return !deletedServicesSet.has(id) && !deletedServicesSet.has(name);
                     });
                 }
