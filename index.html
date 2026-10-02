@@ -1748,15 +1748,15 @@
                 { ID_Cliente: "C1787799908", Nombre_Completo: "Candela", Correo: "prueba@gmail.com", Telefono: "+5491166266846" }
             ],
             servicios: [
-                { ID_Servicio: "SRV01", Nombre_Servicio: "Corte Mujer", Duracion_Min: 60, Especialidad: "Pelo", Costo: "$20.000", Descripción: "Corte adaptado al estilo y forma del rostro, incluye lavado y peinado." },
-                { ID_Servicio: "SRV02", Nombre_Servicio: "Corte Hombre", Duracion_Min: 30, Especialidad: "Pelo", Costo: "$15.000", Descripción: "Corte clásico o moderno con tijera y máquina, terminado impecable." },
+                { ID_Servicio: "SRV01", Nombre_Servicio: "Corte Mujer", Duracion_Min: 60, Especialidad: "Peluquería", Costo: "$20.000", Descripción: "Corte adaptado al estilo y forma del rostro, incluye lavado y peinado." },
+                { ID_Servicio: "SRV02", Nombre_Servicio: "Corte Hombre", Duracion_Min: 30, Especialidad: "Peluquería", Costo: "$15.000", Descripción: "Corte clásico o moderno con tijera y máquina, terminado impecable." },
                 { ID_Servicio: "SRV03", Nombre_Servicio: "Manicuría", Duracion_Min: 30, Especialidad: "Uñas", Costo: "$18.000", Descripción: "Limpieza de cutículas, limado y esmaltado tradicional o gel." },
                 { ID_Servicio: "SRV04", Nombre_Servicio: "Uñas Esculpidas Acrílico", Duracion_Min: 90, Especialidad: "Uñas", Costo: "$30.000", Descripción: "Construcción completa de uñas acrílicas con acabado duradero y natural." },
                 { ID_Servicio: "SRV05", Nombre_Servicio: "Kapping Gel", Duracion_Min: 60, Especialidad: "Uñas", Costo: "$25.000", Descripción: "Capa protectora de gel sobre la uña natural para fortalecerla y evitar quebraduras." }
             ],
             staff: [
                 { ID_Staff: "S01", Nombre: "Valeria Gomez", Especialidad: "Uñas", Hora_Inicio: "08:00", Hora_Fin: "18:00" },
-                { ID_Staff: "S02", Nombre: "Marcos Silva", Especialidad: "Pelo", Hora_Inicio: "15:00", Hora_Fin: "20:00" }
+                { ID_Staff: "S02", Nombre: "Marcos Silva", Especialidad: "Peluquería", Hora_Inicio: "15:00", Hora_Fin: "20:00" }
             ],
             turnos: []
         };
@@ -3398,40 +3398,33 @@
             if (!select) return;
 
             const set = new Set();
-            const isServiceSelect = (selectId === 'nsvcEspecialidad' || selectId === 'esvcEspecialidad');
 
-            // 1. Extraer especialidades directamente de la hoja de Servicios de Google Sheets
+            // Extraer especialidades directamente del catálogo oficial de Servicios de Google Sheets
             const srvList = (bdGlobal && Array.isArray(bdGlobal.servicios) && bdGlobal.servicios.length > 0)
                 ? bdGlobal.servicios
                 : (fallbackData.servicios || []);
 
             srvList.forEach(srv => {
-                const esp = (srv.Especialidad || '').trim();
+                let esp = (srv.Especialidad || '').trim();
+                if (esp.toLowerCase() === 'pelo') esp = 'Peluquería';
                 if (esp && !esp.toLowerCase().includes('baja') && !esp.toLowerCase().includes('eliminad')) {
                     set.add(esp);
                 }
             });
 
-            // 2. Si es para Staff, sumar también especialidades de la hoja de Staff si difieren
-            if (!isServiceSelect) {
-                const staffList = (bdGlobal && Array.isArray(bdGlobal.staff)) ? bdGlobal.staff : (fallbackData.staff || []);
-                staffList.forEach(st => {
-                    const esp = (st.Especialidad || '').trim();
-                    if (esp && !esp.toLowerCase().includes('baja') && !esp.toLowerCase().includes('eliminad')) {
-                        set.add(esp);
-                    }
-                });
-            }
+            // Nunca permitir 'Pelo' como opción (la especialidad formal de corte es 'Peluquería')
+            set.delete('Pelo');
+            set.delete('pelo');
 
-            if (selectedVal && selectedVal.trim()) {
-                set.add(selectedVal.trim());
-            }
+            let currentVal = selectedVal ? selectedVal.trim() : '';
+            if (currentVal.toLowerCase() === 'pelo') currentVal = 'Peluquería';
+            if (currentVal) set.add(currentVal);
 
             const sorted = Array.from(set).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
 
-            let optionsHtml = '<option value="" disabled' + (!selectedVal ? ' selected' : '') + '>-- Seleccionar Especialidad --</option>';
+            let optionsHtml = '<option value="" disabled' + (!currentVal ? ' selected' : '') + '>-- Seleccionar Especialidad --</option>';
             sorted.forEach(esp => {
-                const isMatch = selectedVal && esp.toLowerCase() === selectedVal.trim().toLowerCase();
+                const isMatch = currentVal && esp.toLowerCase() === currentVal.toLowerCase();
                 optionsHtml += `<option value="${esp}"${isMatch ? ' selected' : ''}>${esp}</option>`;
             });
 
@@ -3788,6 +3781,18 @@
                         if (name.toLowerCase() === 'camila') return false;
                         if (name.toLowerCase() === 'sandra') return true;
                         return !deletedStaffSet.has(id) && !deletedStaffSet.has(name);
+                    });
+                    data.staff = data.staff.map(st => {
+                        let esp = (st.Especialidad || '').trim();
+                        if (esp.toLowerCase() === 'pelo') esp = 'Peluquería';
+                        return { ...st, Especialidad: esp };
+                    });
+                }
+                if (Array.isArray(data.servicios)) {
+                    data.servicios = data.servicios.map(s => {
+                        let esp = (s.Especialidad || '').trim();
+                        if (esp.toLowerCase() === 'pelo') esp = 'Peluquería';
+                        return { ...s, Especialidad: esp };
                     });
                 }
                 if (Array.isArray(data.clientes)) {
