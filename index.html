@@ -714,7 +714,9 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-stone-500 mb-1">Especialidad *</label>
-                        <input type="text" id="nsEspecialidad" placeholder="Ej. Pelo, Uñas, Masajes" class="input-pastel text-xs">
+                        <select id="nsEspecialidad" onchange="checkCustomEspecialidad('ns')" class="input-pastel text-xs bg-white">
+                        </select>
+                        <input type="text" id="nsEspecialidadCustom" placeholder="Escribir nueva especialidad..." class="input-pastel text-xs mt-1.5 hide">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -776,7 +778,9 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-stone-500 mb-1">Especialidad *</label>
-                        <input type="text" id="esEspecialidad" placeholder="Ej. Pelo, Uñas, Cejas, Estética" class="input-pastel text-xs">
+                        <select id="esEspecialidad" onchange="checkCustomEspecialidad('es')" class="input-pastel text-xs bg-white">
+                        </select>
+                        <input type="text" id="esEspecialidadCustom" placeholder="Escribir nueva especialidad..." class="input-pastel text-xs mt-1.5 hide">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -1945,6 +1949,11 @@
                 if(id === 'newServiceModal') {
                     populateSpecialtiesSelect('nsvcEspecialidad');
                     const customInput = document.getElementById('nsvcEspecialidadCustom');
+                    if (customInput) { customInput.value = ''; customInput.classList.add('hide'); }
+                }
+                if(id === 'newStaffModal') {
+                    populateSpecialtiesSelect('nsEspecialidad');
+                    const customInput = document.getElementById('nsEspecialidadCustom');
                     if (customInput) { customInput.value = ''; customInput.classList.add('hide'); }
                 }
             }
@@ -3194,12 +3203,15 @@
 
         function saveNewStaff() {
             const nombre = document.getElementById('nsNombre').value.trim();
-            const especialidad = document.getElementById('nsEspecialidad').value.trim();
+            let especialidad = document.getElementById('nsEspecialidad').value.trim();
+            if (especialidad === '__custom__') {
+                especialidad = document.getElementById('nsEspecialidadCustom').value.trim();
+            }
             const horaIni = document.getElementById('nsHoraInicio').value || "08:00";
             const horaFin = document.getElementById('nsHoraFin').value || "20:00";
 
             if (!nombre) { alert("Por favor ingresa el nombre del profesional."); return; }
-            if (!especialidad) { alert("Por favor ingresa la especialidad."); return; }
+            if (!especialidad) { alert("Por favor selecciona o ingresa una especialidad."); return; }
 
             const checkedBoxes = Array.from(document.querySelectorAll('input[name="nsDia"]:checked')).map(b => parseInt(b.value)).sort((a,b)=>a-b);
             const nombresDias = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
@@ -3268,7 +3280,10 @@
             alert(`✨ ¡${nombre} ha sido agregado/a con éxito al equipo (${diasTextoConfig}, ${horaIni} a ${horaFin} hs)!`);
 
             document.getElementById('nsNombre').value = '';
-            document.getElementById('nsEspecialidad').value = '';
+            const nsCustom = document.getElementById('nsEspecialidadCustom');
+            if (nsCustom) { nsCustom.value = ''; nsCustom.classList.add('hide'); }
+            const nsSelect = document.getElementById('nsEspecialidad');
+            if (nsSelect) nsSelect.selectedIndex = 0;
         }
 
         function abrirEditarStaff(idStaff) {
@@ -3278,7 +3293,9 @@
 
             document.getElementById('esIdStaff').value = idStaff;
             document.getElementById('esNombre').value = st.Nombre || st.Nombre_Completo || '';
-            document.getElementById('esEspecialidad').value = st.Especialidad || '';
+            populateSpecialtiesSelect('esEspecialidad', st.Especialidad || '');
+            const esCustom = document.getElementById('esEspecialidadCustom');
+            if (esCustom) { esCustom.value = ''; esCustom.classList.add('hide'); }
             document.getElementById('esHoraInicio').value = normalizeHoraStr(st.Hora_Inicio || '08:00');
             document.getElementById('esHoraFin').value = normalizeHoraStr(st.Hora_Fin || '20:00');
 
@@ -3304,12 +3321,15 @@
         async function guardarEdicionStaff() {
             const idStaff = document.getElementById('esIdStaff').value;
             const nombre = document.getElementById('esNombre').value.trim();
-            const especialidad = document.getElementById('esEspecialidad').value.trim();
+            let especialidad = document.getElementById('esEspecialidad').value.trim();
+            if (especialidad === '__custom__') {
+                especialidad = document.getElementById('esEspecialidadCustom').value.trim();
+            }
             const horaIni = normalizeHoraStr(document.getElementById('esHoraInicio').value || '08:00');
             const horaFin = normalizeHoraStr(document.getElementById('esHoraFin').value || '20:00');
 
             if (!nombre) { alert("Por favor ingresa el nombre del profesional."); return; }
-            if (!especialidad) { alert("Por favor ingresa la especialidad."); return; }
+            if (!especialidad) { alert("Por favor selecciona o ingresa una especialidad."); return; }
 
             const checkedBoxes = Array.from(document.querySelectorAll('input[name="esDia"]:checked')).map(b => parseInt(b.value)).sort((a,b)=>a-b);
             const nombresDias = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
