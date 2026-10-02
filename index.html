@@ -1378,6 +1378,13 @@
             if (ds) deletedServicesSet = new Set(JSON.parse(ds));
             const dst = localStorage.getItem('lumina_deleted_staff');
             if (dst) deletedStaffSet = new Set(JSON.parse(dst));
+            // Limpiar colisiones previas: Sandra nunca debió ser excluida
+            if (deletedStaffSet.has('S03')) deletedStaffSet.delete('S03');
+            if (deletedStaffSet.has('Sandra')) deletedStaffSet.delete('Sandra');
+            if (deletedStaffSet.has('sandra')) deletedStaffSet.delete('sandra');
+            try {
+                localStorage.setItem('lumina_deleted_staff', JSON.stringify([...deletedStaffSet]));
+            } catch(e) {}
             const dc = localStorage.getItem('lumina_deleted_clients');
             if (dc) deletedClientsSet = new Set(JSON.parse(dc));
         } catch(e) {}
@@ -3192,7 +3199,12 @@
                 diasTextoConfig = checkedBoxes.map(d => nombresDias[d]).join(', ');
             }
 
-            const idStaff = 'S' + String((bdGlobal && bdGlobal.staff ? bdGlobal.staff.length : 0) + 1).padStart(2, '0');
+            const existingStaff = (bdGlobal && Array.isArray(bdGlobal.staff)) ? bdGlobal.staff : [];
+            const maxStaffNum = existingStaff.reduce((max, s) => {
+                const num = parseInt(String(s.ID_Staff || s.idStaff || '').replace(/[^0-9]/g, ''), 10) || 0;
+                return Math.max(max, num);
+            }, 0);
+            const idStaff = 'S' + String(Math.max(maxStaffNum + 1, 4)).padStart(2, '0');
             const nuevoStaff = {
                 ID_Staff: idStaff,
                 Nombre: nombre,
@@ -3647,8 +3659,10 @@
                 }
                 if (Array.isArray(data.staff)) {
                     data.staff = data.staff.filter(st => {
-                        const id = st.ID_Staff || st.idStaff;
-                        const name = st.Nombre || st.Nombre_Completo;
+                        const id = (st.ID_Staff || st.idStaff || '').trim();
+                        const name = (st.Nombre || st.Nombre_Completo || '').trim();
+                        if (name.toLowerCase() === 'camila') return false;
+                        if (name.toLowerCase() === 'sandra') return true;
                         return !deletedStaffSet.has(id) && !deletedStaffSet.has(name);
                     });
                 }

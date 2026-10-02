@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-01T01:57:15.642Z",
+  "updatedAt": "2026-10-02T02:38:55.748Z",
   "createdAt": "2026-08-27T02:42:27.494Z",
   "id": "jozxvG23TzJkG3l3UAyIR",
   "name": "Lumina - Post Turno, Cancelación y Notificaciones",
@@ -17,8 +17,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1.1,
       "position": [
-        -544,
-        272
+        -560,
+        464
       ],
       "id": "1b282f5d-2e57-4799-8b99-32708aa31e23",
       "webhookId": "d3cd463b-dba7-42ee-90c6-910d99cdb974"
@@ -77,8 +77,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        16,
-        464
+        288,
+        560
       ],
       "id": "d5d69d21-8f2b-4cca-9bfe-042bf372d070",
       "name": "Actualizar Estado Cancelado",
@@ -186,7 +186,7 @@
       "typeVersion": 4,
       "position": [
         16,
-        0
+        48
       ],
       "id": "f53da5d0-5723-47b3-9a65-1cfc9b92a517",
       "credentials": {
@@ -340,7 +340,7 @@
       "typeVersion": 4,
       "position": [
         288,
-        0
+        48
       ],
       "id": "3ee7a9a3-8073-41a9-812f-2a096d2abee3",
       "credentials": {
@@ -362,7 +362,7 @@
       "typeVersion": 2.1,
       "position": [
         480,
-        0
+        48
       ],
       "id": "a79d77c2-20bb-4e78-9591-cd38fde2b870",
       "webhookId": "4cf6d678-8d66-42d3-b793-904bd334ce8f",
@@ -427,8 +427,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        448,
-        384
+        128,
+        416
       ],
       "id": "97a45a5a-74d3-45b5-a90d-084221ae5aa2",
       "name": "Actualizar Estado",
@@ -648,6 +648,29 @@
                 ],
                 "combinator": "and"
               }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "rule-baja-staff-id",
+                    "leftValue": "={{ $json.body.action }}",
+                    "rightValue": "baja_staff",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
             }
           ]
         },
@@ -656,8 +679,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        -320,
-        208
+        -336,
+        352
       ],
       "id": "302bab5d-b5ba-4835-b506-662a4492b089",
       "name": "Switch"
@@ -775,7 +798,7 @@
       "typeVersion": 4.7,
       "position": [
         144,
-        128
+        192
       ],
       "id": "44d920c5-08da-4920-a90c-12d1e5f44c12",
       "name": "Actualizar Staff",
@@ -898,8 +921,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        304,
-        256
+        320,
+        304
       ],
       "id": "113cfe0f-a06a-4fb4-b934-3f3a06c53a71",
       "name": "Actualizar Servicios",
@@ -1053,8 +1076,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        16,
-        656
+        352,
+        736
       ],
       "id": "a75bdfce-0e13-4117-a5e1-7e1a43979f96",
       "credentials": {
@@ -1075,8 +1098,8 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        208,
-        656
+        544,
+        736
       ],
       "id": "8b208753-663d-4a7a-b93a-dc3d95b78b2e",
       "webhookId": "4cf6d678-8d66-42d3-b793-904bd334ce8f",
@@ -1084,131 +1107,6 @@
         "gmailOAuth2": {
           "id": "lGbWJrHHYY20r6XS",
           "name": "Gmail account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
-          "mode": "list",
-          "cachedResultName": "BaseDatos_Estetica_Demo",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 931049778,
-          "mode": "list",
-          "cachedResultName": "Turnos",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit#gid=931049778"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "ID_Turno": "={{ $json.body.idTurno }}",
-            "Fecha": "={{ $json.body.fecha }}",
-            "Hora_Inicio": "={{ $json.body.horaInicio }}",
-            "Hora_Fin": "={{ $json.body.horaFin }}",
-            "ID_Staff": "={{ $json.body.idStaff }}",
-            "ID_Servicio": "={{ $json.body.idServicio }}",
-            "Estado": "Confirmado",
-            "ID_Cliente": "={{ $json.body.clienteInfo.idCliente }}",
-            "Origen_Demo": "Link"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "ID_Turno",
-              "displayName": "ID_Turno",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Fecha",
-              "displayName": "Fecha",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Hora_Inicio",
-              "displayName": "Hora_Inicio",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Hora_Fin",
-              "displayName": "Hora_Fin",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "ID_Cliente",
-              "displayName": "ID_Cliente",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "ID_Staff",
-              "displayName": "ID_Staff",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "ID_Servicio",
-              "displayName": "ID_Servicio",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Estado",
-              "displayName": "Estado",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "name": "Añadir Turno2",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4,
-      "position": [
-        -1136,
-        1248
-      ],
-      "id": "0b4d365d-9928-4439-9ca0-c55bfcf438be",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "g855PstCDRAtYH2C",
-          "name": "Google Sheets account"
         }
       }
     },
@@ -1240,7 +1138,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        448,
+        496,
         560
       ],
       "id": "83af0936-f54f-4af2-b2b8-600ea4cf18e5",
@@ -1323,8 +1221,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        448,
-        750
+        480,
+        928
       ],
       "id": "c8f49a12-8812-4eb5-a555-reasignarturno",
       "name": "Reasignar Turno",
@@ -1346,10 +1244,11 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        448,
-        900
+        240,
+        976
       ],
       "id": "gmail-generico-1790020223282",
+      "webhookId": "2b8a8416-2c3a-4df8-8944-b002175c8f82",
       "credentials": {
         "gmailOAuth2": {
           "id": "lGbWJrHHYY20r6XS",
@@ -1430,10 +1329,86 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        448,
-        1050
+        240,
+        1136
       ],
       "id": "anadir-cliente-directo-solo",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g855PstCDRAtYH2C",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
+          "mode": "list",
+          "cachedResultName": "BaseDatos_Estetica_Demo",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 891260524,
+          "mode": "list",
+          "cachedResultName": "Staff",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k/edit#gid=891260524"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Nombre": "={{ $json.body.staffInfo.nombre }}",
+            "ID_Staff": "={{ 'DEL_' + ($json.body.staffInfo.idStaff || '') }}",
+            "Especialidad": "ELIMINADO"
+          },
+          "matchingColumns": [
+            "Nombre"
+          ],
+          "schema": [
+            {
+              "id": "ID_Staff",
+              "displayName": "ID_Staff",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nombre",
+              "displayName": "Nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Especialidad",
+              "displayName": "Especialidad",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        250,
+        850
+      ],
+      "id": "del-staff-sheet-node-id",
+      "name": "Eliminar Staff Sheet",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "g855PstCDRAtYH2C",
@@ -1551,6 +1526,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Eliminar Staff Sheet",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -1591,9 +1573,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "47b770d5-fb87-4e8d-abb7-2240a8b4311a",
-  "activeVersionId": "47b770d5-fb87-4e8d-abb7-2240a8b4311a",
-  "versionCounter": 141,
+  "versionId": "e20790d4-4078-4fec-a526-444b68cd421f",
+  "activeVersionId": "e20790d4-4078-4fec-a526-444b68cd421f",
+  "versionCounter": 171,
   "triggerCount": 1,
   "tags": [],
   "shared": [
