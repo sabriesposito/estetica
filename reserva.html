@@ -2194,16 +2194,22 @@
 
                     const turnosOcupadosStaff = turnosList.filter(t => {
                         if(!t) return false;
-                        const idTurno = t.ID_Turno || t.idTurno;
-                        if (turnoActivoDeMismaEspecialidad && idTurno === (turnoActivoDeMismaEspecialidad.ID_Turno || turnoActivoDeMismaEspecialidad.idTurno)) {
-                            return false;
-                        }
-
                         const tFechaNorm = normalizarFecha(t.Fecha || t.fecha || t.Date);
                         const isSameDate = tFechaNorm === fechaNorm;
-                        const isSameStaff = (t.ID_Staff === staffCandidate.ID_Staff) || (t.Staff === staffCandidate.Nombre) || (t.ID_Staff === 'ALL');
+
+                        const tStaffId = (t.ID_Staff || '').toString().trim().toLowerCase();
+                        const tStaffName = (t.Staff || t.staffNombre || t.Nombre_Staff || '').toString().trim().toLowerCase();
+                        const candId = (staffCandidate.ID_Staff || '').toString().trim().toLowerCase();
+                        const candName = (staffCandidate.Nombre || staffCandidate.Nombre_Completo || '').toString().trim().toLowerCase();
+
+                        const isSameStaff = (tStaffId && tStaffId === candId) ||
+                                            (tStaffName && tStaffName === candName) ||
+                                            (tStaffId && tStaffId === candName) ||
+                                            (tStaffId === 'all');
+
                         const estado = (t.Estado || t.estado || "").toString().trim().toLowerCase();
-                        return isSameDate && isSameStaff && (estado !== 'cancelado');
+                        const isNotCancelled = !estado.includes('cancelad');
+                        return isSameDate && isSameStaff && isNotCancelled;
                     });
 
                     let choca = false;
@@ -2392,14 +2398,22 @@
 
                 const ocupado = turnosList.some(t => {
                     if (!t) return false;
-                    const idT = t.ID_Turno || t.idTurno;
-                    if (turnoActivoEncontrado && idT === (turnoActivoEncontrado.ID_Turno || turnoActivoEncontrado.idTurno)) return false;
-
                     const tFechaNorm = normalizarFecha(t.Fecha || t.fecha);
                     const sameDate = tFechaNorm === fechaNorm;
-                    const sameStaff = (t.ID_Staff === st.ID_Staff || t.Staff === st.Nombre || t.ID_Staff === 'ALL');
-                    const estado = (t.Estado || "").toLowerCase();
-                    if (!sameDate || !sameStaff || estado === 'cancelado') return false;
+
+                    const tStaffId = (t.ID_Staff || '').toString().trim().toLowerCase();
+                    const tStaffName = (t.Staff || t.staffNombre || t.Nombre_Staff || '').toString().trim().toLowerCase();
+                    const stId = (st.ID_Staff || '').toString().trim().toLowerCase();
+                    const stName = (st.Nombre || st.Nombre_Completo || '').toString().trim().toLowerCase();
+
+                    const sameStaff = (tStaffId && tStaffId === stId) ||
+                                      (tStaffName && tStaffName === stName) ||
+                                      (tStaffId && tStaffId === stName) ||
+                                      (tStaffId === 'all');
+
+                    const estado = (t.Estado || "").toString().trim().toLowerCase();
+                    const isNotCancelled = !estado.includes('cancelad');
+                    if (!sameDate || !sameStaff || !isNotCancelled) return false;
                     
                     let tFin = parseTime(t.Hora_Fin);
                     let tIni = parseTime(t.Hora_Inicio);

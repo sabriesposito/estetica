@@ -3945,9 +3945,19 @@
                 if(!t) return false;
                 const tFechaNorm = normalizarFecha(t.Fecha || t.fecha || t.Date);
                 const isSameDate = tFechaNorm === fechaNorm;
-                const isSameStaff = (t.ID_Staff === staff.ID_Staff) || (t.Staff === staff.Nombre) || (t.ID_Staff === 'ALL');
+                const tStaffId = (t.ID_Staff || '').toString().trim().toLowerCase();
+                const tStaffName = (t.Staff || t.staffNombre || t.Nombre_Staff || '').toString().trim().toLowerCase();
+                const staffId = (staff.ID_Staff || '').toString().trim().toLowerCase();
+                const staffName = (staff.Nombre || '').toString().trim().toLowerCase();
+
+                const isSameStaff = (tStaffId && tStaffId === staffId) || 
+                                    (tStaffName && tStaffName === staffName) || 
+                                    (tStaffId && tStaffId === staffName) || 
+                                    (tStaffId === 'all');
+
                 const estado = (t.Estado || t.estado || "").toString().trim().toLowerCase();
-                return isSameDate && isSameStaff && (estado !== 'cancelado');
+                const isNotCancelled = !estado.includes('cancelad');
+                return isSameDate && isSameStaff && isNotCancelled;
             });
             
             timeSelect.innerHTML = '';
