@@ -66,8 +66,8 @@
         .cal-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .cal-grid { display: grid; grid-template-columns: 50px 1fr; gap: 1px; background: #e7e5e4; width: 100%; }
         .cal-header { background: #faf7f2; padding: 10px 4px; text-align: center; font-size: 12px; font-weight: 600; color: #78716c; position: sticky; top: 0; z-index: 20; }
-        .cal-cell { background: #ffffff; min-height: 45px; position: relative; border-bottom: 1px solid #f5f5f4; }
-        .cal-time { background: #faf7f2; padding: 4px 4px; font-size: 10px; color: #a8a29e; text-align: right; border-bottom: 1px solid #f5f5f4; position: sticky; left: 0; z-index: 10; font-weight: 500; }
+        .cal-cell { background: #ffffff; min-height: 48px; height: 48px; position: relative; border-bottom: 1px solid #f5f5f4; }
+        .cal-time { background: #faf7f2; padding: 0 6px; font-size: 10px; color: #a8a29e; text-align: right; border-bottom: 1px solid #f5f5f4; position: sticky; left: 0; z-index: 10; font-weight: 500; height: 48px; display: flex; align-items: center; justify-content: flex-end; }
 
         /* Estilo Elegante para Bloqueo de Agenda */
         .cal-cell-blocked {
@@ -4315,28 +4315,52 @@
                                         badgeHtml = `<span class="text-[9px] bg-amber-200 text-amber-900 px-1 rounded font-semibold shrink-0">Agendado</span>`;
                                     }
 
+                                    // Cálculo proporcional de altura y posición vertical según duración y hora de inicio
+                                    const cellHourMin = parseTime(horaStr);
+                                    let startMinuteOffset = Math.max(0, tIniMin - cellHourMin);
+                                    let topPx = Math.round((startMinuteOffset / 60) * 48) + 2;
+                                    let calcH = Math.max(18, Math.round((dur / 60) * 48) - 4);
+
+                                    // Detectar turnos que realmente se solapan en tiempo dentro de la misma celda
+                                    let tOverlap = turnosEnCelda.filter(o => {
+                                        let oIni = parseTime(o.Hora_Inicio || "09:00");
+                                        let oFin = parseTime(o.Hora_Fin || "");
+                                        if (!oFin || oFin <= oIni) {
+                                            let oDur = 60;
+                                            if (bdGlobal && bdGlobal.servicios) {
+                                                let s = bdGlobal.servicios.find(x => (x.ID_Servicio === o.ID_Servicio) || (x.Nombre_Servicio || x.Nombre || x.Servicio) === o.ID_Servicio);
+                                                if (s && s.Duracion_Min) oDur = parseInt(s.Duracion_Min) || 60;
+                                            }
+                                            oFin = oIni + oDur;
+                                        }
+                                        return !(oFin <= tIniMin || oIni >= tFinMin);
+                                    });
+
                                     let layoutStyle = "";
-                                    let count = turnosEnCelda.length;
-                                    let altoStyle = "";
-                                    if (esPC) {
-                                        let calcH = Math.max(40, Math.round((dur / 60) * 48) - 4);
-                                        altoStyle = `height: ${calcH}px;`;
+                                    if (tOverlap.length <= 1) {
+                                        layoutStyle = `style="left: 2px; right: 2px; top: ${topPx}px; height: ${calcH}px;"`;
                                     } else {
-                                        altoStyle = dur > 45 ? `height: ${Math.round((dur / 30) * 45) - 6}px;` : "";
-                                    }
-                                    if (count === 1) {
-                                        layoutStyle = `style="left: 2px; right: 2px; ${altoStyle}"`;
-                                    } else {
-                                        let pct = 100 / count;
-                                        let leftPct = idx * pct;
-                                        layoutStyle = `style="left: calc(${leftPct}% + 1px); width: calc(${pct}% - 2px); ${altoStyle}"`;
+                                        let overlapIdx = tOverlap.indexOf(t);
+                                        if (overlapIdx < 0) overlapIdx = idx;
+                                        let pct = 100 / tOverlap.length;
+                                        let leftPct = overlapIdx * pct;
+                                        layoutStyle = `style="left: calc(${leftPct}% + 1px); width: calc(${pct}% - 2px); top: ${topPx}px; height: ${calcH}px;"`;
                                     }
 
+                                    let isShort = dur <= 35;
+                                    let staffBadgeHtml = (!esStaff && nombreStaff && !isShort)
+                                        ? `<div class="text-[9.5px] font-semibold text-stone-600 truncate flex items-center gap-0.5 mt-0.5"><span class="text-[9px]">👤</span>${nombreStaff}</div>`
+                                        : '';
+
                                     let turnoContentHtml = "";
-                                    if (esPC) {
-                                        let staffBadgeHtml = (!esStaff && nombreStaff)
-                                            ? `<div class="text-[9.5px] font-semibold text-stone-600 truncate flex items-center gap-0.5"><span class="text-[9px]">👤</span>${nombreStaff}</div>`
-                                            : '';
+                                    if (isShort) {
+                                        turnoContentHtml = `
+                                            <div class="font-bold truncate flex items-center justify-between gap-1 leading-none text-[10px] w-full">
+                                                <span class="truncate">${nombreC} <span class="font-normal opacity-80 text-[9px]">· ${nombreServicio}</span></span>
+                                                ${badgeHtml}
+                                            </div>
+                                        `;
+                                    } else if (esPC) {
                                         turnoContentHtml = `
                                             <div class="font-bold truncate flex items-center justify-between gap-1 leading-tight text-[11px]">
                                                 <span class="truncate">${nombreC}</span>
@@ -4346,21 +4370,19 @@
                                             ${staffBadgeHtml}
                                         `;
                                     } else {
-                                        let staffBadgeHtml = (!esStaff && nombreStaff)
-                                            ? `<div class="text-[10px] font-semibold text-stone-600 truncate flex items-center gap-0.5 mt-0.5"><span class="text-[9px]">👤</span>${nombreStaff}</div>`
-                                            : '';
                                         turnoContentHtml = `
-                                            <div class="font-bold truncate flex items-center justify-between gap-1">
+                                            <div class="font-bold truncate flex items-center justify-between gap-1 leading-tight text-[10.5px]">
                                                 <span class="truncate">${nombreC}</span>
                                                 ${badgeHtml}
                                             </div>
-                                            <div class="truncate opacity-80">${nombreServicio}</div>
+                                            <div class="truncate opacity-80 leading-tight text-[9.5px] mt-0.5">${nombreServicio}</div>
                                             ${staffBadgeHtml}
                                         `;
                                     }
 
+                                    let shortClasses = isShort ? "py-0.5 px-1.5 flex flex-col justify-center" : "";
                                     html += `
-                                        <div class="turno ${cColor} top-1 z-10 cursor-pointer hover:opacity-95 transition transform active:scale-95 shadow-sm" ${layoutStyle} onclick="openTurnoDetailModal('${idTTurno}'); event.stopPropagation();" onmousedown="event.stopPropagation();" title="${nombreC} - ${nombreServicio} (${nombreStaff || 'Staff'})">
+                                        <div class="turno ${cColor} ${shortClasses} z-10 cursor-pointer hover:opacity-95 transition transform active:scale-95 shadow-sm" ${layoutStyle} onclick="openTurnoDetailModal('${idTTurno}'); event.stopPropagation();" onmousedown="event.stopPropagation();" title="${nombreC} - ${nombreServicio} (${nombreStaff || 'Staff'})">
                                             ${turnoContentHtml}
                                         </div>
                                     `;
