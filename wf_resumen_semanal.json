@@ -24,6 +24,22 @@
     },
     {
       "parameters": {
+        "httpMethod": "GET",
+        "path": "resumen-semanal",
+        "options": {}
+      },
+      "name": "Webhook Disparador Manual",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        100,
+        380
+      ],
+      "id": "webhook-resumen-semanal",
+      "webhookId": "resumen-semanal-webhook"
+    },
+    {
+      "parameters": {
         "url": "https://estetica.neco-dev.cloud/branding.json",
         "options": {}
       },
@@ -38,103 +54,27 @@
     },
     {
       "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
-          "mode": "list"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 931049778,
-          "mode": "list",
-          "cachedResultName": "Turnos"
-        },
+        "url": "https://n8n.neco-dev.cloud/webhook/get-demo-data",
         "options": {}
       },
-      "name": "Obtener Turnos",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
+      "name": "Obtener Datos Estética",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         500,
-        100
+        200
       ],
-      "id": "gs-turnos-weekly",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "g855PstCDRAtYH2C",
-          "name": "Google Sheets account"
-        }
-      }
+      "id": "http-get-demo-data-weekly"
     },
     {
       "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
-          "mode": "list"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 1785770632,
-          "mode": "list",
-          "cachedResultName": "Servicios"
-        },
-        "options": {}
-      },
-      "name": "Obtener Servicios",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        500,
-        300
-      ],
-      "id": "gs-servicios-weekly",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "g855PstCDRAtYH2C",
-          "name": "Google Sheets account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
-          "mode": "list"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 891260524,
-          "mode": "list",
-          "cachedResultName": "Staff"
-        },
-        "options": {}
-      },
-      "name": "Obtener Staff",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        500,
-        500
-      ],
-      "id": "gs-staff-weekly",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "g855PstCDRAtYH2C",
-          "name": "Google Sheets account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "\nconst brandingData = $('Obtener Branding').first().json || {};\nconst turnosItems = $('Obtener Turnos').all();\nconst serviciosItems = $('Obtener Servicios').all();\nconst staffItems = $('Obtener Staff').all();\n\n// Rango de los últimos 7 días\nconst ahora = new Date();\nconst ahoraArg = new Date(ahora.getTime() - 3 * 3600 * 1000);\nconst hace7Dias = new Date(ahoraArg);\nhace7Dias.setDate(ahoraArg.getDate() - 6);\n\nconst desdeIso = hace7Dias.toISOString().split('T')[0];\nconst hastaIso = ahoraArg.toISOString().split('T')[0];\n\n// Precios y Staff\nconst preciosMap = {};\nserviciosItems.forEach(s => {\n  const item = s.json;\n  const rawCost = item.Costo !== undefined ? item.Costo : 0;\n  const num = parseInt(rawCost.toString().replace(/[^0-9]/g, ''), 10) || 0;\n  if (item.ID_Servicio) preciosMap[item.ID_Servicio.toString().trim().toLowerCase()] = num;\n  if (item.Nombre_Servicio) preciosMap[item.Nombre_Servicio.toString().trim().toLowerCase()] = num;\n});\n\nconst staffMap = {};\nstaffItems.forEach(st => {\n  const item = st.json;\n  if (item.ID_Staff) staffMap[item.ID_Staff.toString().trim()] = item.Nombre;\n});\n\n// Filtrar turnos dentro del rango de 7 días\nconst turnosSemana = turnosItems.filter(t => {\n  const f = (t.json.Fecha || t.json.fecha || '').toString().trim();\n  return f >= desdeIso && f <= hastaIso;\n});\n\nlet totalTurnos = turnosSemana.length;\nlet facturacionTotal = 0;\nlet confirmados = 0;\nlet agendados = 0;\nlet cancelados = 0;\n\nconst staffBreakdown = {};\nconst serviciosCount = {};\nconst diasBreakdown = {}; // Facturación por día\n\nturnosSemana.forEach(t => {\n  const fecha = (t.json.Fecha || '').toString().trim();\n  const estado = (t.json.Estado || t.json.estado || 'Agendado').toString().trim();\n  const rawSvc = (t.json.ID_Servicio || t.json.Servicio || '').toString().trim();\n  const rawStaffId = (t.json.ID_Staff || '').toString().trim();\n  const staffName = staffMap[rawStaffId] || t.json.Staff || rawStaffId || 'Sin asignar';\n\n  const costo = preciosMap[rawSvc.toLowerCase()] || 0;\n\n  if (estado.toLowerCase() === 'cancelado') {\n    cancelados++;\n  } else {\n    facturacionTotal += costo;\n    if (estado.toLowerCase().includes('confirmado')) confirmados++;\n    else agendados++;\n\n    if (!staffBreakdown[staffName]) staffBreakdown[staffName] = { turnos: 0, total: 0 };\n    staffBreakdown[staffName].turnos++;\n    staffBreakdown[staffName].total += costo;\n\n    serviciosCount[rawSvc] = (serviciosCount[rawSvc] || 0) + 1;\n\n    if (!diasBreakdown[fecha]) diasBreakdown[fecha] = { turnos: 0, total: 0 };\n    diasBreakdown[fecha].turnos++;\n    diasBreakdown[fecha].total += costo;\n  }\n});\n\nlet topServicio = \"Ninguno\";\nlet maxSvcCount = 0;\nfor (const [sName, sCount] of Object.entries(serviciosCount)) {\n  if (sCount > maxSvcCount) {\n    maxSvcCount = sCount;\n    topServicio = sName + ' (' + sCount + ' turnos)';\n  }\n}\n\nconst ownerEmail = (brandingData.ownerEmail && brandingData.ownerEmail.trim().length > 3)\n  ? brandingData.ownerEmail.trim()\n  : 'espositosabrina29@gmail.com';\n\nconst brandName = brandingData.name || 'Lumina Estética';\nconst facturacionFmt = '$' + facturacionTotal.toLocaleString('de-DE');\nconst promedioDiarioFmt = '$' + Math.round(facturacionTotal / 7).toLocaleString('de-DE');\n\nreturn [{\n  json: {\n    desdeIso,\n    hastaIso,\n    totalTurnos,\n    facturacionTotal,\n    facturacionFmt,\n    promedioDiarioFmt,\n    confirmados,\n    agendados,\n    cancelados,\n    turnosEfectivos: confirmados + agendados,\n    topServicio,\n    staffBreakdown,\n    diasBreakdown,\n    ownerEmail,\n    brandName,\n    brandingData\n  }\n}];\n"
+        "jsCode": "\nconst brandingData = $('Obtener Branding').first().json || {};\nconst demoData = $('Obtener Datos Estética').first().json || {};\n\nconst turnosItems = demoData.turnos || [];\nconst serviciosItems = demoData.servicios || [];\nconst staffItems = demoData.staff || [];\n\n// Rango de los últimos 7 días (hora Argentina UTC-3)\nconst ahora = new Date();\nconst ahoraArg = new Date(ahora.getTime() - 3 * 3600 * 1000);\nconst hace7Dias = new Date(ahoraArg);\nhace7Dias.setDate(ahoraArg.getDate() - 6);\n\nconst desdeIso = hace7Dias.toISOString().split('T')[0];\nconst hastaIso = ahoraArg.toISOString().split('T')[0];\n\n// Precios y Staff\nconst preciosMap = {};\nserviciosItems.forEach(s => {\n  const item = s.json || s;\n  const rawCost = item.Costo !== undefined ? item.Costo : 0;\n  const num = parseInt(rawCost.toString().replace(/[^0-9]/g, ''), 10) || 0;\n  if (item.ID_Servicio) preciosMap[item.ID_Servicio.toString().trim().toLowerCase()] = num;\n  if (item.Nombre_Servicio) preciosMap[item.Nombre_Servicio.toString().trim().toLowerCase()] = num;\n});\n\nconst staffMap = {};\nstaffItems.forEach(st => {\n  const item = st.json || st;\n  if (item.ID_Staff) staffMap[item.ID_Staff.toString().trim()] = item.Nombre;\n});\n\n// Filtrar turnos dentro del rango de 7 días\nconst turnosSemana = turnosItems.filter(t => {\n  const item = t.json || t;\n  const f = (item.Fecha || item.fecha || '').toString().trim();\n  return f >= desdeIso && f <= hastaIso;\n});\n\nlet totalTurnos = turnosSemana.length;\nlet facturacionTotal = 0;\nlet confirmados = 0;\nlet agendados = 0;\nlet cancelados = 0;\n\nconst staffBreakdown = {};\nconst serviciosCount = {};\nconst diasBreakdown = {}; // Facturación por día\n\nturnosSemana.forEach(t => {\n  const item = t.json || t;\n  const fecha = (item.Fecha || '').toString().trim();\n  const estado = (item.Estado || item.estado || 'Agendado').toString().trim();\n  const rawSvc = (item.ID_Servicio || item.Servicio || '').toString().trim();\n  const rawStaffId = (item.ID_Staff || '').toString().trim();\n  const staffName = staffMap[rawStaffId] || item.Staff || rawStaffId || 'Sin asignar';\n\n  const costo = preciosMap[rawSvc.toLowerCase()] || 0;\n\n  if (estado.toLowerCase() === 'cancelado') {\n    cancelados++;\n  } else {\n    facturacionTotal += costo;\n    if (estado.toLowerCase().includes('confirmado')) confirmados++;\n    else agendados++;\n\n    if (!staffBreakdown[staffName]) staffBreakdown[staffName] = { turnos: 0, total: 0 };\n    staffBreakdown[staffName].turnos++;\n    staffBreakdown[staffName].total += costo;\n\n    serviciosCount[rawSvc] = (serviciosCount[rawSvc] || 0) + 1;\n\n    if (!diasBreakdown[fecha]) diasBreakdown[fecha] = { turnos: 0, total: 0 };\n    diasBreakdown[fecha].turnos++;\n    diasBreakdown[fecha].total += costo;\n  }\n});\n\nlet topServicio = \"Ninguno\";\nlet maxSvcCount = 0;\nfor (const [sName, sCount] of Object.entries(serviciosCount)) {\n  if (sCount > maxSvcCount) {\n    maxSvcCount = sCount;\n    topServicio = sName + ' (' + sCount + ' turnos)';\n  }\n}\n\nconst ownerEmail = (brandingData.ownerEmail && brandingData.ownerEmail.trim().length > 3)\n  ? brandingData.ownerEmail.trim()\n  : 'espositosabrina29@gmail.com';\n\nconst brandName = brandingData.name || 'Lumina Estética';\nconst facturacionFmt = '$' + facturacionTotal.toLocaleString('de-DE');\nconst promedioDiarioFmt = '$' + Math.round(facturacionTotal / 7).toLocaleString('de-DE');\n\nreturn [{\n  json: {\n    desdeIso,\n    hastaIso,\n    totalTurnos,\n    facturacionTotal,\n    facturacionFmt,\n    promedioDiarioFmt,\n    confirmados,\n    agendados,\n    cancelados,\n    turnosEfectivos: confirmados + agendados,\n    topServicio,\n    staffBreakdown,\n    diasBreakdown,\n    ownerEmail,\n    brandName,\n    brandingData\n  }\n}];\n"
       },
       "name": "Calcular Métricas Semanales",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        800,
+        700,
         200
       ],
       "id": "code-calc-metrics-weekly"
@@ -150,7 +90,7 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        1100,
+        900,
         200
       ],
       "id": "gmail-send-weekly-summary",
@@ -170,19 +110,15 @@
             "node": "Obtener Branding",
             "type": "main",
             "index": 0
-          },
+          }
+        ]
+      ]
+    },
+    "Webhook Disparador Manual": {
+      "main": [
+        [
           {
-            "node": "Obtener Turnos",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Obtener Servicios",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Obtener Staff",
+            "node": "Obtener Branding",
             "type": "main",
             "index": 0
           }
@@ -193,36 +129,14 @@
       "main": [
         [
           {
-            "node": "Calcular Métricas Semanales",
+            "node": "Obtener Datos Estética",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Obtener Turnos": {
-      "main": [
-        [
-          {
-            "node": "Calcular Métricas Semanales",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Obtener Servicios": {
-      "main": [
-        [
-          {
-            "node": "Calcular Métricas Semanales",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Obtener Staff": {
+    "Obtener Datos Estética": {
       "main": [
         [
           {
@@ -246,6 +160,7 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "timezone": "America/Argentina/Buenos_Aires"
   }
 }

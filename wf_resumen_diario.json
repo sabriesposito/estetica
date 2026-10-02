@@ -24,6 +24,22 @@
     },
     {
       "parameters": {
+        "httpMethod": "GET",
+        "path": "resumen-diario",
+        "options": {}
+      },
+      "name": "Webhook Disparador Manual",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        100,
+        380
+      ],
+      "id": "webhook-resumen-diario",
+      "webhookId": "resumen-diario-webhook"
+    },
+    {
+      "parameters": {
         "url": "https://estetica.neco-dev.cloud/branding.json",
         "options": {}
       },
@@ -38,103 +54,27 @@
     },
     {
       "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
-          "mode": "list"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 931049778,
-          "mode": "list",
-          "cachedResultName": "Turnos"
-        },
+        "url": "https://n8n.neco-dev.cloud/webhook/get-demo-data",
         "options": {}
       },
-      "name": "Obtener Turnos",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
+      "name": "Obtener Datos Estética",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         500,
-        100
+        200
       ],
-      "id": "gs-turnos-daily",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "g855PstCDRAtYH2C",
-          "name": "Google Sheets account"
-        }
-      }
+      "id": "http-get-demo-data-daily"
     },
     {
       "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
-          "mode": "list"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 1785770632,
-          "mode": "list",
-          "cachedResultName": "Servicios"
-        },
-        "options": {}
-      },
-      "name": "Obtener Servicios",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        500,
-        300
-      ],
-      "id": "gs-servicios-daily",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "g855PstCDRAtYH2C",
-          "name": "Google Sheets account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "1myRSXzpbbr_21hQbVsjYz2HwnNBVbjS1VAenHIdSz7k",
-          "mode": "list"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 891260524,
-          "mode": "list",
-          "cachedResultName": "Staff"
-        },
-        "options": {}
-      },
-      "name": "Obtener Staff",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        500,
-        500
-      ],
-      "id": "gs-staff-daily",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "g855PstCDRAtYH2C",
-          "name": "Google Sheets account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "\nconst brandingData = $('Obtener Branding').first().json || {};\nconst turnosItems = $('Obtener Turnos').all();\nconst serviciosItems = $('Obtener Servicios').all();\nconst staffItems = $('Obtener Staff').all();\n\n// Fecha local de hoy (Argentina UTC-3)\nconst ahora = new Date();\nconst fechaHoy = new Date(ahora.getTime() - 3 * 3600 * 1000).toISOString().split('T')[0];\n\n// Mapeos de nombres y precios\nconst preciosMap = {};\nserviciosItems.forEach(s => {\n  const item = s.json;\n  const rawCost = item.Costo !== undefined ? item.Costo : 0;\n  const num = parseInt(rawCost.toString().replace(/[^0-9]/g, ''), 10) || 0;\n  if (item.ID_Servicio) preciosMap[item.ID_Servicio.toString().trim().toLowerCase()] = num;\n  if (item.Nombre_Servicio) preciosMap[item.Nombre_Servicio.toString().trim().toLowerCase()] = num;\n});\n\nconst staffMap = {};\nstaffItems.forEach(st => {\n  const item = st.json;\n  if (item.ID_Staff) staffMap[item.ID_Staff.toString().trim()] = item.Nombre;\n});\n\n// Filtrar turnos del día\nconst turnosHoy = turnosItems.filter(t => {\n  const f = (t.json.Fecha || t.json.fecha || '').toString().trim();\n  return f === fechaHoy;\n});\n\nlet totalTurnos = turnosHoy.length;\nlet facturacionTotal = 0;\nlet confirmados = 0;\nlet agendados = 0;\nlet cancelados = 0;\n\nconst staffBreakdown = {};\nconst serviciosCount = {};\n\nturnosHoy.forEach(t => {\n  const estado = (t.json.Estado || t.json.estado || 'Agendado').toString().trim();\n  const rawSvc = (t.json.ID_Servicio || t.json.Servicio || '').toString().trim();\n  const rawStaffId = (t.json.ID_Staff || '').toString().trim();\n  const staffName = staffMap[rawStaffId] || t.json.Staff || rawStaffId || 'Sin asignar';\n\n  const costo = preciosMap[rawSvc.toLowerCase()] || 0;\n\n  if (estado.toLowerCase() === 'cancelado') {\n    cancelados++;\n  } else {\n    facturacionTotal += costo;\n    if (estado.toLowerCase().includes('confirmado')) {\n      confirmados++;\n    } else {\n      agendados++;\n    }\n\n    // Por profesional\n    if (!staffBreakdown[staffName]) staffBreakdown[staffName] = { turnos: 0, total: 0 };\n    staffBreakdown[staffName].turnos++;\n    staffBreakdown[staffName].total += costo;\n\n    // Por servicio\n    serviciosCount[rawSvc] = (serviciosCount[rawSvc] || 0) + 1;\n  }\n});\n\n// Servicio más solicitado\nlet topServicio = \"Ninguno\";\nlet maxSvcCount = 0;\nfor (const [sName, sCount] of Object.entries(serviciosCount)) {\n  if (sCount > maxSvcCount) {\n    maxSvcCount = sCount;\n    topServicio = sName + ' (' + sCount + ')';\n  }\n}\n\n// Destinatario del correo\nconst ownerEmail = (brandingData.ownerEmail && brandingData.ownerEmail.trim().length > 3)\n  ? brandingData.ownerEmail.trim()\n  : 'espositosabrina29@gmail.com';\n\nconst brandName = brandingData.name || 'Lumina Estética';\nconst facturacionFmt = '$' + facturacionTotal.toLocaleString('de-DE');\n\nreturn [{\n  json: {\n    fechaHoy,\n    totalTurnos,\n    facturacionTotal,\n    facturacionFmt,\n    confirmados,\n    agendados,\n    cancelados,\n    turnosEfectivos: confirmados + agendados,\n    topServicio,\n    staffBreakdown,\n    ownerEmail,\n    brandName,\n    brandingData,\n    turnosDetalle: turnosHoy.map(t => ({\n      hora: t.json.Hora_Inicio || '',\n      cliente: t.json.Nombre_Completo || t.json.Cliente || 'Cliente',\n      servicio: t.json.ID_Servicio || '',\n      staff: staffMap[t.json.ID_Staff] || t.json.ID_Staff || '',\n      estado: t.json.Estado || 'Agendado',\n      monto: '$' + ((preciosMap[(t.json.ID_Servicio || '').toLowerCase()] || 0).toLocaleString('de-DE'))\n    }))\n  }\n}];\n"
+        "jsCode": "\nconst brandingData = $('Obtener Branding').first().json || {};\nconst demoData = $('Obtener Datos Estética').first().json || {};\n\nconst turnosItems = demoData.turnos || [];\nconst serviciosItems = demoData.servicios || [];\nconst staffItems = demoData.staff || [];\n\n// Fecha del reporte: si se pasa ?fecha=YYYY-MM-DD en el webhook se usa esa.\n// De lo contrario, si se ejecuta entre 00:00 y 05:00 de la madrugada (hora Argentina),\n// corresponde al cierre del día anterior. En cualquier otro momento (ej. cron 21:00 hs), al día de hoy.\nlet fechaParam = null;\ntry {\n  const trig = $('Webhook Disparador Manual').first()?.json;\n  fechaParam = trig?.query?.fecha || trig?.body?.fecha;\n} catch (e) {}\n\nconst ahora = new Date();\nconst artTime = new Date(ahora.getTime() - 3 * 3600 * 1000);\nconst artHour = artTime.getUTCHours();\n\nlet targetDate = artTime;\nif (artHour < 5) {\n  targetDate = new Date(artTime.getTime() - 24 * 3600 * 1000);\n}\nconst fechaHoy = (fechaParam && /^\\d{4}-\\d{2}-\\d{2}$/.test(fechaParam.toString().trim()))\n  ? fechaParam.toString().trim()\n  : targetDate.toISOString().split('T')[0];\n\n// Mapeos de nombres y precios\nconst preciosMap = {};\nserviciosItems.forEach(s => {\n  const item = s.json || s;\n  const rawCost = item.Costo !== undefined ? item.Costo : 0;\n  const num = parseInt(rawCost.toString().replace(/[^0-9]/g, ''), 10) || 0;\n  if (item.ID_Servicio) preciosMap[item.ID_Servicio.toString().trim().toLowerCase()] = num;\n  if (item.Nombre_Servicio) preciosMap[item.Nombre_Servicio.toString().trim().toLowerCase()] = num;\n});\n\nconst staffMap = {};\nstaffItems.forEach(st => {\n  const item = st.json || st;\n  if (item.ID_Staff) staffMap[item.ID_Staff.toString().trim()] = item.Nombre;\n});\n\n// Filtrar turnos del día\nconst turnosHoy = turnosItems.filter(t => {\n  const item = t.json || t;\n  const f = (item.Fecha || item.fecha || '').toString().trim();\n  return f === fechaHoy;\n});\n\nlet totalTurnos = turnosHoy.length;\nlet facturacionTotal = 0;\nlet confirmados = 0;\nlet agendados = 0;\nlet cancelados = 0;\n\nconst staffBreakdown = {};\nconst serviciosCount = {};\n\nturnosHoy.forEach(t => {\n  const item = t.json || t;\n  const estado = (item.Estado || item.estado || 'Agendado').toString().trim();\n  const rawSvc = (item.ID_Servicio || item.Servicio || '').toString().trim();\n  const rawStaffId = (item.ID_Staff || '').toString().trim();\n  const staffName = staffMap[rawStaffId] || item.Staff || rawStaffId || 'Sin asignar';\n\n  const costo = preciosMap[rawSvc.toLowerCase()] || 0;\n\n  if (estado.toLowerCase() === 'cancelado') {\n    cancelados++;\n  } else {\n    facturacionTotal += costo;\n    if (estado.toLowerCase().includes('confirmado')) {\n      confirmados++;\n    } else {\n      agendados++;\n    }\n\n    // Por profesional\n    if (!staffBreakdown[staffName]) staffBreakdown[staffName] = { turnos: 0, total: 0 };\n    staffBreakdown[staffName].turnos++;\n    staffBreakdown[staffName].total += costo;\n\n    // Por servicio\n    serviciosCount[rawSvc] = (serviciosCount[rawSvc] || 0) + 1;\n  }\n});\n\n// Servicio más solicitado\nlet topServicio = \"Ninguno\";\nlet maxSvcCount = 0;\nfor (const [sName, sCount] of Object.entries(serviciosCount)) {\n  if (sCount > maxSvcCount) {\n    maxSvcCount = sCount;\n    topServicio = sName + ' (' + sCount + ')';\n  }\n}\n\n// Destinatario del correo\nconst ownerEmail = (brandingData.ownerEmail && brandingData.ownerEmail.trim().length > 3)\n  ? brandingData.ownerEmail.trim()\n  : 'espositosabrina29@gmail.com';\n\nconst brandName = brandingData.name || 'Lumina Estética';\nconst facturacionFmt = '$' + facturacionTotal.toLocaleString('de-DE');\n\nreturn [{\n  json: {\n    fechaHoy,\n    totalTurnos,\n    facturacionTotal,\n    facturacionFmt,\n    confirmados,\n    agendados,\n    cancelados,\n    turnosEfectivos: confirmados + agendados,\n    topServicio,\n    staffBreakdown,\n    ownerEmail,\n    brandName,\n    brandingData,\n    turnosDetalle: turnosHoy.map(t => {\n      const item = t.json || t;\n      return {\n        hora: item.Hora_Inicio || '',\n        cliente: item.Nombre_Completo || item.Cliente || 'Cliente',\n        servicio: item.ID_Servicio || '',\n        staff: staffMap[item.ID_Staff] || item.ID_Staff || '',\n        estado: item.Estado || 'Agendado',\n        monto: '$' + ((preciosMap[(item.ID_Servicio || '').toLowerCase()] || 0).toLocaleString('de-DE'))\n      };\n    })\n  }\n}];\n"
       },
       "name": "Calcular Métricas del Día",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        800,
+        700,
         200
       ],
       "id": "code-calc-metrics-daily"
@@ -150,7 +90,7 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        1100,
+        900,
         200
       ],
       "id": "gmail-send-daily-summary",
@@ -170,19 +110,15 @@
             "node": "Obtener Branding",
             "type": "main",
             "index": 0
-          },
+          }
+        ]
+      ]
+    },
+    "Webhook Disparador Manual": {
+      "main": [
+        [
           {
-            "node": "Obtener Turnos",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Obtener Servicios",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Obtener Staff",
+            "node": "Obtener Branding",
             "type": "main",
             "index": 0
           }
@@ -193,36 +129,14 @@
       "main": [
         [
           {
-            "node": "Calcular Métricas del Día",
+            "node": "Obtener Datos Estética",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Obtener Turnos": {
-      "main": [
-        [
-          {
-            "node": "Calcular Métricas del Día",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Obtener Servicios": {
-      "main": [
-        [
-          {
-            "node": "Calcular Métricas del Día",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Obtener Staff": {
+    "Obtener Datos Estética": {
       "main": [
         [
           {
@@ -246,6 +160,7 @@
     }
   },
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "timezone": "America/Argentina/Buenos_Aires"
   }
 }
