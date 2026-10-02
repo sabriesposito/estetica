@@ -761,14 +761,59 @@
                 }
                 turno24hTarget = t;
 
+                const est = (t.Estado || t.estado || '').toString().trim().toLowerCase();
+                const yaConfirmado = est.includes('confirmad') || est.includes('24');
+
                 if (isConfirmarDirecto) {
-                    // UN SOLO CLIC: Confirmar directamente sin tocar otro botón
-                    confirmarAsistencia24hAction(t);
+                    if (yaConfirmado) {
+                        mostrarPantallaYaConfirmado(t);
+                    } else {
+                        // UN SOLO CLIC: Confirmar directamente sin tocar otro botón
+                        confirmarAsistencia24hAction(t);
+                    }
                 } else if (isGestionar || targetId) {
                     // Pantalla de reprogramar o cancelar
                     mostrarPantallaGestionTurno(t);
                 }
             }
+        }
+
+        function mostrarPantallaYaConfirmado(t) {
+            document.getElementById('step1').classList.add('hide');
+            document.getElementById('step2').classList.add('hide');
+            document.getElementById('stepConfirmar24h').classList.add('hide');
+            document.getElementById('stepActiveTurno').classList.add('hide');
+
+            document.getElementById('successTitle').innerText = "¡Tu cita ya está confirmada!";
+            document.getElementById('successMessage').innerText = "Ya registramos previamente tu confirmación de asistencia. ¡Te esperamos en Lumina Estética!";
+
+            const target = t || turno24hTarget || turnoActivoEncontrado;
+            const successDetails = document.getElementById('successTurnoDetails');
+            if (successDetails && target) {
+                const nombreCliente = target.Cliente || target.Nombre || 'Cliente';
+                const idSvc = target.ID_Servicio || target.idServicio || target.Servicio || '';
+                const servicioObj = bdGlobal && bdGlobal.servicios ? bdGlobal.servicios.find(s => s.ID_Servicio === idSvc || (s.Nombre_Servicio || s.Nombre || s.Servicio) === idSvc) : null;
+                const nombreServicio = servicioObj ? (servicioObj.Nombre_Servicio || servicioObj.Nombre || servicioObj.Servicio) : idSvc;
+                const staffNombre = target.Staff || target.staffNombre || target.ID_Staff || '';
+
+                successDetails.innerHTML = `
+                    <div class="bg-accent/60 border border-theme/50 rounded-2xl p-4 text-left text-xs space-y-2.5 shadow-2xs">
+                        <div class="flex items-center justify-between gap-2 pb-2 border-b border-theme/30 text-xs">
+                            <span class="font-extrabold uppercase tracking-wider text-theme whitespace-nowrap text-[11px] sm:text-xs">📋 Detalles de tu Turno</span>
+                            <span class="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold text-[10.5px] sm:text-[11px] whitespace-nowrap shrink-0">✓ Asistencia Ya Confirmada</span>
+                        </div>
+                        <div><strong>Cliente:</strong> ${nombreCliente}</div>
+                        <div><strong>Servicio:</strong> ${nombreServicio}</div>
+                        <div><strong>Fecha:</strong> ${normalizarFecha(target.Fecha || target.fecha)}</div>
+                        <div><strong>Horario:</strong> ${target.Hora_Inicio || target.horaInicio} hs</div>
+                        ${staffNombre ? `<div><strong>Profesional:</strong> ${staffNombre}</div>` : ''}
+                    </div>
+                `;
+                successDetails.classList.remove('hide');
+            }
+
+            document.getElementById('stepSuccess').classList.remove('hide');
+            actualizarBotonVolverHeader();
         }
 
         function mostrarPantallaGestionTurno(t) {
@@ -801,18 +846,35 @@
             const nombreServicio = servicioObj ? (servicioObj.Nombre_Servicio || servicioObj.Nombre || servicioObj.Servicio) : idSvc;
             const staffNombre = t.Staff || t.staffNombre || t.ID_Staff || '';
 
+            const est = (t.Estado || t.estado || '').toString().trim().toLowerCase();
+            const yaConfirmado = est.includes('confirmad') || est.includes('24');
+
             const titleEl = document.getElementById('confirm24hTitle');
-            if (titleEl) titleEl.innerText = "Gestionar tu Cita";
+            if (titleEl) titleEl.innerText = yaConfirmado ? "Tu Cita Confirmada" : "Gestionar tu Cita";
             const subEl = document.getElementById('confirm24hSubtitle');
-            if (subEl) subEl.innerText = "Aquí puedes reprogramar el día y horario de tu cita, o cancelarla si no vas a poder asistir:";
+            if (subEl) subEl.innerText = yaConfirmado ? "Tu turno ya se encuentra confirmado. Si lo necesitas, puedes reprogramarlo o cancelarlo:" : "Aquí puedes reprogramar el día y horario de tu cita, o cancelarla si no vas a poder asistir:";
 
             document.getElementById('confirm24hDetails').innerHTML = `
+                <div class="flex items-center justify-between pb-1 mb-1 border-b border-stone-100">
+                    <span class="font-bold text-stone-500 text-[11px] uppercase tracking-wider">Estado:</span>
+                    ${yaConfirmado ? '<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold text-xs">✓ Asistencia Confirmada</span>' : '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold text-xs">Pendiente de Confirmación</span>'}
+                </div>
                 <div><strong>Cliente:</strong> ${nombreCliente}</div>
                 <div><strong>Servicio:</strong> ${nombreServicio}</div>
                 <div><strong>Fecha:</strong> ${normalizarFecha(t.Fecha || t.fecha)}</div>
                 <div><strong>Horario:</strong> ${t.Hora_Inicio || t.horaInicio} hs</div>
                 ${staffNombre ? `<div><strong>Profesional:</strong> ${staffNombre}</div>` : ''}
             `;
+
+            // Si ya está confirmado, ocultar el botón de confirmar y mostrar aviso informativo
+            const btnConfirmar = document.querySelector('#confirm24hButtons button:last-child');
+            if (btnConfirmar) {
+                if (yaConfirmado) {
+                    btnConfirmar.style.display = 'none';
+                } else {
+                    btnConfirmar.style.display = 'flex';
+                }
+            }
 
             document.getElementById('stepConfirmar24h').classList.remove('hide');
             actualizarBotonVolverHeader();
@@ -1594,10 +1656,10 @@
 
             const turnosConConfirmacionPendiente = turnosActivosCliente.filter(t => {
                 const estadoLower = (t.Estado || t.estado || '').toLowerCase();
-                const esConfirmado24h = estadoLower.includes('24h') || estadoLower.includes('24');
+                const esConfirmado = estadoLower.includes('confirmad') || estadoLower.includes('24h') || estadoLower.includes('24');
                 const esRecordatorioEnviado = estadoLower.includes('recordatorio') || estadoLower.includes('enviado');
                 const esFaltan24hOMenos = esDentroDe24Horas(t.Fecha || t.fecha, t.Hora_Inicio || t.horaInicio);
-                return !esConfirmado24h && (esRecordatorioEnviado || esFaltan24hOMenos);
+                return !esConfirmado && (esRecordatorioEnviado || esFaltan24hOMenos);
             });
 
             if (turnosConConfirmacionPendiente.length > 0) {
