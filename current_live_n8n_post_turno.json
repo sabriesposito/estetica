@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-02T02:45:08.636Z",
+  "updatedAt": "2026-10-02T02:49:26.779Z",
   "createdAt": "2026-08-27T02:42:27.494Z",
   "id": "jozxvG23TzJkG3l3UAyIR",
   "name": "Lumina - Post Turno, Cancelación y Notificaciones",
@@ -678,7 +678,7 @@
                   "caseSensitive": true,
                   "leftValue": "",
                   "typeValidation": "strict",
-                  "version": 3
+                  "version": 2
                 },
                 "conditions": [
                   {
@@ -1267,8 +1267,8 @@
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
       "position": [
-        240,
-        976
+        272,
+        1008
       ],
       "id": "gmail-generico-1790020223282",
       "webhookId": "2b8a8416-2c3a-4df8-8944-b002175c8f82",
@@ -1352,8 +1352,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        240,
-        1136
+        304,
+        1184
       ],
       "id": "anadir-cliente-directo-solo",
       "credentials": {
@@ -1427,8 +1427,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        250,
-        850
+        80,
+        1232
       ],
       "id": "del-staff-sheet-node-id",
       "name": "Eliminar Staff Sheet",
@@ -1506,8 +1506,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        250,
-        960
+        80,
+        1392
       ],
       "id": "del-service-sheet-node-id",
       "name": "Eliminar Servicio Sheet",
@@ -1682,9 +1682,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "2dfad7d0-51f8-479f-b994-eb7644f3384a",
-  "activeVersionId": "2dfad7d0-51f8-479f-b994-eb7644f3384a",
-  "versionCounter": 173,
+  "versionId": "d4c919c7-62a1-4f0e-921a-8acf85853db7",
+  "activeVersionId": null,
+  "versionCounter": 191,
   "triggerCount": 1,
   "tags": [],
   "shared": [
