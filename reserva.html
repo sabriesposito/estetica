@@ -898,7 +898,7 @@
 
             if (targetId && bdGlobal && bdGlobal.turnos) {
                 const localT = bdGlobal.turnos.find(x => (x.ID_Turno || x.idTurno) === targetId);
-                if (localT) localT.Estado = "Confirmado 24h";
+                if (localT) localT.Estado = "Confirmado";
             }
 
             const cfg = await getBrandingConfigAsync();
@@ -950,11 +950,11 @@
             };
 
             try {
-                fetch(POST_WEBHOOK_URL, {
+                await fetch(POST_WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
-                }).catch(e => console.warn(e));
+                });
 
                 document.getElementById('step1').classList.add('hide');
                 document.getElementById('step2').classList.add('hide');
