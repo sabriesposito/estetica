@@ -627,12 +627,21 @@
                             <label class="block text-xs font-semibold text-stone-500">Cliente *</label>
                             <button type="button" onclick="openModal('newClientModal')" class="text-xs text-theme font-bold hover:underline">+ Dar de alta</button>
                         </div>
-                        <select id="clienteSelect" class="input-pastel text-xs appearance-none bg-white font-medium text-stone-700" onchange="handleClienteSelectChange(this.value)">
-                            <option value="">Selecciona un cliente de la lista...</option>
-                            <option value="MANUAL_NAME">✍️ Escribir otro nombre (Cliente manual)</option>
-                        </select>
-                        <div id="divManualClientInput" class="hide mt-2">
-                            <input type="text" id="clienteManualInput" placeholder="Ingresa el nombre del cliente..." class="input-pastel text-xs">
+                        <div class="relative" id="clienteSearchCombobox">
+                            <div class="relative">
+                                <input type="text" id="clienteSearchInput" 
+                                       placeholder="Buscar cliente por nombre..." 
+                                       class="input-pastel text-xs bg-white font-medium text-stone-700 pr-8"
+                                       autocomplete="off"
+                                       oninput="filtrarClientesEnBuscador(this.value)"
+                                       onfocus="mostrarDesplegableClientes()"
+                                       onclick="mostrarDesplegableClientes()">
+                                <input type="hidden" id="clienteSelect" value="">
+                                <button type="button" id="btnClearClienteSearch" onclick="limpiarSeleccionCliente()" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 hide text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full bg-stone-100">✕</button>
+                            </div>
+                            <div id="clienteSearchResults" class="absolute left-0 right-0 top-full mt-1 bg-white border border-stone-200 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto hide divide-y divide-stone-100">
+                                <!-- Opciones generadas dinámicamente -->
+                            </div>
                         </div>
                     </div>
 
@@ -1764,10 +1773,7 @@
             }
         }
 
-        function actualizarDesplegableClientes() {
-            const select = document.getElementById('clienteSelect');
-            if (!select) return;
-            
+        function obtenerListaClientesParaBuscador() {
             let listaClientes = [];
             if (bdGlobal && Array.isArray(bdGlobal.clientes) && bdGlobal.clientes.length > 0) {
                 listaClientes = bdGlobal.clientes;
@@ -1782,26 +1788,109 @@
                     } catch(e) {}
                 }
             }
-            
             if (!listaClientes || listaClientes.length === 0) {
-                listaClientes = fallbackData.clientes;
+                listaClientes = fallbackData.clientes || [];
+            }
+            return listaClientes.filter(c => !deletedClientsSet.has(c.ID_Cliente || c.idCliente) && !deletedClientsSet.has(c.Nombre_Completo || c.Nombre));
+        }
+
+        function actualizarDesplegableClientes() {
+            const input = document.getElementById('clienteSearchInput');
+            const hidden = document.getElementById('clienteSelect');
+            if (input && !hidden?.value) {
+                input.value = '';
+                const clearBtn = document.getElementById('btnClearClienteSearch');
+                if (clearBtn) clearBtn.classList.add('hide');
+            }
+            filtrarClientesEnBuscador(input ? input.value : '');
+        }
+
+        function mostrarDesplegableClientes() {
+            const input = document.getElementById('clienteSearchInput');
+            filtrarClientesEnBuscador(input ? input.value : '');
+            const results = document.getElementById('clienteSearchResults');
+            if (results) results.classList.remove('hide');
+        }
+
+        function filtrarClientesEnBuscador(query) {
+            const results = document.getElementById('clienteSearchResults');
+            const clearBtn = document.getElementById('btnClearClienteSearch');
+            if (!results) return;
+
+            const q = (query || '').trim().toLowerCase();
+            const clientes = obtenerListaClientesParaBuscador();
+
+            if (clearBtn) {
+                if (q) clearBtn.classList.remove('hide');
+                else clearBtn.classList.add('hide');
             }
 
-            const valActual = select.value;
-            select.innerHTML = '<option value="">Selecciona un cliente de la lista...</option>';
-            
-            listaClientes.forEach(c => {
-                const nombre = c.Nombre_Completo || c.Nombre || c.Name;
-                const email = c.Correo || c.Email || c.email;
-                const infoExtra = email ? ` (${email})` : '';
-                if (nombre) {
-                    select.innerHTML += `<option value="${nombre}">👤 ${nombre}${infoExtra}</option>`;
-                }
+            const filtrados = clientes.filter(c => {
+                if (!q) return true;
+                const nombre = (c.Nombre_Completo || c.Nombre || c.Name || '').toLowerCase();
+                const email = (c.Correo || c.Email || c.email || '').toLowerCase();
+                const tel = (c.Telefono || c.Tel || c.tel || '').toString().toLowerCase();
+                return nombre.includes(q) || email.includes(q) || tel.includes(q);
             });
-            
-            select.innerHTML += '<option value="MANUAL_NAME">✍️ Escribir otro nombre (Cliente manual)</option>';
-            if (valActual) select.value = valActual;
+
+            if (filtrados.length === 0) {
+                results.innerHTML = `
+                    <div class="p-3 text-center text-xs text-stone-400">
+                        No se encontraron clientes que coincidan.<br>
+                        <button type="button" onclick="openModal('newClientModal')" class="text-theme font-bold hover:underline mt-1.5 inline-block">+ Dar de alta nuevo cliente</button>
+                    </div>
+                `;
+            } else {
+                results.innerHTML = filtrados.map(c => {
+                    const nombre = c.Nombre_Completo || c.Nombre || c.Name || 'Cliente';
+                    const email = c.Correo || c.Email || c.email || '';
+                    const idC = c.ID_Cliente || c.idCliente || '';
+                    const safeNombre = (nombre || '').replace(/'/g, "\\'");
+                    const safeEmail = (email || '').replace(/'/g, "\\'");
+                    const safeId = (idC || '').replace(/'/g, "\\'");
+                    return `
+                        <div class="p-2.5 hover:bg-stone-50 cursor-pointer text-xs flex items-center justify-between transition"
+                             onclick="seleccionarClienteDesdeBuscador('${safeNombre}', '${safeEmail}', '${safeId}')">
+                            <span class="font-bold text-stone-700">👤 ${nombre}</span>
+                            ${email ? `<span class="text-[10px] text-stone-400 truncate max-w-[140px] font-mono">${email}</span>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
         }
+
+        function seleccionarClienteDesdeBuscador(nombre, email, idC) {
+            const input = document.getElementById('clienteSearchInput');
+            const hidden = document.getElementById('clienteSelect');
+            const results = document.getElementById('clienteSearchResults');
+            const clearBtn = document.getElementById('btnClearClienteSearch');
+
+            if (input) input.value = nombre;
+            if (hidden) hidden.value = nombre;
+            if (results) results.classList.add('hide');
+            if (clearBtn) clearBtn.classList.remove('hide');
+        }
+
+        function limpiarSeleccionCliente() {
+            const input = document.getElementById('clienteSearchInput');
+            const hidden = document.getElementById('clienteSelect');
+            const clearBtn = document.getElementById('btnClearClienteSearch');
+
+            if (input) { input.value = ''; input.focus(); }
+            if (hidden) hidden.value = '';
+            if (clearBtn) clearBtn.classList.add('hide');
+            filtrarClientesEnBuscador('');
+            const results = document.getElementById('clienteSearchResults');
+            if (results) results.classList.remove('hide');
+        }
+
+        document.addEventListener('click', (e) => {
+            const box = document.getElementById('clienteSearchCombobox');
+            if (box && !box.contains(e.target)) {
+                const results = document.getElementById('clienteSearchResults');
+                if (results) results.classList.add('hide');
+            }
+        });
 
         function openModal(id) { 
             const modal = document.getElementById(id);
@@ -2917,16 +3006,7 @@
             }, 20000);
         });
         
-        function handleClienteSelectChange(val) {
-            const manualDiv = document.getElementById('divManualClientInput');
-            if (!manualDiv) return;
-            if (val === 'MANUAL_NAME') {
-                manualDiv.classList.remove('hide');
-                document.getElementById('clienteManualInput').focus();
-            } else {
-                manualDiv.classList.add('hide');
-            }
-        }
+
 
         function formatPrecio(val) {
             if (val === null || val === undefined) return '';
@@ -2978,12 +3058,7 @@
                 }).catch(e => console.warn(e));
             } catch(e) {}
             
-            const select = document.getElementById('clienteSelect');
-            if (select) {
-                select.innerHTML += `<option value="${nombre}" selected>${nombre} (${email})</option>`;
-                select.value = nombre;
-                handleClienteSelectChange(nombre);
-            }
+            seleccionarClienteDesdeBuscador(nombre, email, idCliente);
             alert('¡Cliente registrado con éxito!');
             closeModal('newClientModal');
         }
@@ -3393,24 +3468,34 @@
         }
 
         async function confirmTurnoAction() {
-            let clienteName = document.getElementById('clienteSelect').value;
-            if (clienteName === 'MANUAL_NAME') {
-                clienteName = document.getElementById('clienteManualInput').value.trim();
-            }
+            let clienteName = (document.getElementById('clienteSelect')?.value || document.getElementById('clienteSearchInput')?.value || '').trim();
 
             const servicioName = document.getElementById('serviceSelect').value;
             const fecha = document.getElementById('datePicker').value;
             const hora = document.getElementById('timeSelect').value;
             
             if(!clienteName || !servicioName || !fecha || !hora) {
-                alert("Faltan datos obligatorios para agendar el turno."); return;
+                alert("Faltan datos obligatorios para agendar el turno. Por favor busca y selecciona un cliente."); return;
             }
 
             let clienteObj = nuevoClienteGlobal;
             let esNuevo = !!nuevoClienteGlobal;
             if (!esNuevo) {
-                let c = bdGlobal.clientes ? bdGlobal.clientes.find(c => (c.Nombre_Completo||c.Nombre||c.Name) === clienteName) : null;
-                clienteObj = { idCliente: c ? c.ID_Cliente : 'C_MANUAL', nombre: clienteName, tel: c ? c.Telefono||'' : '', email: c ? c.Correo||'' : '' };
+                const clientesList = (bdGlobal && Array.isArray(bdGlobal.clientes)) ? bdGlobal.clientes : (fallbackData.clientes || []);
+                let c = clientesList.find(c => {
+                    const nom = (c.Nombre_Completo || c.Nombre || c.Name || '').trim().toLowerCase();
+                    return nom === clienteName.toLowerCase();
+                });
+                if (!c) {
+                    alert(`El cliente "${clienteName}" no fue encontrado en la base de clientes. Por favor selecciona uno de los resultados sugeridos o haz clic en "+ Dar de alta".`);
+                    return;
+                }
+                clienteObj = { 
+                    idCliente: c.ID_Cliente || ('C' + Math.floor(Date.now() / 1000)), 
+                    nombre: c.Nombre_Completo || c.Nombre || clienteName, 
+                    tel: c.Telefono || c.Tel || '', 
+                    email: c.Correo || c.Email || '' 
+                };
             }
 
             const serviciosList = bdGlobal.servicios || fallbackData.servicios;
@@ -3597,19 +3682,7 @@
                     actualizarDesplegableClientes();
                     
                     if (bdGlobal.clientes && Array.isArray(bdGlobal.clientes)) {
-                        const select = document.getElementById('clienteSelect');
-                        if (select) {
-                            const valActual = select.value;
-                            select.innerHTML = '<option value="">Selecciona un cliente de la lista...</option>';
-                            bdGlobal.clientes.forEach(c => {
-                                const nombre = c.Nombre_Completo || c.Nombre || c.Name;
-                                const email = c.Correo || c.Email || c.email;
-                                const infoExtra = email ? ` (${email})` : '';
-                                if (nombre) select.innerHTML += `<option value="${nombre}">👤 ${nombre}${infoExtra}</option>`;
-                            });
-                            select.innerHTML += '<option value="MANUAL_NAME">✍️ Escribir otro nombre (Cliente manual)</option>';
-                            if (valActual) select.value = valActual;
-                        }
+                        actualizarDesplegableClientes();
                     }
                     
                     if (bdGlobal.servicios) {
