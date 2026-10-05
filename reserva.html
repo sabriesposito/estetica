@@ -2244,8 +2244,7 @@
 
                         const estado = (t.Estado || t.estado || "").toString().trim().toLowerCase();
                         const isNotCancelled = !estado.includes('cancelad');
-                        const isTurnoSiendoReprogramado = turnoAReprogramar && ((t.ID_Turno || t.idTurno) === (turnoAReprogramar.ID_Turno || turnoAReprogramar.idTurno));
-                        return isSameDate && isSameStaff && isNotCancelled && !isTurnoSiendoReprogramado;
+                        return isSameDate && isSameStaff && isNotCancelled;
                     });
 
                     let choca = false;
@@ -2279,9 +2278,18 @@
 
                 if (libreEnAlMenosUnStaff) {
                     const horaStr = formatTime(minActual);
-                    if (minActual < 13 * 60) slotsManana.push(horaStr);
-                    else if (minActual < 18 * 60) slotsTarde.push(horaStr);
-                    else slotsNoche.push(horaStr);
+
+                    // Si el cliente está reprogramando un turno, no ofrecerle el mismo día y horario que ya tiene reservado
+                    const targetReprog = turnoAReprogramar || turno24hTarget;
+                    const esMismoHorarioActual = targetReprog && 
+                        (fechaNorm === normalizarFecha(targetReprog.Fecha || targetReprog.fecha)) &&
+                        (horaStr === (targetReprog.Hora_Inicio || targetReprog.horaInicio));
+
+                    if (!esMismoHorarioActual) {
+                        if (minActual < 13 * 60) slotsManana.push(horaStr);
+                        else if (minActual < 18 * 60) slotsTarde.push(horaStr);
+                        else slotsNoche.push(horaStr);
+                    }
                 }
             }
 
