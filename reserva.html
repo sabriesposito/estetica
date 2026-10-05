@@ -702,6 +702,7 @@
         let turnoActivoDeMismaEspecialidad = null;
         let turnoActivoEncontrado = null;
         let turno24hTarget = null;
+        let turnoAReprogramar = null;
         
         let selectedFechaGlobal = getLocalDateIso();
         let selectedHoraGlobal = null;
@@ -760,6 +761,18 @@
                     };
                 }
                 turno24hTarget = t;
+
+                if (t) {
+                    const cEmailInput = document.getElementById('cEmail');
+                    const cNombreInput = document.getElementById('cNombre');
+                    const cTelInput = document.getElementById('cTel');
+                    if (cEmailInput && (t.Correo || t.Email || t.email)) cEmailInput.value = (t.Correo || t.Email || t.email);
+                    if (cNombreInput && (t.Cliente || t.Nombre || t.nombre) && (t.Cliente || t.Nombre || t.nombre).toLowerCase() !== 'cliente') {
+                        cNombreInput.value = (t.Cliente || t.Nombre || t.nombre);
+                    }
+                    if (cTelInput && (t.Telefono || t.Tel || t.tel)) cTelInput.value = (t.Telefono || t.Tel || t.tel);
+                    verificarClienteYEstado();
+                }
 
                 const est = (t.Estado || t.estado || '').toString().trim().toLowerCase();
                 const yaConfirmado = est.includes('confirmad') || est.includes('24');
@@ -1008,6 +1021,7 @@
             const target = turno24hTarget || turnoActivoEncontrado;
             if (!target) return;
 
+            turnoAReprogramar = target;
             turnoActivoEncontrado = target;
             turnoActivoDeMismaEspecialidad = target;
 
@@ -1025,6 +1039,9 @@
                 cTelInput.value = target.Telefono || target.Tel || target.tel;
             }
 
+            // Sincronizar estado del cliente
+            verificarClienteYEstado();
+
             // Preseleccionar servicio
             const idSvc = target.ID_Servicio || target.idServicio || target.Servicio || '';
             const servicioObj = bdGlobal && bdGlobal.servicios ? bdGlobal.servicios.find(s => s.ID_Servicio === idSvc || (s.Nombre_Servicio || s.Nombre || s.Servicio) === idSvc) : null;
@@ -1033,8 +1050,8 @@
             const selectSvc = document.getElementById('serviceSelect');
             if (selectSvc && nombreServicio) {
                 selectSvc.value = nombreServicio;
-                onServiceChange();
             }
+            onServiceChange();
 
             document.getElementById('stepConfirmar24h').classList.add('hide');
             document.getElementById('stepActiveTurno').classList.add('hide');
@@ -1044,7 +1061,7 @@
             const hNorm = target.Hora_Inicio || target.horaInicio;
             const banner = document.getElementById('bannerReprogramando');
             if (banner) {
-                banner.innerHTML = `🔒 <strong>Turno actual reservado (${fNorm} ${hNorm} hs).</strong> Explora libremente otros horarios. Tu turno actual no cambiará salvo que confirmes una nueva opción.`;
+                banner.innerHTML = `🔒 <strong>Turno actual reservado (${nombreServicio} el ${fNorm} a las ${hNorm} hs).</strong> Explora otros horarios. Al confirmar una nueva fecha/horario, tu turno anterior se cancelará automáticamente.`;
                 banner.classList.remove('hide');
             }
 
@@ -1088,11 +1105,16 @@
             };
 
             try {
-                fetch(POST_WEBHOOK_URL, {
+                await fetch(POST_WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
-                }).catch(e => console.warn(e));
+                });
+
+                if (bdGlobal && Array.isArray(bdGlobal.turnos)) {
+                    const localT = bdGlobal.turnos.find(x => (x.ID_Turno || x.idTurno) === payload.idTurno);
+                    if (localT) localT.Estado = "Cancelado";
+                }
 
                 document.getElementById('stepConfirmar24h').classList.add('hide');
                 document.getElementById('stepActiveTurno').classList.add('hide');
@@ -1726,11 +1748,13 @@
             document.getElementById('stepActiveTurno').classList.add('hide');
             
             if (turnoActivoEncontrado) {
+                turnoAReprogramar = turnoActivoEncontrado;
+                turnoActivoDeMismaEspecialidad = turnoActivoEncontrado;
                 const fNorm = normalizarFecha(turnoActivoEncontrado.Fecha || turnoActivoEncontrado.fecha);
                 const hNorm = turnoActivoEncontrado.Hora_Inicio || turnoActivoEncontrado.horaInicio;
                 const banner = document.getElementById('bannerReprogramando');
                 if (banner) {
-                    banner.innerHTML = `🔒 <strong>Turno actual reservado (${fNorm} ${hNorm} hs).</strong> Explora libremente otros horarios. Tu turno actual no cambiará salvo que confirmes una nueva opción.`;
+                    banner.innerHTML = `🔒 <strong>Turno actual reservado (${fNorm} ${hNorm} hs).</strong> Explora libremente otros horarios. Al confirmar un nuevo horario, tu turno anterior se cancelará automáticamente.`;
                     banner.classList.remove('hide');
                 }
             }
@@ -1776,13 +1800,19 @@
             };
 
             try {
-                fetch(POST_WEBHOOK_URL, {
+                await fetch(POST_WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
-                }).catch(e => console.warn(e));
+                });
+
+                if (bdGlobal && Array.isArray(bdGlobal.turnos)) {
+                    const localT = bdGlobal.turnos.find(x => (x.ID_Turno || x.idTurno) === targetIdTurno);
+                    if (localT) localT.Estado = "Cancelado";
+                }
 
                 turnoActivoEncontrado = null;
+                turnoAReprogramar = null;
 
                 document.getElementById('stepActiveTurno').classList.add('hide');
                 document.getElementById('step2').classList.add('hide');
@@ -1900,7 +1930,7 @@
             
             if (!servicioInput || !bdGlobal) {
                 if (infoPill) infoPill.classList.add('hide');
-                turnoActivoDeMismaEspecialidad = null;
+                if (!turnoAReprogramar) turnoActivoDeMismaEspecialidad = null;
                 return;
             }
 
@@ -1908,25 +1938,30 @@
             const s = serviciosList.find(x => (x.Nombre_Servicio || x.Nombre || x.Servicio) === servicioInput);
             if (!s) {
                 if (infoPill) infoPill.classList.add('hide');
-                turnoActivoDeMismaEspecialidad = null;
+                if (!turnoAReprogramar) turnoActivoDeMismaEspecialidad = null;
                 return;
             }
 
             const espSeleccionada = (s.Especialidad || s.especialidad || '').toString().trim().toLowerCase();
 
-            turnoActivoDeMismaEspecialidad = (turnosActivosCliente || []).find(t => {
-                const espT = obtenerEspecialidadDeTurno(t);
-                return espT && espSeleccionada && matchEspecialidad(espT, espSeleccionada);
-            }) || null;
+            if (turnoAReprogramar) {
+                turnoActivoDeMismaEspecialidad = turnoAReprogramar;
+            } else {
+                turnoActivoDeMismaEspecialidad = (turnosActivosCliente || []).find(t => {
+                    const espT = obtenerEspecialidadDeTurno(t);
+                    return espT && espSeleccionada && matchEspecialidad(espT, espSeleccionada);
+                }) || null;
+            }
 
             const noticeBox = document.getElementById('noticeServicioPreseleccionado');
             const noticeText = document.getElementById('noticeServicioText');
             if (noticeBox && noticeText) {
-                if (turnoActivoDeMismaEspecialidad) {
-                    const fNorm = normalizarFecha(turnoActivoDeMismaEspecialidad.Fecha || turnoActivoDeMismaEspecialidad.fecha);
-                    const hIni = turnoActivoDeMismaEspecialidad.Hora_Inicio || turnoActivoDeMismaEspecialidad.horaInicio;
-                    const sPrev = turnoActivoDeMismaEspecialidad.ID_Servicio || turnoActivoDeMismaEspecialidad.Servicio;
-                    noticeText.innerHTML = `⚠️ <strong>Reprogramación de ${s.Especialidad || 'Especialidad'}:</strong> Ya tenés un turno activo de <em>${s.Especialidad || 'esta especialidad'}</em> (${sPrev} el ${fNorm} a las ${hIni}hs). Al agendar, reemplazarás tu turno anterior de esta categoría.`;
+                const targetT = turnoAReprogramar || turnoActivoDeMismaEspecialidad;
+                if (targetT) {
+                    const fNorm = normalizarFecha(targetT.Fecha || targetT.fecha);
+                    const hIni = targetT.Hora_Inicio || targetT.horaInicio;
+                    const sPrev = targetT.ID_Servicio || targetT.Servicio;
+                    noticeText.innerHTML = `⚠️ <strong>Reprogramación de turno:</strong> Reemplazarás tu turno previo (${sPrev} el ${fNorm} a las ${hIni} hs). Al agendar, el turno anterior se cancelará automáticamente.`;
                     noticeBox.classList.remove('hide');
                 } else {
                     noticeText.innerHTML = `✨ Vas a agendar: <strong>${servicioInput}</strong>`;
@@ -1937,7 +1972,7 @@
             if (selectedHoraGlobal) {
                 const btnConfirmar = document.getElementById('btnConfirmar');
                 if (btnConfirmar) {
-                    if (turnoActivoDeMismaEspecialidad) {
+                    if (turnoAReprogramar || turnoActivoDeMismaEspecialidad) {
                         btnConfirmar.innerText = `✏️ Reprogramar a las ${selectedHoraGlobal} hs`;
                     } else {
                         btnConfirmar.innerText = `Confirmar a las ${selectedHoraGlobal} hs`;
@@ -2094,7 +2129,7 @@
             btnConfirmar.disabled = true;
             btnConfirmar.classList.add('opacity-50', 'cursor-not-allowed');
 
-            if (turnoActivoEncontrado) {
+            if (turnoAReprogramar || turnoActivoEncontrado) {
                 btnConfirmar.innerText = "✏️ Cambiar a este Horario";
             } else {
                 btnConfirmar.innerText = "Confirmar Reserva";
@@ -2209,7 +2244,8 @@
 
                         const estado = (t.Estado || t.estado || "").toString().trim().toLowerCase();
                         const isNotCancelled = !estado.includes('cancelad');
-                        return isSameDate && isSameStaff && isNotCancelled;
+                        const isTurnoSiendoReprogramado = turnoAReprogramar && ((t.ID_Turno || t.idTurno) === (turnoAReprogramar.ID_Turno || turnoAReprogramar.idTurno));
+                        return isSameDate && isSameStaff && isNotCancelled && !isTurnoSiendoReprogramado;
                     });
 
                     let choca = false;
@@ -2307,7 +2343,7 @@
             btnConfirmar.disabled = false;
             btnConfirmar.classList.remove('opacity-50', 'cursor-not-allowed');
 
-            if (turnoActivoDeMismaEspecialidad) {
+            if (turnoAReprogramar || turnoActivoDeMismaEspecialidad) {
                 btnConfirmar.innerText = `✏️ Reprogramar a las ${horaStr} hs`;
             } else {
                 btnConfirmar.innerText = `Confirmar a las ${horaStr} hs`;
@@ -2334,12 +2370,13 @@
             const cfg = await getBrandingConfigAsync();
             const tColors = themesMap[cfg.theme] || themesMap.purple;
 
-            if (turnoActivoDeMismaEspecialidad) {
-                const targetOldIdTurno = turnoActivoDeMismaEspecialidad.ID_Turno || turnoActivoDeMismaEspecialidad.idTurno;
-                const oldSvcId = turnoActivoDeMismaEspecialidad.ID_Servicio || turnoActivoDeMismaEspecialidad.idServicio || '';
+            const turnoPrevioACancelar = turnoAReprogramar || turnoActivoDeMismaEspecialidad;
+            if (turnoPrevioACancelar) {
+                const targetOldIdTurno = turnoPrevioACancelar.ID_Turno || turnoPrevioACancelar.idTurno;
+                const oldSvcId = turnoPrevioACancelar.ID_Servicio || turnoPrevioACancelar.idServicio || '';
                 
                 try {
-                    fetch(POST_WEBHOOK_URL, {
+                    await fetch(POST_WEBHOOK_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -2347,8 +2384,9 @@
                             idTurno: targetOldIdTurno,
                             clienteInfo: { nombre: nombre, email: email },
                             idServicio: oldSvcId,
-                            fecha: normalizarFecha(turnoActivoDeMismaEspecialidad.Fecha || turnoActivoDeMismaEspecialidad.fecha),
-                            horaInicio: turnoActivoDeMismaEspecialidad.Hora_Inicio || turnoActivoDeMismaEspecialidad.horaInicio || '',
+                            fecha: normalizarFecha(turnoPrevioACancelar.Fecha || turnoPrevioACancelar.fecha),
+                            horaInicio: turnoPrevioACancelar.Hora_Inicio || turnoPrevioACancelar.horaInicio || '',
+                            motivoCancelacion: `Reprogramado por el cliente a nuevo horario (${normalizarFecha(fecha)} ${hora} hs)`,
                             branding: {
                                 name: cfg.name,
                                 theme: cfg.theme,
@@ -2357,8 +2395,15 @@
                                 coverUrl: cfg.publicCoverUrl || "https://estetica.neco-dev.cloud/branding_cover.jpg"
                             }
                         })
-                    }).catch(e => console.warn(e));
-                } catch(e) {}
+                    });
+
+                    if (bdGlobal && Array.isArray(bdGlobal.turnos)) {
+                        const localOld = bdGlobal.turnos.find(x => (x.ID_Turno || x.idTurno) === targetOldIdTurno);
+                        if (localOld) localOld.Estado = "Cancelado";
+                    }
+                } catch(e) {
+                    console.warn("Error cancelando turno anterior:", e);
+                }
             }
 
             const isNuevo = esClienteNuevo || !clienteEncontrado;
@@ -2466,23 +2511,30 @@
             };
 
             try {
-                fetch(POST_WEBHOOK_URL, {
+                await fetch(POST_WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
-                }).catch(e => console.warn(e));
+                });
+
+                if (bdGlobal && Array.isArray(bdGlobal.turnos)) {
+                    bdGlobal.turnos.push(nuevoTurno);
+                }
 
                 document.getElementById('step2').classList.add('hide');
                 const serviciosSec = document.getElementById('serviciosDisponiblesSection');
                 if (serviciosSec) serviciosSec.classList.add('hide');
                 
-                if (turnoActivoDeMismaEspecialidad) {
+                if (turnoPrevioACancelar) {
                     document.getElementById('successTitle').innerText = "¡Turno Reprogramado!";
-                    document.getElementById('successMessage').innerText = `Tu turno fue reprogramado exitosamente para el ${fechaNorm} a las ${hora} hs. Te enviamos la confirmación por correo.`;
+                    document.getElementById('successMessage').innerText = `Tu turno fue reprogramado exitosamente para el ${fechaNorm} a las ${hora} hs (se canceló tu horario anterior). Te enviamos la confirmación por correo.`;
                 } else {
                     document.getElementById('successTitle').innerText = "¡Reserva Confirmada!";
                     document.getElementById('successMessage').innerText = "Te hemos enviado un correo con todos los detalles de tu turno. ¡Te esperamos!";
                 }
+
+                turnoAReprogramar = null;
+                turnoActivoDeMismaEspecialidad = null;
 
                 const elSuccess = document.getElementById('stepSuccess');
                 elSuccess.classList.remove('hide');
