@@ -2388,8 +2388,8 @@
                             horaInicio: turnoPrevioACancelar.Hora_Inicio || turnoPrevioACancelar.horaInicio || '',
                             motivoCancelacion: `Reprogramado por el cliente a nuevo horario (${normalizarFecha(fecha)} ${hora} hs)`,
                             branding: {
-                                name: cfg.name,
-                                theme: cfg.theme,
+                                name: cfg.name || "Lumina Estética",
+                                theme: cfg.theme || "amber",
                                 colors: tColors,
                                 logoUrl: cfg.publicLogoUrl || "https://estetica.neco-dev.cloud/branding_logo.jpg",
                                 coverUrl: cfg.publicCoverUrl || "https://estetica.neco-dev.cloud/branding_cover.jpg"
